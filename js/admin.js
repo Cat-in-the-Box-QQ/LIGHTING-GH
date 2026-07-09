@@ -195,14 +195,19 @@ const passwordInput = document.getElementById('adminPasswordInput');
   }
 
   loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (AdminAuth.unlock(pinInput.value.trim())) {
-      loginStatus.textContent = '';
-      await showApp();
-    } else {
-      loginStatus.textContent = 'รหัส Admin ไม่ถูกต้อง';
-    }
-  });
+  e.preventDefault();
+  const ok = await AdminAuth.unlock(
+    emailInput.value.trim(),
+    passwordInput.value
+  );
+
+  if (ok) {
+    loginStatus.textContent = '';
+    await showApp();
+  } else {
+    loginStatus.textContent = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+  }
+});
 
   if (AdminAuth.isUnlocked()) {
     await showApp();
