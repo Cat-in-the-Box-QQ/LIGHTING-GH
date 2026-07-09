@@ -36,21 +36,26 @@ function accessoryEditorHtml(accessory = {}, formId = 'accessoryEditorForm', opt
     </div>`;
 }
 
-function syncAccessoryNameAcrossFixtures(oldName, newName, compatibleIds) {
+async function syncAccessoryNameAcrossFixtures(oldName, newName, compatibleIds) {
   const updatedFixtures = DB.getAll().map((fixture) => {
     let accessories = Array.isArray(fixture.accessories) ? [...fixture.accessories] : [];
     if (oldName) accessories = accessories.filter((item) => item !== oldName);
     if (newName && compatibleIds.includes(Number(fixture.id))) accessories.push(newName);
     accessories = [...new Set(accessories)];
-    return { ...fixture, accessories };
+    return {
+      ...fixture,
+      accessories,
+      compatibleText: accessories.join(' '),
+    };
   });
-  DB.replaceAll(updatedFixtures);
+
+  await DB.replaceAll(updatedFixtures);
 }
 
-function deleteAccessoryAndRelations(accessoryId) {
+async function deleteAccessoryAndRelations(accessoryId) {
   const current = AccessoryStore.getById(accessoryId);
   if (!current) return false;
-  syncAccessoryNameAcrossFixtures(current.name || null, null, []);
+  await syncAccessoryNameAcrossFixtures(current.name || null, null, []);
   return AccessoryStore.remove(accessoryId);
 }
 
@@ -62,33 +67,39 @@ function bindAccessoryEditor(formId, accessoryId, onSaved, options = {}) {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const oldItem = isCreate ? null : AccessoryStore.getById(accessoryId);
-    const patch = {
-      name: form.elements.name.value.trim() || null,
-      brand: form.elements.brand.value.trim() || null,
-      category: form.elements.category.value.trim() || null,
-      stock: form.elements.stock.value.trim() || null,
-      pdfPage: form.elements.pdfPage.value.trim() === '' ? null : Number(form.elements.pdfPage.value.trim()),
-      image: form.elements.image.value.trim() || null,
-      compatibleWith: form.elements.compatibleWith.value
-        .split(',')
-        .map((item) => Number(item.trim()))
-        .filter(Boolean),
-    };
 
-    let savedItem;
-    if (isCreate) {
-      savedItem = AccessoryStore.create(patch);
-      syncAccessoryNameAcrossFixtures(null, savedItem?.name || null, savedItem?.compatibleWith || []);
-      status.textContent = 'เพิ่มรายการแล้ว';
-      if (typeof onSaved === 'function') onSaved({ action: 'created', item: savedItem });
-      return;
+    try {
+      const oldItem = isCreate ? null : AccessoryStore.getById(accessoryId);
+      const patch = {
+        name: form.elements.name.value.trim() || null,
+        brand: form.elements.brand.value.trim() || null,
+        category: form.elements.category.value.trim() || null,
+        stock: form.elements.stock.value.trim() || null,
+        pdfPage: form.elements.pdfPage.value.trim() === '' ? null : Number(form.elements.pdfPage.value.trim()),
+        image: form.elements.image.value.trim() || null,
+        compatibleWith: form.elements.compatibleWith.value
+          .split(',')
+          .map((item) => Number(item.trim()))
+          .filter(Boolean),
+      };
+
+      let savedItem;
+      if (isCreate) {
+        savedItem = await AccessoryStore.create(patch);
+        await syncAccessoryNameAcrossFixtures(null, savedItem?.name || null, savedItem?.compatibleWith || []);
+        status.textContent = 'เพิ่มรายการแล้ว';
+        if (typeof onSaved === 'function') onSaved({ action: 'created', item: savedItem });
+        return;
+      }
+
+      savedItem = await AccessoryStore.update(accessoryId, patch);
+      await syncAccessoryNameAcrossFixtures(oldItem?.name || null, savedItem?.name || null, savedItem?.compatibleWith || []);
+      status.textContent = 'บันทึกแล้ว';
+      if (typeof onSaved === 'function') onSaved({ action: 'saved', item: savedItem });
+    } catch (err) {
+      console.error(err);
+      status.textContent = 'บันทึกไม่สำเร็จ';
     }
-
-    savedItem = AccessoryStore.update(accessoryId, patch);
-    syncAccessoryNameAcrossFixtures(oldItem?.name || null, savedItem?.name || null, savedItem?.compatibleWith || []);
-    status.textContent = 'บันทึกแล้ว';
-    if (typeof onSaved === 'function') onSaved({ action: 'saved', item: savedItem });
   });
 
   cancelBtn?.addEventListener('click', () => {
