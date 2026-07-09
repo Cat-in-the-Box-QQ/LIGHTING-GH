@@ -42,10 +42,7 @@ const AdminAuth = (() => {
       password,
     });
 
-    if (error) {
-      return false;
-    }
-
+    if (error) return false;
     return refresh();
   }
 
