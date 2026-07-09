@@ -612,7 +612,12 @@ function render() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const [fixtures, accessories] = await Promise.all([DB.load(), AccessoryStore.load(), VerificationStore.load()]);
+  const [fixtures, accessories] = await Promise.all([
+    DB.load(),
+    AccessoryStore.load(),
+    VerificationStore.load(),
+    AdminAuth.ready
+  ]);
   allFixtures = buildFixtureItems(fixtures.filter((item) => inferItemType(item) !== 'accessory'));
   allAccessoryItems = buildAccessoryItems(accessories);
 
