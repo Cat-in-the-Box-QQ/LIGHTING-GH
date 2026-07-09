@@ -205,6 +205,7 @@ function buildAccessoryItems(accessories) {
       .map((id) => DB.getById(id))
       .filter(Boolean)
       .map((fixture) => `${fixture.brand} ${fixture.model}`);
+
     return {
       id: Number(item.id),
       brand: item.brand || '',
@@ -274,6 +275,7 @@ function renderPagination(totalPages) {
   ul.innerHTML = '';
   const pageSize = currentPageSize();
   if (!pageSize || filtered.length <= pageSize) return;
+
   for (let i = 1; i <= totalPages; i++) {
     const li = document.createElement('li');
     li.className = 'page-item' + (i === page ? ' active' : '');
@@ -315,14 +317,18 @@ function openItemEditor(item) {
   if (item.source === 'accessory') {
     const current = AccessoryStore.getById(item.id);
     if (!current) return;
+
     editorTitle.textContent = `แก้ไข Accessory · ${current.name}`;
     editorBody.innerHTML = accessoryEditorHtml(current, 'equipmentAccessoryEditor');
+
     bindAccessoryEditor('equipmentAccessoryEditor', Number(item.id), async ({ item: savedItem }) => {
       await reloadCatalogData();
       render();
       editorModal.hide();
+
       const updated = savedItem ? getItemByKey(`accessory-${savedItem.id}`) : null;
       if (updated) showDetail(updated._key);
+
       flashStatus(`บันทึก ${current.name} แล้ว`);
     }, {
       onCancel: () => editorModal.hide(),
@@ -330,14 +336,18 @@ function openItemEditor(item) {
   } else {
     const current = DB.getById(item.id);
     if (!current) return;
+
     editorTitle.textContent = `แก้ไข Fixture · ${current.brand} ${current.model}`;
     editorBody.innerHTML = fixtureEditorHtml(current, 'equipmentFixtureEditor');
+
     bindFixtureEditor('equipmentFixtureEditor', Number(item.id), async ({ item: savedItem }) => {
       await reloadCatalogData();
       render();
       editorModal.hide();
+
       const updated = savedItem ? getItemByKey(`fixture-${savedItem.id}`) : null;
       if (updated) showDetail(updated._key);
+
       flashStatus(`บันทึก ${current.brand} ${current.model} แล้ว`);
     }, {
       onCancel: () => editorModal.hide(),
@@ -351,8 +361,9 @@ async function toggleItemHidden(item) {
   if (item.source === 'accessory') {
     const current = AccessoryStore.getById(item.id);
     if (!current) return;
+
     const nextHidden = !current.hidden;
-    AccessoryStore.update(item.id, { hidden: nextHidden });
+    await AccessoryStore.update(item.id, { hidden: nextHidden });
     await reloadCatalogData();
     render();
     getDetailModalInstance().hide();
@@ -362,8 +373,9 @@ async function toggleItemHidden(item) {
 
   const current = DB.getById(item.id);
   if (!current) return;
+
   const nextHidden = !current.hidden;
-  DB.update(item.id, { hidden: nextHidden });
+  await DB.update(item.id, { hidden: nextHidden });
   await reloadCatalogData();
   render();
   getDetailModalInstance().hide();
@@ -375,9 +387,9 @@ async function deleteItem(item) {
   if (!window.confirm(`ลบรายการ “${label}” ใช่หรือไม่?`)) return;
 
   if (item.source === 'accessory') {
-    deleteAccessoryAndRelations(item.id);
+    await deleteAccessoryAndRelations(item.id);
   } else {
-    deleteFixtureAndRelations(item.id);
+    await deleteFixtureAndRelations(item.id);
   }
 
   await reloadCatalogData();
@@ -393,7 +405,10 @@ function renderModalAdminTools(item) {
 
   if (!isAdminUnlocked()) return;
 
-  const current = item.source === 'accessory' ? AccessoryStore.getById(item.id) : DB.getById(item.id);
+  const current = item.source === 'accessory'
+    ? AccessoryStore.getById(item.id)
+    : DB.getById(item.id);
+
   if (!current) return;
 
   area.innerHTML = `
@@ -411,6 +426,7 @@ function renderModalAdminTools(item) {
 function showDetail(key) {
   const item = getItemByKey(key);
   if (!item) return;
+
   currentModalItem = item;
 
   document.getElementById('detailTitle').textContent = item.source === 'accessory'
@@ -435,6 +451,7 @@ function showDetail(key) {
       .map((id) => DB.getById(id))
       .filter(Boolean)
       .map((fixture) => `${fixture.brand} ${fixture.model}`);
+
     document.getElementById('detailBody').innerHTML = `
       <div class="row g-3">
         <div class="col-md-5">
@@ -455,6 +472,7 @@ function showDetail(key) {
       </div>`;
   } else {
     const stockCount = getStockCount(item);
+
     document.getElementById('detailBody').innerHTML = `
       <div class="row g-3">
         <div class="col-md-5">
@@ -493,15 +511,22 @@ function showDetail(key) {
 function render() {
   const filters = getFilters();
   filters.includeHidden = isAdminUnlocked();
+
   const sourceItems = filters.type === 'accessory'
     ? visibleItems(allAccessoryItems, isAdminUnlocked())
     : visibleItems(allFixtures, isAdminUnlocked());
-  filtered = sortFixtures(filterFixtures(sourceItems, filters), document.getElementById('fSort').value);
+
+  filtered = sortFixtures(
+    filterFixtures(sourceItems, filters),
+    document.getElementById('fSort').value
+  );
+
   document.getElementById('resultCount').textContent = `พบ ${filtered.length} รายการ`;
 
   const pageSize = currentPageSize();
   const totalPages = pageSize ? Math.max(Math.ceil(filtered.length / pageSize), 1) : 1;
   if (page > totalPages) page = totalPages;
+
   const start = pageSize ? (page - 1) * pageSize : 0;
   const pageItems = pageSize ? filtered.slice(start, start + pageSize) : filtered;
 
@@ -526,6 +551,7 @@ function render() {
         .map((id) => DB.getById(id))
         .filter(Boolean)
         .map((fixture) => `${fixture.brand} ${fixture.model}`);
+
       col.innerHTML = `
         <div class="filter-panel h-100 accessory-card" role="button" data-key="${item._key}">
           <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
@@ -618,29 +644,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     VerificationStore.load(),
     AdminAuth.ready
   ]);
+
   allFixtures = buildFixtureItems(fixtures.filter((item) => inferItemType(item) !== 'accessory'));
   allAccessoryItems = buildAccessoryItems(accessories);
 
   const brandSel = document.getElementById('fBrand');
-  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => item.brand).filter(Boolean))].sort().forEach((brand) => {
-    const o = document.createElement('option');
-    o.value = brand; o.textContent = brand;
-    brandSel.appendChild(o);
-  });
+  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => item.brand).filter(Boolean))]
+    .sort()
+    .forEach((brand) => {
+      const o = document.createElement('option');
+      o.value = brand;
+      o.textContent = brand;
+      brandSel.appendChild(o);
+    });
 
   const catSel = document.getElementById('fCategory');
-  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => item.category).filter(Boolean))].sort().forEach((category) => {
-    const o = document.createElement('option');
-    o.value = category; o.textContent = category;
-    catSel.appendChild(o);
-  });
+  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => item.category).filter(Boolean))]
+    .sort()
+    .forEach((category) => {
+      const o = document.createElement('option');
+      o.value = category;
+      o.textContent = category;
+      catSel.appendChild(o);
+    });
 
   const ipSel = document.getElementById('fIp');
-  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => item.ip).filter(Boolean))].sort().forEach((ip) => {
-    const o = document.createElement('option');
-    o.value = ip; o.textContent = ip;
-    ipSel.appendChild(o);
-  });
+  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => item.ip).filter(Boolean))]
+    .sort()
+    .forEach((ip) => {
+      const o = document.createElement('option');
+      o.value = ip;
+      o.textContent = ip;
+      ipSel.appendChild(o);
+    });
 
   ['fSearch','fType','fBrand','fCategory','fIp','fWireless','fColor','fBattery','fInStock','fMaxWeight','fMaxPower','fSort','fPageSize']
     .forEach((id) => {
@@ -651,7 +687,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('fReset').addEventListener('click', () => {
     document.getElementById('fSearch').value = '';
-    ['fType','fBrand','fCategory','fIp','fWireless','fColor','fBattery','fInStock'].forEach((id) => document.getElementById(id).value = '');
+    ['fType','fBrand','fCategory','fIp','fWireless','fColor','fBattery','fInStock']
+      .forEach((id) => document.getElementById(id).value = '');
     document.getElementById('fMaxWeight').value = '';
     document.getElementById('fMaxPower').value = '';
     page = 1;
