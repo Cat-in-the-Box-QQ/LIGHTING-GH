@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
   await Promise.all([DB.load(), AccessoryStore.load(), AdminAuth.ready]);
+
   let accessories = AccessoryStore.getAll();
   let page = 1;
+
   const listEl = document.getElementById('accessoryGrid');
   const resultEl = document.getElementById('accessoryResult');
   const adminInfoEl = document.getElementById('accessoryAdminInfo');
@@ -55,19 +57,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   function sortAccessories(items) {
     const sortBy = sortEl.value;
     const arr = [...items];
+
     if (sortBy === 'name_desc') {
       arr.sort((a, b) => String(b.name || '').localeCompare(String(a.name || '')));
     } else if (sortBy === 'brand_asc') {
-      arr.sort((a, b) => String(a.brand || '').localeCompare(String(b.brand || '')) || String(a.name || '').localeCompare(String(b.name || '')));
+      arr.sort((a, b) =>
+        String(a.brand || '').localeCompare(String(b.brand || '')) ||
+        String(a.name || '').localeCompare(String(b.name || ''))
+      );
     } else if (sortBy === 'brand_desc') {
-      arr.sort((a, b) => String(b.brand || '').localeCompare(String(a.brand || '')) || String(a.name || '').localeCompare(String(b.name || '')));
+      arr.sort((a, b) =>
+        String(b.brand || '').localeCompare(String(a.brand || '')) ||
+        String(a.name || '').localeCompare(String(b.name || ''))
+      );
     } else if (sortBy === 'stock_desc') {
-      arr.sort((a, b) => getStockCount(b) - getStockCount(a) || String(a.name || '').localeCompare(String(b.name || '')));
+      arr.sort((a, b) =>
+        getStockCount(b) - getStockCount(a) ||
+        String(a.name || '').localeCompare(String(b.name || ''))
+      );
     } else if (sortBy === 'stock_asc') {
-      arr.sort((a, b) => getStockCount(a) - getStockCount(b) || String(a.name || '').localeCompare(String(b.name || '')));
+      arr.sort((a, b) =>
+        getStockCount(a) - getStockCount(b) ||
+        String(a.name || '').localeCompare(String(b.name || ''))
+      );
     } else {
       arr.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
     }
+
     return arr;
   }
 
@@ -100,6 +116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       await reloadData();
       render();
       editorModal.hide();
+
       if (item) {
         showDetail(item.id);
         flashStatus(`บันทึก ${item.name} แล้ว`);
@@ -114,8 +131,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function toggleAccessoryHidden(accessoryId) {
     const current = AccessoryStore.getById(accessoryId);
     if (!current) return;
+
     const nextHidden = !current.hidden;
-    AccessoryStore.update(accessoryId, { hidden: nextHidden });
+    await AccessoryStore.update(accessoryId, { hidden: nextHidden });
     await reloadData();
     render();
     modal.hide();
@@ -125,8 +143,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function deleteAccessory(accessoryId) {
     const current = AccessoryStore.getById(accessoryId);
     if (!current) return;
+
     if (!window.confirm(`ลบ Accessory “${current.name}” ใช่หรือไม่?`)) return;
-    deleteAccessoryAndRelations(accessoryId);
+
+    await deleteAccessoryAndRelations(accessoryId);
     await reloadData();
     render();
     editorModal.hide();
@@ -137,10 +157,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderAdminArea(accessoryId) {
     const area = document.getElementById('accessoryAdminArea');
     if (!area) return;
+
     area.innerHTML = '';
 
     if (adminUnlocked()) {
       const accessory = AccessoryStore.getById(accessoryId);
+
       area.innerHTML = `
         <div class="d-flex gap-2 flex-wrap justify-content-end w-100">
           <button type="button" id="accessoryEditBtn" class="btn btn-outline-danger btn-sm">แก้ไข</button>
@@ -157,7 +179,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   function showDetail(id) {
     const item = AccessoryStore.getById(id);
     if (!item) return;
+
     const compatible = fixtureNames(item.compatibleWith || []);
+
     document.getElementById('accessoryTitle').textContent = item.name;
     document.getElementById('accessoryBody').innerHTML = `
       <div class="spec-row"><span>Brand</span><span>${item.brand || '-'}</span></div>
@@ -170,6 +194,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           ? `<ul class="mb-0 small">${compatible.map((name) => `<li>${name}</li>`).join('')}</ul>`
           : `<div class="text-muted small">ยังไม่ระบุ fixture ที่ใช้ร่วมกัน</div>`}
       </div>`;
+
     renderAdminArea(id);
     modal.show();
   }
@@ -177,11 +202,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   function render() {
     const q = (searchEl.value || '').trim().toLowerCase();
     const category = catEl.value;
+
     let filtered = visibleItems(accessories, adminUnlocked()).filter((item) => {
       const compatibleText = fixtureNames(item.compatibleWith || []).join(' ');
       const hay = `${item.name} ${item.brand || ''} ${item.category || ''} ${compatibleText}`.toLowerCase();
+
       if (q && !hay.includes(q)) return false;
       if (category && item.category !== category) return false;
+
       return true;
     });
 
@@ -191,6 +219,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     adminInfoEl.textContent = adminUnlocked()
       ? 'Admin mode active: มีปุ่มแก้ไข / ซ่อน / ลบ ใน popup รายละเอียด'
       : 'หากต้องการแก้ไข Accessories ให้ปลดล็อกผ่านหน้า Admin ก่อน';
+
     listEl.innerHTML = '';
 
     if (!filtered.length) {
@@ -202,6 +231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const pageSize = currentPageSize();
     const totalPages = pageSize ? Math.max(Math.ceil(filtered.length / pageSize), 1) : 1;
     if (page > totalPages) page = totalPages;
+
     const start = pageSize ? (page - 1) * pageSize : 0;
     const pageItems = pageSize ? filtered.slice(start, start + pageSize) : filtered;
 
@@ -209,6 +239,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const compatible = fixtureNames(item.compatibleWith || []);
       const col = document.createElement('div');
       col.className = 'col-sm-6 col-lg-4';
+
       col.innerHTML = `
         <div class="filter-panel h-100 accessory-card" role="button" data-id="${item.id}">
           <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
@@ -223,6 +254,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="small"><strong>ใช้กับ:</strong> ${compatible.length ? compatible.join(', ') : 'ยังไม่ระบุ'}</div>
           ${adminUnlocked() ? `<div class="small text-danger mt-2">Admin: คลิกเพื่อแก้ไข / ซ่อน / ลบ</div>` : ''}
         </div>`;
+
       listEl.appendChild(col);
     });
 
@@ -234,8 +266,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   [searchEl, catEl, sortEl, pageSizeEl].forEach((el) => {
-    el.addEventListener('input', () => { page = 1; render(); });
-    el.addEventListener('change', () => { page = 1; render(); });
+    el.addEventListener('input', () => {
+      page = 1;
+      render();
+    });
+    el.addEventListener('change', () => {
+      page = 1;
+      render();
+    });
   });
 
   render();
