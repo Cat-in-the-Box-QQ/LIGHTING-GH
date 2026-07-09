@@ -215,10 +215,10 @@ if (AdminAuth.isUnlocked()) {
   await showApp();
 }
 
-  document.getElementById('adminLogoutBtn')?.addEventListener('click', () => {
-    AdminAuth.lock();
-    location.reload();
-  });
+  document.getElementById('adminLogoutBtn')?.addEventListener('click', async () => {
+  await AdminAuth.lock();
+  location.reload();
+});
 
   document.getElementById('exportFixturesBtn')?.addEventListener('click', async () => {
     await DB.load();
