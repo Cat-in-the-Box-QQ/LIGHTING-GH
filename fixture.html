@@ -51,7 +51,7 @@
 <script src="js/inline-fixture-editor.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
-  await Promise.all([DB.load(), AccessoryStore.load(), VerificationStore.load()]);
+  await Promise.all([DB.load(), AccessoryStore.load(), VerificationStore.load(), AdminAuth.ready]);
   const id = new URLSearchParams(location.search).get("id");
   const f = DB.getById(id);
   const el = document.getElementById("content");
