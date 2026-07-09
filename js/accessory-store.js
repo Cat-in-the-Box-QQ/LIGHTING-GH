@@ -1,37 +1,51 @@
-// accessory-store.js - localStorage-backed accessory catalog for static app
-
 const AccessoryStore = (() => {
-  const STORAGE_KEY = 'lighting_db_accessories_v1';
   let accessories = [];
 
-  async function load() {
-    const res = await fetch('data/accessories.json', { cache: 'no-store' });
-    const base = await res.json();
-    const overrides = localStorage.getItem(STORAGE_KEY);
+  function mapRowToAccessory(row) {
+    return {
+      id: Number(row.id),
+      name: row.name || '',
+      brand: row.brand || '',
+      category: row.category || 'Accessory',
+      stock: row.stock || null,
+      image: row.image || '',
+      pdfPage: row.pdf_page ?? null,
+      compatibleWith: Array.isArray(row.compatible_with)
+        ? row.compatible_with.map(Number).filter(Boolean)
+        : [],
+      hidden: !!row.hidden,
+    };
+  }
 
-    if (overrides) {
-      try {
-        const parsed = JSON.parse(overrides);
-        const map = new Map(parsed.map((item) => [Number(item.id), item]));
-        accessories = base.map((item) => ({ ...item, ...(map.get(Number(item.id)) || {}) }));
-        const baseIds = new Set(base.map((item) => Number(item.id)));
-        parsed.forEach((item) => {
-          if (!baseIds.has(Number(item.id))) accessories.push(item);
-        });
-      } catch (e) {
-        accessories = base;
-      }
-    } else {
-      accessories = base;
+  function mapPatchToRow(patch = {}) {
+    const row = {};
+
+    if ('name' in patch) row.name = patch.name || null;
+    if ('brand' in patch) row.brand = patch.brand || null;
+    if ('category' in patch) row.category = patch.category || 'Accessory';
+    if ('stock' in patch) row.stock = patch.stock || null;
+    if ('image' in patch) row.image = patch.image || null;
+    if ('pdfPage' in patch) row.pdf_page = patch.pdfPage ?? null;
+    if ('compatibleWith' in patch) {
+      row.compatible_with = Array.isArray(patch.compatibleWith)
+        ? patch.compatibleWith.map(Number).filter(Boolean)
+        : [];
     }
+    if ('hidden' in patch) row.hidden = !!patch.hidden;
 
-    accessories = accessories.map((item) => ({
-      ...item,
-      compatibleWith: Array.isArray(item.compatibleWith) ? item.compatibleWith.map(Number).filter(Boolean) : [],
-      hidden: !!item.hidden,
-    })).sort((a, b) => Number(a.id) - Number(b.id));
+    return row;
+  }
 
-    return accessories;
+  async function load() {
+    const { data, error } = await window.sb
+      .from('accessories')
+      .select('*')
+      .order('id', { ascending: true });
+
+    if (error) throw error;
+
+    accessories = (data || []).map(mapRowToAccessory);
+    return getAll();
   }
 
   function getAll() {
@@ -42,73 +56,100 @@ const AccessoryStore = (() => {
     return accessories.find((item) => Number(item.id) === Number(id)) || null;
   }
 
-  function nextId() {
-    return accessories.reduce((max, item) => Math.max(max, Number(item.id) || 0), 0) + 1;
-  }
-
-  function persist() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(accessories));
-  }
-
-  function create(initial = {}) {
-    const item = {
-      id: nextId(),
+  async function create(initial = {}) {
+    const row = mapPatchToRow({
       name: 'New Accessory',
-      brand: '',
       category: 'Accessory',
-      stock: null,
-      image: '',
-      pdfPage: null,
       compatibleWith: [],
       hidden: false,
       ...initial,
-    };
-    accessories.push(item);
+    });
+
+    const { data, error } = await window.sb
+      .from('accessories')
+      .insert(row)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const mapped = mapRowToAccessory(data);
+    accessories.push(mapped);
     accessories.sort((a, b) => Number(a.id) - Number(b.id));
-    persist();
-    return item;
+    return mapped;
   }
 
-  function update(id, patch) {
+  async function update(id, patch) {
+    const row = mapPatchToRow(patch);
+
+    const { data, error } = await window.sb
+      .from('accessories')
+      .update(row)
+      .eq('id', Number(id))
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const mapped = mapRowToAccessory(data);
     const idx = accessories.findIndex((item) => Number(item.id) === Number(id));
-    if (idx === -1) return null;
-    accessories[idx] = {
-      ...accessories[idx],
-      ...patch,
-      compatibleWith: Array.isArray(patch.compatibleWith)
-        ? patch.compatibleWith.map(Number).filter(Boolean)
-        : accessories[idx].compatibleWith,
-    };
-    persist();
-    return accessories[idx];
-  }
-
-  function remove(id) {
-    const before = accessories.length;
-    accessories = accessories.filter((item) => Number(item.id) !== Number(id));
-    if (accessories.length !== before) {
-      persist();
-      return true;
+    if (idx !== -1) {
+      accessories[idx] = mapped;
+    } else {
+      accessories.push(mapped);
     }
-    return false;
+    accessories.sort((a, b) => Number(a.id) - Number(b.id));
+    return mapped;
   }
 
-  function replaceAll(newItems) {
-    accessories = [...newItems].map((item) => ({
-      ...item,
-      compatibleWith: Array.isArray(item.compatibleWith) ? item.compatibleWith.map(Number).filter(Boolean) : [],
-    }));
-    persist();
-    return accessories;
+  async function remove(id) {
+    const { error } = await window.sb
+      .from('accessories')
+      .delete()
+      .eq('id', Number(id));
+
+    if (error) throw error;
+
+    accessories = accessories.filter((item) => Number(item.id) !== Number(id));
+    return true;
+  }
+
+  async function replaceAll(newItems) {
+    const rows = (newItems || []).map((item) => {
+      const row = mapPatchToRow(item);
+      row.id = Number(item.id);
+      row.name = item.name || 'New Accessory';
+      row.category = item.category || 'Accessory';
+      return row;
+    });
+
+    const { error } = await window.sb
+      .from('accessories')
+      .upsert(rows, { onConflict: 'id' });
+
+    if (error) throw error;
+
+    await load();
+    return getAll();
   }
 
   function resetToOriginal() {
-    localStorage.removeItem(STORAGE_KEY);
+    console.warn('AccessoryStore.resetToOriginal() is disabled in Supabase mode');
   }
 
   function exportJson() {
     return JSON.stringify(accessories, null, 2);
   }
 
-  return { load, getAll, getById, create, update, remove, replaceAll, resetToOriginal, exportJson };
+  return {
+    load,
+    getAll,
+    getById,
+    create,
+    update,
+    remove,
+    replaceAll,
+    resetToOriginal,
+    exportJson
+  };
 })();
