@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Fixture Detail - Lighting GH</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="index.html">💡 Lighting GH</a>
+    <div class="d-flex gap-3 flex-wrap">
+      <a class="nav-link text-light" href="index.html">Dashboard</a>
+      <a class="nav-link text-light" href="equipment.html">Equipment</a>
+      <a class="nav-link text-light" href="accessories.html">Accessories</a>
+      <a class="nav-link text-light" href="setbuilder.html">Set Builder</a>
+      <a class="nav-link text-light" href="inventory.html">Inventory</a>
+      <a class="nav-link text-light" href="admin.html">Admin</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container pb-5" id="content">
+  <p class="text-muted">กำลังโหลด...</p>
+</div>
+
+<div class="modal fade" id="fixtureEditorModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="fixtureEditorModalTitle">แก้ไข Fixture</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="fixtureEditorModalBody"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="js/database.js"></script>
+<script src="js/search.js"></script>
+<script src="js/setbuilder-helper.js"></script>
+<script src="js/accessory-store.js"></script>
+<script src="js/verification-store.js"></script>
+<script src="js/admin-auth.js"></script>
+<script src="js/inline-fixture-editor.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  await Promise.all([DB.load(), AccessoryStore.load(), VerificationStore.load()]);
+  const id = new URLSearchParams(location.search).get("id");
+  const f = DB.getById(id);
+  const el = document.getElementById("content");
+
+  if (f && f.hidden && !isAdminUnlocked()) {
+    el.innerHTML = `<div class="alert alert-warning">รายการนี้ถูกซ่อนอยู่</div>`;
+    return;
+  }
+
+  if (!f) {
+    el.innerHTML = `<div class="alert alert-warning">ไม่พบข้อมูลอุปกรณ์ (id=${id}). <a href="equipment.html">กลับไปหน้า Equipment</a></div>`;
+    return;
+  }
+
+  const stockCount = getStockCount(f);
+  const current220 = f.power ? (f.power / 220).toFixed(2) : "-";
+  const stockLine = f.stockNote ? `${stockCount} Pieces · ${f.stockNote}` : `${stockCount} Pieces`;
+  const canBuild = isBuildableItem(f);
+
+  el.innerHTML = `
+    <a href="equipment.html" class="btn btn-sm btn-outline-secondary mb-3">&larr; กลับไปหน้ารายการ</a>
+    <div id="detailStatus" class="small text-success inline-status mb-2"></div>
+    <div class="row g-3">
+      <div class="col-md-5">
+        <div class="filter-panel h-100">
+          <img src="${f.image || ''}" class="img-fluid rounded shadow-sm mb-3" alt="${f.model}" onerror="this.style.display='none'">
+          <div class="d-flex gap-2 flex-wrap mb-3 align-items-center">
+            ${canBuild ? `<input type="number" min="1" value="1" id="detailQtyInput" class="form-control form-control-sm qty-inline">` : ''}
+            ${canBuild ? `<button id="addToSetBtn" class="btn btn-dark btn-sm">+</button>` : ''}
+            ${canBuild && hasSetOption(f) ? `<button id="addSetBtn" class="btn btn-outline-dark btn-sm">+ ชุด</button>` : ''}
+            <span id="adminActionArea"></span>
+          </div>
+          <div class="spec-row"><span>ID</span><span>${f.id}</span></div>
+          <div class="spec-row"><span>Group</span><span>${itemTypeLabel(f)}</span></div>
+          <div class="spec-row"><span>Stock</span><span>${stockLine}</span></div>
+        </div>
+      </div>
+      <div class="col-md-7">
+        <h2>${f.brand} ${f.model}</h2>
+        <div class="d-flex gap-2 flex-wrap mb-3">
+          <span class="badge bg-dark">${f.category || '-'}</span>
+          ${f.ip ? `<span class="badge bg-secondary">${f.ip}</span>` : ''}
+          ${f.color ? `<span class="badge bg-secondary">${f.color}</span>` : ''}
+          ${f.hidden ? `<span class="badge bg-danger">Hidden</span>` : ''}
+        </div>
+
+        <div class="spec-row"><span>Power</span><span>${f.powerRaw || (f.power != null ? `${f.power} W` : '-')}</span></div>
+        <div class="spec-row"><span>Weight</span><span>${f.weightRaw || (f.weight != null ? `${f.weight} kg` : '-')}</span></div>
+        <div class="spec-row"><span>Current @ 220V</span><span>${current220} A</span></div>
+        <div class="spec-row"><span>Lux</span><span>${f.lux || '-'}</span></div>
+        <div class="spec-row"><span>Lumens</span><span>${f.lumens ?? '-'}</span></div>
+        <div class="spec-row"><span>Beam Angle</span><span>${f.beam || '-'}</span></div>
+        <div class="spec-row"><span>Dimensions</span><span>${f.dimensions || '-'}</span></div>
+        <div class="spec-row"><span>Wireless Control</span><span>${f.wireless || '-'}</span></div>
+        <div class="spec-row"><span>White Light</span><span>${f.whiteLight || '-'}</span></div>
+        <div class="spec-row"><span>Color Light</span><span>${f.color || '-'}</span></div>
+        <div class="spec-row"><span>Battery</span><span>${f.battery || '-'}</span></div>
+
+        <div class="filter-panel mt-3">
+          <h5 class="mb-2">Accessories / อุปกรณ์เสริม</h5>
+          ${Array.isArray(f.accessories) && f.accessories.length
+            ? `<ul class="mb-0 small">${f.accessories.map((item) => `<li>${item}</li>`).join('')}</ul>`
+            : `<div class="text-muted small">ไม่มีข้อมูลอุปกรณ์เสริม</div>`}
+        </div>
+
+        <div id="fixtureVerificationMount">${isAdminUnlocked() ? fixtureVerificationHtml(f.id) : ''}</div>
+      </div>
+    </div>`;
+
+  const addBtn = document.getElementById('addToSetBtn');
+  if (addBtn) {
+    addBtn.addEventListener('click', () => {
+      const qty = Math.max(Number(document.getElementById('detailQtyInput')?.value) || 1, 1);
+      addFixtureToCurrentSet(f.id, qty);
+      const status = document.getElementById('detailStatus');
+      status.textContent = `เพิ่ม ${f.brand} ${f.model} จำนวน ${qty} เข้าชุดแล้ว`;
+      setTimeout(() => status.textContent = '', 2500);
+    });
+  }
+
+  const addSetBtn = document.getElementById('addSetBtn');
+  if (addSetBtn) {
+    addSetBtn.addEventListener('click', () => {
+      const setUnits = getUnitsPerSet(f) || 1;
+      const setCount = Math.max(Number(document.getElementById('detailQtyInput')?.value) || 1, 1);
+      addFixtureToCurrentSet(f.id, setUnits * setCount);
+      const status = document.getElementById('detailStatus');
+      status.textContent = `เพิ่ม ${f.brand} ${f.model} จำนวน ${setCount} ชุด (${setUnits * setCount} ชิ้น) แล้ว`;
+      setTimeout(() => status.textContent = '', 2500);
+    });
+  }
+
+  function showDetailStatus(message, ok = true) {
+    const status = document.getElementById('detailStatus');
+    status.className = `small inline-status mb-2 ${ok ? 'text-success' : 'text-danger'}`;
+    status.textContent = message;
+    clearTimeout(window.__fixtureDetailStatusTimer);
+    window.__fixtureDetailStatusTimer = setTimeout(() => {
+      status.textContent = '';
+    }, 3000);
+  }
+
+  function renderAdminTools() {
+    const actionArea = document.getElementById('adminActionArea');
+    actionArea.innerHTML = '';
+
+    if (!isAdminUnlocked()) return;
+
+    const current = DB.getById(id);
+    if (!current) return;
+
+    const editorModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('fixtureEditorModal'));
+
+    function openEditor() {
+      document.getElementById('fixtureEditorModalTitle').textContent = `แก้ไข Fixture · ${current.brand} ${current.model}`;
+      document.getElementById('fixtureEditorModalBody').innerHTML = fixtureEditorHtml(DB.getById(id), 'detailFixtureEditor');
+      bindFixtureEditor('detailFixtureEditor', Number(id), async () => {
+        await Promise.all([DB.load(), AccessoryStore.load(), VerificationStore.load()]);
+        editorModal.hide();
+        showDetailStatus('บันทึกข้อมูลแล้ว');
+        setTimeout(() => location.reload(), 150);
+      }, {
+        onCancel: () => editorModal.hide(),
+      });
+      editorModal.show();
+    }
+
+    async function toggleHidden() {
+      const latest = DB.getById(id);
+      if (!latest) return;
+      const nextHidden = !latest.hidden;
+      DB.update(Number(id), { hidden: nextHidden });
+      await DB.load();
+      showDetailStatus(nextHidden ? 'ซ่อนรายการแล้ว' : 'ยกเลิกซ่อนแล้ว');
+      setTimeout(() => location.reload(), 150);
+    }
+
+    async function deleteItem() {
+      const latest = DB.getById(id);
+      if (!latest) return;
+      if (!window.confirm(`ลบรายการ “${latest.brand} ${latest.model}” ใช่หรือไม่?`)) return;
+      deleteFixtureAndRelations(Number(id));
+      await Promise.all([DB.load(), AccessoryStore.load()]);
+      showDetailStatus('ลบรายการแล้ว');
+      setTimeout(() => {
+        window.location.href = 'equipment.html';
+      }, 150);
+    }
+
+    actionArea.innerHTML = `
+      <div class="d-flex gap-2 flex-wrap">
+        <button id="toggleEditBtn" class="btn btn-outline-danger btn-sm">แก้ไข</button>
+        <button id="toggleHiddenBtn" class="btn btn-outline-warning btn-sm">${current.hidden ? 'ยกเลิกซ่อน' : 'ซ่อน'}</button>
+        <button id="deleteItemBtn" class="btn btn-outline-danger btn-sm">ลบ</button>
+      </div>`;
+
+    document.getElementById('toggleEditBtn').addEventListener('click', openEditor);
+    document.getElementById('toggleHiddenBtn').addEventListener('click', toggleHidden);
+    document.getElementById('deleteItemBtn').addEventListener('click', deleteItem);
+  }
+
+  renderAdminTools();
+});
+</script>
+</body>
+</html>

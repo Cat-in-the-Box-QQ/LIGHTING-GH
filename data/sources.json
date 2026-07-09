@@ -1,0 +1,351 @@
+[
+  {
+    "id": "SRC-AL-2018-CAT",
+    "type": "manufacturer_catalog",
+    "manufacturer": "Aladdin",
+    "title": "Aladdin Catalog 2018",
+    "url": "https://aladdin-lights.com/wp-content/uploads/2018/03/Aladdin-Cat2018.pdf",
+    "relatedFixtureIds": [
+      1,
+      2,
+      3
+    ],
+    "notes": "Used for Bi-Flex series power/CCT/reference checks."
+  },
+  {
+    "id": "SRC-AL-2022-CAT",
+    "type": "manufacturer_catalog",
+    "manufacturer": "Aladdin",
+    "title": "Aladdin Catalog 2022",
+    "url": "https://aladdin-lights.com/wp-content/uploads/2022/05/Aladdin_Katalog_2022_high_res.pdf",
+    "relatedFixtureIds": [
+      1,
+      2,
+      3
+    ],
+    "notes": "Used for Bi-Flex series weight/CCT comparison."
+  },
+  {
+    "id": "SRC-AP-MCPRO-HC",
+    "type": "manufacturer_help_center",
+    "manufacturer": "Aputure",
+    "title": "MC Pro Photometrics & Technical Specifications",
+    "url": "https://help.aputure.com/en/mc-pro/photometrics-technical-specifications",
+    "relatedFixtureIds": [
+      5
+    ],
+    "notes": "Direct MC Pro power, battery, weight, lux, IP, control methods."
+  },
+  {
+    "id": "SRC-AP-MCPRO-PROD",
+    "type": "manufacturer_product_page",
+    "manufacturer": "Aputure",
+    "title": "MC Pro Product Page",
+    "url": "https://aputure.com/en-US/products/mc-pro",
+    "relatedFixtureIds": [
+      5
+    ],
+    "notes": "Used as product overview and photometric cross-check."
+  },
+  {
+    "id": "SRC-AP-B7C-HC",
+    "type": "manufacturer_help_center",
+    "manufacturer": "Aputure",
+    "title": "B7c Photometrics & Technical Specifications",
+    "url": "https://help.aputure.com/en/b7c-bulb/photometrics-technical-specifications",
+    "relatedFixtureIds": [
+      6
+    ],
+    "notes": "Direct Accent B7c electrical and weight reference."
+  },
+  {
+    "id": "SRC-AP-LS60X",
+    "type": "manufacturer_spec_page",
+    "manufacturer": "Aputure",
+    "title": "LS 60x Specifications",
+    "url": "https://archive.aputure.com/products/ls60x/",
+    "relatedFixtureIds": [
+      7
+    ],
+    "notes": "Beam, lamp head weight, max draw, CCT."
+  },
+  {
+    "id": "SRC-AP-LS300X",
+    "type": "manufacturer_spec_page",
+    "manufacturer": "Aputure",
+    "title": "LS 300x Specifications",
+    "url": "https://archive.aputure.com/products/ls-300x/",
+    "relatedFixtureIds": [
+      8
+    ],
+    "notes": "Weight, power consumption, CCT, control methods."
+  },
+  {
+    "id": "SRC-AP-LS600XPRO",
+    "type": "manufacturer_help_center",
+    "manufacturer": "Aputure",
+    "title": "LS 600x Pro Photometrics & Specifications",
+    "url": "https://help.aputure.com/en/ls600x-pro/photometrics-and-specifications",
+    "relatedFixtureIds": [
+      9
+    ],
+    "notes": "Head/control box weight breakdown and max draw."
+  },
+  {
+    "id": "SRC-AP-LS600CPRO",
+    "type": "manufacturer_help_center",
+    "manufacturer": "Aputure",
+    "title": "LS 600c Pro Photometrics & Technical Specifications",
+    "url": "https://help.aputure.com/en/ls600c-pro/photometrics-technical-specifications",
+    "relatedFixtureIds": [
+      10
+    ],
+    "notes": "Direct RGBWW spec and head/control box weight reference."
+  },
+  {
+    "id": "SRC-AP-LS1200DPRO",
+    "type": "manufacturer_help_center",
+    "manufacturer": "Aputure",
+    "title": "LS 1200d Pro Photometrics & Technical Specifications",
+    "url": "https://help.aputure.com/en/ls1200d-pro/photometrics-technical-specifications-ls-1200d-pro",
+    "relatedFixtureIds": [
+      11
+    ],
+    "notes": "Input power and photometrics used for verification."
+  },
+  {
+    "id": "SRC-AP-STORM80C",
+    "type": "manufacturer_help_center",
+    "manufacturer": "Aputure",
+    "title": "STORM 80c Technical Specifications and Photometrics",
+    "url": "https://help.aputure.com/en/storm-80c/technical-specifications-and-photometrics",
+    "relatedFixtureIds": [
+      12
+    ],
+    "notes": "Input/output power and weight with yoke."
+  },
+  {
+    "id": "SRC-AP-STORM1200X",
+    "type": "manufacturer_help_center",
+    "manufacturer": "Aputure",
+    "title": "STORM 1200x Technical Specifications and Photometrics",
+    "url": "https://help.aputure.com/en/storm-1200x-technical-specifications-and-photometrics",
+    "relatedFixtureIds": [
+      13
+    ],
+    "notes": "Input power, lamp head weight, IP and CCT."
+  },
+  {
+    "id": "SRC-AP-ESXT26",
+    "type": "manufacturer_help_center",
+    "manufacturer": "Aputure",
+    "title": "Electro Storm XT26 Photometrics & Specifications",
+    "url": "https://help.aputure.com/en/esxt26/photometrics-specifications",
+    "relatedFixtureIds": [
+      14
+    ],
+    "notes": "Weight breakdown and 3500W input reference."
+  },
+  {
+    "id": "SRC-AP-F21F22",
+    "type": "manufacturer_help_center",
+    "manufacturer": "Aputure",
+    "title": "amaran F21x/F22x/F21c/F22c Photometrics and Technical Specifications",
+    "url": "https://help.aputure.com/en/amaran-flexible-lights/photometrics-and-technical-specifications",
+    "relatedFixtureIds": [
+      15,
+      16
+    ],
+    "notes": "Flexible mat family power references."
+  },
+  {
+    "id": "SRC-ARRI-SKP-CLASSIC",
+    "type": "manufacturer_tech_data",
+    "manufacturer": "ARRI",
+    "title": "SkyPanel Classic Tech Data & Downloads",
+    "url": "https://www.arri.com/en/lighting/led-panel-lights/skypanel-classic/tech-data-downloads",
+    "relatedFixtureIds": [
+      17,
+      18,
+      19,
+      20
+    ],
+    "notes": "Power and weight references for SkyPanel classic family."
+  },
+  {
+    "id": "SRC-ARRI-S30",
+    "type": "manufacturer_product_page",
+    "manufacturer": "ARRI",
+    "title": "SkyPanel S30-C",
+    "url": "https://www.arri.com/en/lighting/led-panel-lights/skypanel-classic/s30-c",
+    "relatedFixtureIds": [
+      17
+    ],
+    "notes": "Manual version weight and product details."
+  },
+  {
+    "id": "SRC-ARRI-X",
+    "type": "manufacturer_tech_data",
+    "manufacturer": "ARRI",
+    "title": "SkyPanel X Tech Data",
+    "url": "https://www.arri.com/en/lighting/led-panel-lights/skypanel-x/tech-data",
+    "relatedFixtureIds": [
+      21
+    ],
+    "notes": "RGBACL, IP66, weight and beam references."
+  },
+  {
+    "id": "SRC-ARRI-ORBITER",
+    "type": "manufacturer_tech_data",
+    "manufacturer": "ARRI",
+    "title": "Orbiter Tech Specs",
+    "url": "https://microsites.arri.com/orbiter/orbiter-tech-specs.html",
+    "relatedFixtureIds": [
+      22
+    ],
+    "notes": "Power range, white light, CRMX and IP references."
+  },
+  {
+    "id": "SRC-ARRI-L7C",
+    "type": "manufacturer_product_page",
+    "manufacturer": "ARRI",
+    "title": "L7-C",
+    "url": "https://www.arri.com/en/lighting/led-spotlights/discontinued/l-series-c/l7-c",
+    "relatedFixtureIds": [
+      23
+    ],
+    "notes": "220W max power and manual weight reference."
+  },
+  {
+    "id": "SRC-AST-AX3",
+    "type": "manufacturer_spec_page",
+    "manufacturer": "Astera",
+    "title": "AX3 LightDrop Specs",
+    "url": "https://astera-led.com/products/ax3-lightdrop/specs/",
+    "relatedFixtureIds": [
+      24
+    ],
+    "notes": "Power, beam, battery runtime, weight and IP."
+  },
+  {
+    "id": "SRC-AST-AX5AX9",
+    "type": "manufacturer_spec_page",
+    "manufacturer": "Astera",
+    "title": "AX5 / AX9",
+    "url": "https://astera-led.com/ax5",
+    "relatedFixtureIds": [
+      25,
+      26
+    ],
+    "notes": "AX5 total power and AX9 power/weight reference."
+  },
+  {
+    "id": "SRC-AST-HYDRA",
+    "type": "manufacturer_spec_page",
+    "manufacturer": "Astera",
+    "title": "HydraPanel Specs",
+    "url": "https://astera-led.com/products/hydrapanel/specs/",
+    "relatedFixtureIds": [
+      27
+    ],
+    "notes": "Power draw, weight, beam, wireless and runtime."
+  },
+  {
+    "id": "SRC-AST-HELIOS",
+    "type": "manufacturer_spec_page",
+    "manufacturer": "Astera",
+    "title": "Helios Tube Specs",
+    "url": "https://astera-led.com/products/helios-tube/specs/",
+    "relatedFixtureIds": [
+      28
+    ],
+    "notes": "Helios specific power draw, lux and weight."
+  },
+  {
+    "id": "SRC-AST-TITAN-FAMILY",
+    "type": "manufacturer_spec_page",
+    "manufacturer": "Astera",
+    "title": "Titan / Helios / Hyperion family overview",
+    "url": "https://astera-led.com/titan/",
+    "relatedFixtureIds": [
+      28,
+      29,
+      30
+    ],
+    "notes": "Tube family total power, LED draw, light output and IP."
+  },
+  {
+    "id": "SRC-AST-HYPERION",
+    "type": "manufacturer_spec_page",
+    "manufacturer": "Astera",
+    "title": "Hyperion Specs",
+    "url": "https://astera-led.com/hyperion",
+    "relatedFixtureIds": [
+      30
+    ],
+    "notes": "Hyperion family reference page."
+  },
+  {
+    "id": "SRC-AST-NYX",
+    "type": "manufacturer_spec_page",
+    "manufacturer": "Astera",
+    "title": "NYX Bulb Specs",
+    "url": "https://astera-led.com/products/nyx-bulb/specs/",
+    "relatedFixtureIds": [
+      31
+    ],
+    "notes": "Power draw, lumens, weight, wireless and IP."
+  },
+  {
+    "id": "SRC-CRM-V8",
+    "type": "manufacturer_knowledge_base",
+    "manufacturer": "Creamsource",
+    "title": "Specs for the Vortex8",
+    "url": "https://knowledge.creamsource.com/specs-for-the-vortex8",
+    "relatedFixtureIds": [
+      32
+    ],
+    "notes": "650W, 15.9kg, RGBW, 2200K-15000K, IP65."
+  },
+  {
+    "id": "SRC-FIILEX-Q5",
+    "type": "manufacturer_product_page",
+    "manufacturer": "Fiilex",
+    "title": "Q5 Color Specs",
+    "url": "https://fiilex.com/products/Q5_Color.php",
+    "relatedFixtureIds": [
+      38
+    ],
+    "notes": "175W, 3.3kg, beam 12°-55°, IP-X5."
+  },
+  {
+    "id": "SRC-LG-PLUS-FAMILY",
+    "type": "manufacturer_product_family",
+    "manufacturer": "LiteGear",
+    "title": "LiteMat Product Family - Plus",
+    "url": "https://www.litegear.com/litemat-product-family-plus/",
+    "relatedFixtureIds": [
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+    ],
+    "notes": "Weight/power ranges and family-level validation."
+  },
+  {
+    "id": "SRC-LG-SPECTRUM-SHEET",
+    "type": "manufacturer_datasheet",
+    "manufacturer": "LiteGear",
+    "title": "LiteMat Spectrum Complete Data Sheet",
+    "url": "https://www.litegear.com/wp-content/uploads/2020/07/LiteMat-Spectrum-Data-Sheet-Complete.pdf",
+    "relatedFixtureIds": [
+      39,
+      41,
+      43
+    ],
+    "notes": "Spectrum line dimensional and weight references."
+  }
+]

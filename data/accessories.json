@@ -1,0 +1,903 @@
+[
+  {
+    "id": 1,
+    "name": "LiteDimmer Pro Hybrid",
+    "brand": "LiteGear",
+    "category": "Accessory - Dimmer",
+    "stock": "10 Pieces",
+    "image": "images/page-083.jpg",
+    "pdfPage": 83,
+    "compatibleWith": [
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Chimera Panel Lantern",
+    "brand": "Chimera",
+    "category": "Lantern",
+    "stock": "2 Pieces",
+    "image": "images/page-088.jpg",
+    "pdfPage": 88,
+    "compatibleWith": []
+  },
+  {
+    "id": 3,
+    "name": "200W Dimmer Unit",
+    "brand": "Aladdin",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-014.jpg",
+    "pdfPage": 14,
+    "compatibleWith": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Metal Frame",
+    "brand": "Aladdin",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-014.jpg",
+    "pdfPage": 14,
+    "compatibleWith": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Diffuser",
+    "brand": "Aladdin",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-014.jpg",
+    "pdfPage": 14,
+    "compatibleWith": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "id": 6,
+    "name": "2 m Extension Cable",
+    "brand": "Aladdin",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-014.jpg",
+    "pdfPage": 14,
+    "compatibleWith": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "id": 7,
+    "name": "5 m Extension Cable",
+    "brand": "Aladdin",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-014.jpg",
+    "pdfPage": 14,
+    "compatibleWith": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "id": 8,
+    "name": "Bubble Diffuser",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-019.jpg",
+    "pdfPage": 19,
+    "compatibleWith": [
+      5
+    ]
+  },
+  {
+    "id": 9,
+    "name": "Dome Diffuser",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-019.jpg",
+    "pdfPage": 19,
+    "compatibleWith": [
+      5
+    ]
+  },
+  {
+    "id": 10,
+    "name": "Flat Diffuser",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-019.jpg",
+    "pdfPage": 19,
+    "compatibleWith": [
+      5,
+      32
+    ]
+  },
+  {
+    "id": 11,
+    "name": "30° Grid",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-019.jpg",
+    "pdfPage": 19,
+    "compatibleWith": [
+      5
+    ]
+  },
+  {
+    "id": 12,
+    "name": "Spotlight Mini Zoom",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-021.jpg",
+    "pdfPage": 21,
+    "compatibleWith": [
+      7
+    ]
+  },
+  {
+    "id": 13,
+    "name": "Dual NP-F Battery Plate",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-021.jpg",
+    "pdfPage": 21,
+    "compatibleWith": [
+      7
+    ]
+  },
+  {
+    "id": 14,
+    "name": "D-Tap Power Cable",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-021.jpg",
+    "pdfPage": 21,
+    "compatibleWith": [
+      7
+    ]
+  },
+  {
+    "id": 15,
+    "name": "Fresnel 2X",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-022.jpg",
+    "pdfPage": 22,
+    "compatibleWith": [
+      8
+    ]
+  },
+  {
+    "id": 16,
+    "name": "Barn Doors",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-022.jpg",
+    "pdfPage": 22,
+    "compatibleWith": [
+      8,
+      14,
+      23
+    ]
+  },
+  {
+    "id": 17,
+    "name": "5-Pin Head Cable",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-022.jpg",
+    "pdfPage": 22,
+    "compatibleWith": [
+      8
+    ]
+  },
+  {
+    "id": 18,
+    "name": "Hyper Reflector",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-023.jpg",
+    "pdfPage": 23,
+    "compatibleWith": [
+      9,
+      10
+    ]
+  },
+  {
+    "id": 19,
+    "name": "Spotlight Max",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-023.jpg",
+    "pdfPage": 23,
+    "compatibleWith": [
+      9
+    ]
+  },
+  {
+    "id": 20,
+    "name": "5-Pin Weatherproof Head Cable",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-023.jpg",
+    "pdfPage": 23,
+    "compatibleWith": [
+      9
+    ]
+  },
+  {
+    "id": 21,
+    "name": "BM1215 Hyper Reflector (Narrow)",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-024.jpg",
+    "pdfPage": 24,
+    "compatibleWith": [
+      10
+    ]
+  },
+  {
+    "id": 22,
+    "name": "Rolling Carrying Case",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-024.jpg",
+    "pdfPage": 24,
+    "compatibleWith": [
+      10
+    ]
+  },
+  {
+    "id": 23,
+    "name": "Hyper Reflector 45°",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-025.jpg",
+    "pdfPage": 25,
+    "compatibleWith": [
+      11
+    ]
+  },
+  {
+    "id": 24,
+    "name": "Hyper Reflector 30°",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-025.jpg",
+    "pdfPage": 25,
+    "compatibleWith": [
+      11
+    ]
+  },
+  {
+    "id": 25,
+    "name": "Hyper Reflector 15°",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-025.jpg",
+    "pdfPage": 25,
+    "compatibleWith": [
+      11
+    ]
+  },
+  {
+    "id": 26,
+    "name": "CF4 Fresnel",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-026.jpg",
+    "pdfPage": 26,
+    "compatibleWith": [
+      12
+    ]
+  },
+  {
+    "id": 27,
+    "name": "CF4 Barn Doors",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-026.jpg",
+    "pdfPage": 26,
+    "compatibleWith": [
+      12
+    ]
+  },
+  {
+    "id": 28,
+    "name": "Bowens Mount Adapter",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-026.jpg",
+    "pdfPage": 26,
+    "compatibleWith": [
+      12
+    ]
+  },
+  {
+    "id": 29,
+    "name": "CF12 Fresnel",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-027.jpg",
+    "pdfPage": 27,
+    "compatibleWith": [
+      13
+    ]
+  },
+  {
+    "id": 30,
+    "name": "CF12 Barn Doors",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-027.jpg",
+    "pdfPage": 27,
+    "compatibleWith": [
+      13
+    ]
+  },
+  {
+    "id": 31,
+    "name": "Reflector Kit",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-027.jpg",
+    "pdfPage": 27,
+    "compatibleWith": [
+      13
+    ]
+  },
+  {
+    "id": 32,
+    "name": "Standard Reflector",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-028.jpg",
+    "pdfPage": 28,
+    "compatibleWith": [
+      14
+    ]
+  },
+  {
+    "id": 33,
+    "name": "Motorized F14 Fresnel",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-028.jpg",
+    "pdfPage": 28,
+    "compatibleWith": [
+      14
+    ]
+  },
+  {
+    "id": 34,
+    "name": "Softbox",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-029.jpg",
+    "pdfPage": 29,
+    "compatibleWith": [
+      15,
+      16
+    ]
+  },
+  {
+    "id": 35,
+    "name": "Control Grid",
+    "brand": "Aputure",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-029.jpg",
+    "pdfPage": 29,
+    "compatibleWith": [
+      15,
+      16
+    ]
+  },
+  {
+    "id": 36,
+    "name": "Standard Diffusion Panel",
+    "brand": "ARRI",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-038.jpg",
+    "pdfPage": 38,
+    "compatibleWith": [
+      17,
+      18,
+      19,
+      20
+    ]
+  },
+  {
+    "id": 37,
+    "name": "SkyLink Receiver",
+    "brand": "ARRI",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-038.jpg",
+    "pdfPage": 38,
+    "compatibleWith": [
+      17,
+      18,
+      19,
+      20
+    ]
+  },
+  {
+    "id": 38,
+    "name": "S60 Adapter",
+    "brand": "ARRI",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-042.jpg",
+    "pdfPage": 42,
+    "compatibleWith": [
+      21
+    ]
+  },
+  {
+    "id": 39,
+    "name": "X21 Dome",
+    "brand": "ARRI",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-042.jpg",
+    "pdfPage": 42,
+    "compatibleWith": [
+      21
+    ]
+  },
+  {
+    "id": 40,
+    "name": "30° Projection Optic",
+    "brand": "ARRI",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-043.jpg",
+    "pdfPage": 43,
+    "compatibleWith": [
+      22
+    ]
+  },
+  {
+    "id": 41,
+    "name": "Control Panel",
+    "brand": "ARRI",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-043.jpg",
+    "pdfPage": 43,
+    "compatibleWith": [
+      22
+    ]
+  },
+  {
+    "id": 42,
+    "name": "Rain Cover",
+    "brand": "ARRI",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-043.jpg",
+    "pdfPage": 43,
+    "compatibleWith": [
+      22
+    ]
+  },
+  {
+    "id": 43,
+    "name": "Pole-Operated Yoke",
+    "brand": "ARRI",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-044.jpg",
+    "pdfPage": 44,
+    "compatibleWith": [
+      23
+    ]
+  },
+  {
+    "id": 44,
+    "name": "Magnet Mount",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-054.jpg",
+    "pdfPage": 54,
+    "compatibleWith": [
+      24
+    ]
+  },
+  {
+    "id": 45,
+    "name": "Adapter Disk",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-054.jpg",
+    "pdfPage": 54,
+    "compatibleWith": [
+      24
+    ]
+  },
+  {
+    "id": 46,
+    "name": "Waterproof Protection Cover",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-054.jpg",
+    "pdfPage": 54,
+    "compatibleWith": [
+      24
+    ]
+  },
+  {
+    "id": 47,
+    "name": "Charging Case",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-055.jpg",
+    "pdfPage": 55,
+    "compatibleWith": [
+      25,
+      26
+    ]
+  },
+  {
+    "id": 48,
+    "name": "Kickstand",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-055.jpg",
+    "pdfPage": 55,
+    "compatibleWith": [
+      25,
+      26
+    ]
+  },
+  {
+    "id": 49,
+    "name": "6 Light Modifiers",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-057.jpg",
+    "pdfPage": 57,
+    "compatibleWith": [
+      27
+    ]
+  },
+  {
+    "id": 50,
+    "name": "FlexBase",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-057.jpg",
+    "pdfPage": 57,
+    "compatibleWith": [
+      27
+    ]
+  },
+  {
+    "id": 51,
+    "name": "ConnectorPlate",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-057.jpg",
+    "pdfPage": 57,
+    "compatibleWith": [
+      27
+    ]
+  },
+  {
+    "id": 52,
+    "name": "BabyPin 1/4\"",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-057.jpg",
+    "pdfPage": 57,
+    "compatibleWith": [
+      27
+    ]
+  },
+  {
+    "id": 53,
+    "name": "Power/Data Cable",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-057.jpg",
+    "pdfPage": 57,
+    "compatibleWith": [
+      27
+    ]
+  },
+  {
+    "id": 54,
+    "name": "SnapGrid 40° 2FT (x8)",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-058.jpg",
+    "pdfPage": 58,
+    "compatibleWith": [
+      28
+    ]
+  },
+  {
+    "id": 55,
+    "name": "PowerBox",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-058.jpg",
+    "pdfPage": 58,
+    "compatibleWith": [
+      28,
+      29,
+      30
+    ]
+  },
+  {
+    "id": 56,
+    "name": "Power Supply",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-058.jpg",
+    "pdfPage": 58,
+    "compatibleWith": [
+      28
+    ]
+  },
+  {
+    "id": 57,
+    "name": "SnapGrid 40° 4FT (x8)",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-059.jpg",
+    "pdfPage": 59,
+    "compatibleWith": [
+      29
+    ]
+  },
+  {
+    "id": 58,
+    "name": "Hyperion PSU",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-060.jpg",
+    "pdfPage": 60,
+    "compatibleWith": [
+      30
+    ]
+  },
+  {
+    "id": 59,
+    "name": "PowerStation",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-061.jpg",
+    "pdfPage": 61,
+    "compatibleWith": [
+      31
+    ]
+  },
+  {
+    "id": 60,
+    "name": "PowerStation Charging Case",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-061.jpg",
+    "pdfPage": 61,
+    "compatibleWith": [
+      31
+    ]
+  },
+  {
+    "id": 61,
+    "name": "Lamp Socket",
+    "brand": "Astera",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-061.jpg",
+    "pdfPage": 61,
+    "compatibleWith": [
+      31
+    ]
+  },
+  {
+    "id": 62,
+    "name": "Secondary Lens Kit",
+    "brand": "Creamsource",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-066.jpg",
+    "pdfPage": 66,
+    "compatibleWith": [
+      32
+    ]
+  },
+  {
+    "id": 63,
+    "name": "Removable Yoke",
+    "brand": "Creamsource",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-066.jpg",
+    "pdfPage": 66,
+    "compatibleWith": [
+      32
+    ]
+  },
+  {
+    "id": 64,
+    "name": "Flexible Energy Source 270 Battery",
+    "brand": "Fiilex",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-076.jpg",
+    "pdfPage": 76,
+    "compatibleWith": [
+      38
+    ]
+  },
+  {
+    "id": 65,
+    "name": "Juice Box Station",
+    "brand": "Fiilex",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-076.jpg",
+    "pdfPage": 76,
+    "compatibleWith": [
+      38
+    ]
+  },
+  {
+    "id": 66,
+    "name": "PDX Extension Cable",
+    "brand": "LiteGear",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-078.jpg",
+    "pdfPage": 78,
+    "compatibleWith": [
+      39,
+      41,
+      43
+    ]
+  },
+  {
+    "id": 67,
+    "name": "LiteMount",
+    "brand": "LiteGear",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-079.jpg",
+    "pdfPage": 79,
+    "compatibleWith": [
+      40,
+      42,
+      44,
+      45
+    ]
+  },
+  {
+    "id": 68,
+    "name": "DMG Dash 8-Light Kit Case",
+    "brand": "Rosco",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-085.jpg",
+    "pdfPage": 85,
+    "compatibleWith": [
+      47
+    ]
+  },
+  {
+    "id": 69,
+    "name": "Lens Zoom 25°-50° (x4)",
+    "brand": "ETC",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-087.jpg",
+    "pdfPage": 87,
+    "compatibleWith": [
+      50
+    ]
+  },
+  {
+    "id": 70,
+    "name": "Lens Zoom 15°-30° (x4)",
+    "brand": "ETC",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-087.jpg",
+    "pdfPage": 87,
+    "compatibleWith": [
+      50
+    ]
+  },
+  {
+    "id": 71,
+    "name": "Louver / Grid",
+    "brand": "Kino Flo",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-088.jpg",
+    "pdfPage": 88,
+    "compatibleWith": [
+      51,
+      52
+    ]
+  },
+  {
+    "id": 72,
+    "name": "Controller",
+    "brand": "Kino Flo",
+    "category": "Accessory",
+    "stock": null,
+    "image": "images/page-088.jpg",
+    "pdfPage": 88,
+    "compatibleWith": [
+      51,
+      52
+    ]
+  }
+]

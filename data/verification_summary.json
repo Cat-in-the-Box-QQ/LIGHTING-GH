@@ -1,0 +1,11 @@
+{
+  "generatedAt": "2026-07-09",
+  "verifiedBy": "Arena Agent",
+  "totalFixtures": 63,
+  "statuses": {
+    "verified": 24,
+    "partially_verified": 15,
+    "pending": 24
+  },
+  "sourceCount": 30
+}

@@ -1,0 +1,87 @@
+[
+  {
+    "name": "ARRI",
+    "slug": "arri",
+    "count": 7
+  },
+  {
+    "name": "Aladdin",
+    "slug": "aladdin",
+    "count": 3
+  },
+  {
+    "name": "Aputure",
+    "slug": "aputure",
+    "count": 13
+  },
+  {
+    "name": "Astera",
+    "slug": "astera",
+    "count": 8
+  },
+  {
+    "name": "Battery",
+    "slug": "battery",
+    "count": 3
+  },
+  {
+    "name": "Chimera",
+    "slug": "chimera",
+    "count": 1
+  },
+  {
+    "name": "Creamsource",
+    "slug": "creamsource",
+    "count": 1
+  },
+  {
+    "name": "DMX Control",
+    "slug": "dmx-control",
+    "count": 7
+  },
+  {
+    "name": "Digital Sputnik",
+    "slug": "digital-sputnik",
+    "count": 4
+  },
+  {
+    "name": "ETC",
+    "slug": "etc",
+    "count": 1
+  },
+  {
+    "name": "Falcon Eyes",
+    "slug": "falcon-eyes",
+    "count": 1
+  },
+  {
+    "name": "Fiilex",
+    "slug": "fiilex",
+    "count": 1
+  },
+  {
+    "name": "Kino Flo",
+    "slug": "kino-flo",
+    "count": 2
+  },
+  {
+    "name": "LiteGear",
+    "slug": "litegear",
+    "count": 8
+  },
+  {
+    "name": "Litepanels",
+    "slug": "litepanels",
+    "count": 1
+  },
+  {
+    "name": "Other Light",
+    "slug": "other-light",
+    "count": 1
+  },
+  {
+    "name": "Rosco",
+    "slug": "rosco",
+    "count": 1
+  }
+]

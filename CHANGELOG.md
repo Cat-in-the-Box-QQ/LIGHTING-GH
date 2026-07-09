@@ -1,0 +1,130 @@
+# CHANGELOG
+
+- Generated verified database files on 2026-07-09
+- Total fixtures: 63
+- Verified: 24
+- Partially verified: 15
+- Pending manual verification: 24
+
+## Major corrected records
+
+- **Aladdin Bi-Flex 1** (partially_verified)
+  - `accessories`: `None` → `['200W Dimmer Unit', 'Metal Frame', 'Diffuser', '2 m Extension Cable', '5 m Extension Cable']`
+  - `color`: `None` → `Bi-Color`
+  - `ip`: `IP 32` → `IP32`
+  - `stockCount`: `None` → `4`
+  - `type`: `None` → `fixture`
+  - `whiteLight`: `2,850 - 6,098 k` → `2,850 - 6,098K`
+- **Aladdin Bi-Flex 2** (partially_verified)
+  - `accessories`: `None` → `['200W Dimmer Unit', 'Metal Frame', 'Diffuser', '2 m Extension Cable', '5 m Extension Cable']`
+  - `color`: `None` → `Bi-Color`
+  - `ip`: `IP 32` → `IP32`
+  - `stockCount`: `None` → `4`
+  - `type`: `None` → `fixture`
+  - `whiteLight`: `2,850 - 6,098 k` → `2,850 - 6,098K`
+- **Aladdin Bi-Flex 4** (partially_verified)
+  - `accessories`: `None` → `['200W Dimmer Unit', 'Metal Frame', 'Diffuser', '2 m Extension Cable', '5 m Extension Cable']`
+  - `color`: `None` → `Bi-Color`
+  - `ip`: `IP 32` → `IP32`
+  - `powerRaw`: `48-12 VDC <200 W >` → `12-48 VDC <200 W>`
+  - `stockCount`: `None` → `4`
+  - `type`: `None` → `fixture`
+- **Aputure MC** (pending)
+  - `accessories`: `None` → `[]`
+  - `battery`: `3.7 V (2,600 mAh)` → `Built-in battery`
+  - `color`: `None` → `RGBWW`
+  - `setCountInStock`: `None` → `7`
+  - `stock`: `7 Set of 4` → `28 Pieces (7 sets of 4)`
+  - `stockCount`: `None` → `28`
+- **Aputure MC Pro** (verified)
+  - `accessories`: `None` → `['Bubble Diffuser', 'Dome Diffuser', 'Flat Diffuser', '30° Grid']`
+  - `battery`: `3.7 V (4,200 mAh)` → `Built-in battery`
+  - `color`: `None` → `RGBWW`
+  - `ip`: `IP 65` → `IP65`
+  - `setCountInStock`: `None` → `2`
+  - `stock`: `2 Set of 8` → `16 Pieces (2 sets of 8)`
+- **Aputure Accent B7C** (verified)
+  - `accessories`: `None` → `[]`
+  - `battery`: `3.7 V (1,300 mAh)` → `7.4V 1300mAh built-in battery`
+  - `category`: `Pocket Light` → `Bulb`
+  - `color`: `None` → `RGBWW`
+  - `setCountInStock`: `None` → `3`
+  - `stock`: `3 set of 8` → `24 Pieces (3 sets of 8)`
+- **Aputure Light Storm 60X** (verified)
+  - `accessories`: `None` → `['Spotlight Mini Zoom', 'Dual NP-F Battery Plate', 'D-Tap Power Cable']`
+  - `beam`: `15°- 45°` → `15° - 45°`
+  - `color`: `None` → `Bi-Color`
+  - `stockCount`: `None` → `4`
+  - `type`: `None` → `fixture`
+  - `whiteLight`: `2,700 - 6,500 k` → `2,700 - 6,500K`
+- **Aputure Light Storm 300X** (verified)
+  - `accessories`: `None` → `['Fresnel 2X', 'Barn Doors', '5-Pin Head Cable']`
+  - `beam`: `93°` → `62° (Hyper-Reflector) / 93° (No Reflector)`
+  - `color`: `None` → `Bi-Color`
+  - `ip`: `IP 54` → `IP54`
+  - `stockCount`: `None` → `5`
+  - `type`: `None` → `fixture`
+- **Aputure Light Storm 600X Pro** (verified)
+  - `accessories`: `None` → `['Hyper Reflector', 'Spotlight Max', '5-Pin Weatherproof Head Cable']`
+  - `beam`: `93°` → `62° (Hyper-Reflector) / 93° (No Reflector)`
+  - `color`: `None` → `Bi-Color`
+  - `ip`: `IP 54` → `IP54`
+  - `stockCount`: `None` → `2`
+  - `type`: `None` → `fixture`
+- **Aputure Light Storm 600C Pro** (verified)
+  - `accessories`: `None` → `['Hyper Reflector', 'BM1215 Hyper Reflector (Narrow)', 'Rolling Carrying Case']`
+  - `beam`: `93°` → `62° (Hyper-Reflector) / 93° (No Reflector)`
+  - `ip`: `IP 54` → `IP54`
+  - `stockCount`: `None` → `17`
+  - `type`: `None` → `fixture`
+  - `weight`: `11.0` → `11.07`
+- **Aputure Light Storm 1200D Pro** (verified)
+  - `accessories`: `None` → `['Hyper Reflector 45°', 'Hyper Reflector 30°', 'Hyper Reflector 15°']`
+  - `beam`: `66°` → `45° / 30° / 15° (Hyper-Reflector) / 66° (No Reflector)`
+  - `color`: `None` → `Daylight`
+  - `ip`: `IP 54` → `IP54`
+  - `stockCount`: `None` → `2`
+  - `type`: `None` → `fixture`
+- **Aputure Storm 80C** (verified)
+  - `accessories`: `None` → `['CF4 Fresnel', 'CF4 Barn Doors', 'Bowens Mount Adapter']`
+  - `beam`: `None` → `35° (Reflector)`
+  - `color`: `None` → `BLAIR-CG`
+  - `ip`: `IP 65` → `IP65`
+  - `powerRaw`: `100 W` → `100 W input / 80 W output`
+  - `stockCount`: `None` → `3`
+- **Aputure Storm 1200X** (verified)
+  - `accessories`: `None` → `['CF12 Fresnel', 'CF12 Barn Doors', 'Reflector Kit']`
+  - `beam`: `66°` → `45° / 30° / 15° (Hyper-Reflector) / 66° (No Reflector)`
+  - `color`: `None` → `Bi-Color`
+  - `ip`: `IP 65` → `IP65`
+  - `power`: `1550.0` → `1450.0`
+  - `powerRaw`: `1,550 W` → `1450 W input / 1200 W output`
+- **Aputure Electro Storm XT 26** (verified)
+  - `accessories`: `None` → `['Standard Reflector', 'Motorized F14 Fresnel', 'Barn Doors']`
+  - `beam`: `62°` → `50° / 35° / 20° (Reflector) / 62° (No Reflector)`
+  - `color`: `None` → `Bi-Color`
+  - `ip`: `IP 65` → `IP65`
+  - `stockCount`: `None` → `5`
+  - `type`: `None` → `fixture`
+- **Aputure Amaran F21C** (partially_verified)
+  - `accessories`: `None` → `['Softbox', 'Control Grid']`
+  - `color`: `None` → `RGBWW`
+  - `stockCount`: `None` → `5`
+  - `type`: `None` → `fixture`
+  - `whiteLight`: `2,500 - 7,500 k` → `2,500 - 7,500K`
+- **Aputure Amaran F22C** (partially_verified)
+  - `accessories`: `None` → `['Softbox', 'Control Grid']`
+  - `color`: `None` → `RGBWW`
+  - `stockCount`: `None` → `8`
+  - `type`: `None` → `fixture`
+  - `whiteLight`: `2,500 - 7,500 k` → `2,500 - 7,500K`
+- **ARRI SkyPanel S30-C** (verified)
+  - `accessories`: `None` → `['Standard Diffusion Panel', 'SkyLink Receiver']`
+  - `brand`: `Arri` → `ARRI`
+  - `power`: `None` → `200.0`
+  - `powerRaw`: `48 VDC` → `48 VDC <200 W Maximum>`
+  - `stockCount`: `None` → `22`
+  - `type`: `None` → `fixture`
+- **ARRI SkyPanel S60-C** (verified)
+  - `accessories`: `None` → `['Standard Diffusion Panel', 'SkyLink Receiver']`
+  - `brand`: `Arri` → `ARRI`

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Lighting GH</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="index.html">💡 Lighting GH</a>
+    <div class="d-flex gap-3 flex-wrap">
+      <a class="nav-link text-light active" href="index.html">Dashboard</a>
+      <a class="nav-link text-light" href="equipment.html">Equipment</a>
+      <a class="nav-link text-light" href="accessories.html">Accessories</a>
+      <a class="nav-link text-light" href="setbuilder.html">Set Builder</a>
+      <a class="nav-link text-light" href="inventory.html">Inventory</a>
+      <a class="nav-link text-light" href="admin.html">Admin</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container pb-5">
+  <div class="filter-panel mb-4">
+    <h2 class="mb-2">Lighting GH</h2>
+    <p class="text-muted mb-2">ระบบรวมข้อมูลอุปกรณ์ไฟสำหรับงาน Film / Broadcast / Event ใช้สำหรับค้นหาอุปกรณ์ ดูรายละเอียด จัดชุดงาน และเช็กสถานะสต็อก</p>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="equipment.html" class="btn btn-dark btn-sm">ดูรายการอุปกรณ์</a>
+      <a href="accessories.html" class="btn btn-outline-dark btn-sm">ดู Accessories</a>
+      <a href="setbuilder.html" class="btn btn-outline-dark btn-sm">สร้างชุดงาน</a>
+      <a href="inventory.html" class="btn btn-outline-dark btn-sm">ดู Inventory</a>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card text-center">
+        <div class="stat-value" id="statTotal">-</div>
+        <div class="text-muted">รายการทั้งหมด</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card text-center">
+        <div class="stat-value" id="statBrands">-</div>
+        <div class="text-muted">แบรนด์</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card text-center">
+        <div class="stat-value" id="statStock">-</div>
+        <div class="text-muted">สต็อกรวม</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card text-center">
+        <div class="stat-value" id="statRgb">-</div>
+        <div class="text-muted">รุ่นที่มี RGB</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="filter-panel h-100">
+        <h5>สรุปตามแบรนด์</h5>
+        <ul class="list-group list-group-flush" id="brandBreakdown"></ul>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="filter-panel h-100">
+        <h5>สรุปตามกลุ่มข้อมูล</h5>
+        <ul class="list-group list-group-flush" id="typeBreakdown"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="filter-panel h-100">
+        <h5>วิธีใช้งาน</h5>
+        <ol class="small text-muted" style="padding-left:1.1rem; margin-bottom:0;">
+          <li>เปิดหน้า <strong>Equipment</strong> เพื่อค้นหาอุปกรณ์</li>
+          <li>กดปุ่ม <strong>+ เข้าชุด</strong> เพื่อเพิ่มอุปกรณ์เข้าชุดงาน</li>
+          <li>เปิดหน้า <strong>Set Builder</strong> เพื่อตรวจจำนวน กำลังไฟ และพิมพ์/บันทึก PDF</li>
+          <li>ดูสถานะสต็อกที่หน้า <strong>Inventory</strong></li>
+        </ol>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="filter-panel h-100">
+        <h5>ข้อมูลในระบบนี้</h5>
+        <ul class="small text-muted mb-0" style="padding-left:1.1rem;">
+          <li>Fixtures / Lights</li>
+          <li>Accessories แยกหน้าเฉพาะ</li>
+          <li>Controllers / Wireless DMX</li>
+          <li>Batteries / Power Station</li>
+          <li>ข้อมูล Power, Weight, Lux, Color, Wireless และ Stock</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <footer class="mt-5 text-center">
+    Lighting GH · Static HTML version
+  </footer>
+</div>
+
+<script src="js/database.js"></script>
+<script src="js/search.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

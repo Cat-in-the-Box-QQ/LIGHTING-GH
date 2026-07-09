@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Equipment - Lighting GH</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="index.html">💡 Lighting GH</a>
+    <div class="d-flex gap-3 flex-wrap">
+      <a class="nav-link text-light" href="index.html">Dashboard</a>
+      <a class="nav-link text-light active" href="equipment.html">Equipment</a>
+      <a class="nav-link text-light" href="accessories.html">Accessories</a>
+      <a class="nav-link text-light" href="setbuilder.html">Set Builder</a>
+      <a class="nav-link text-light" href="inventory.html">Inventory</a>
+      <a class="nav-link text-light" href="admin.html">Admin</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container pb-5">
+  <div class="row g-3">
+    <div class="col-md-3">
+      <div class="filter-panel">
+        <h6 class="mb-3">ค้นหา / กรอง</h6>
+        <input type="text" id="fSearch" class="form-control mb-2" placeholder="ค้นหา id / ยี่ห้อ / รุ่น / ชื่ออุปกรณ์เสริม...">
+
+        <label class="form-label small mb-0">กลุ่มข้อมูล</label>
+        <select id="fType" class="form-select form-select-sm mb-2">
+          <option value="">ทั้งหมด</option>
+          <option value="fixture">Fixture</option>
+          <option value="accessory">Accessory</option>
+          <option value="controller">Controller</option>
+          <option value="power">Power / Battery</option>
+        </select>
+
+        <label class="form-label small mb-0">แบรนด์</label>
+        <select id="fBrand" class="form-select form-select-sm mb-2">
+          <option value="">ทั้งหมด</option>
+        </select>
+
+        <label class="form-label small mb-0">ประเภท</label>
+        <select id="fCategory" class="form-select form-select-sm mb-2">
+          <option value="">ทั้งหมด</option>
+        </select>
+
+        <label class="form-label small mb-0">IP Rating</label>
+        <select id="fIp" class="form-select form-select-sm mb-2">
+          <option value="">ทั้งหมด</option>
+        </select>
+
+        <label class="form-label small mb-0">Wireless</label>
+        <select id="fWireless" class="form-select form-select-sm mb-2">
+          <option value="">ทั้งหมด</option>
+          <option value="yes">มี</option>
+          <option value="no">ไม่มี</option>
+        </select>
+
+        <label class="form-label small mb-0">Color Capability</label>
+        <select id="fColor" class="form-select form-select-sm mb-2">
+          <option value="">ทั้งหมด</option>
+          <option value="rgb">RGB / Color</option>
+          <option value="bicolor">Bi-Color</option>
+        </select>
+
+        <label class="form-label small mb-0">ใช้แบตเตอรี่</label>
+        <select id="fBattery" class="form-select form-select-sm mb-2">
+          <option value="">ทั้งหมด</option>
+          <option value="yes">มีแบตเตอรี่</option>
+        </select>
+
+        <label class="form-label small mb-0">มี stock</label>
+        <select id="fInStock" class="form-select form-select-sm mb-2">
+          <option value="">ทั้งหมด</option>
+          <option value="yes">มี stock</option>
+        </select>
+
+        <label class="form-label small mb-0">น้ำหนักไม่เกิน (kg)</label>
+        <input type="number" id="fMaxWeight" class="form-control form-control-sm mb-2" placeholder="เช่น 5">
+
+        <label class="form-label small mb-0">กำลังไฟไม่เกิน (W)</label>
+        <input type="number" id="fMaxPower" class="form-control form-control-sm mb-3" placeholder="เช่น 500">
+
+        <button id="fReset" class="btn btn-sm btn-outline-secondary w-100">ล้างตัวกรอง</button>
+      </div>
+    </div>
+
+    <div class="col-md-9">
+      <div class="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">
+        <div id="resultCount" class="text-muted">กำลังโหลด...</div>
+        <div class="d-flex gap-2 flex-wrap">
+          <select id="fSort" class="form-select form-select-sm" style="width:220px">
+            <option value="model_asc">ชื่อ A → Z</option>
+            <option value="model_desc">ชื่อ Z → A</option>
+            <option value="brand_asc">แบรนด์ A → Z</option>
+            <option value="brand_desc">แบรนด์ Z → A</option>
+            <option value="power_asc">กำลังไฟ น้อย → มาก</option>
+            <option value="power_desc">กำลังไฟ มาก → น้อย</option>
+            <option value="weight_asc">น้ำหนัก น้อย → มาก</option>
+            <option value="weight_desc">น้ำหนัก มาก → น้อย</option>
+            <option value="stock_desc">Stock มาก → น้อย</option>
+            <option value="stock_asc">Stock น้อย → มาก</option>
+          </select>
+          <select id="fPageSize" class="form-select form-select-sm" style="width:140px">
+            <option value="6">แสดง 6</option>
+            <option value="12" selected>แสดง 12</option>
+            <option value="18">แสดง 18</option>
+            <option value="24">แสดง 24</option>
+            <option value="all">ทั้งหมด</option>
+          </select>
+        </div>
+      </div>
+      <div id="equipActionStatus" class="small text-success inline-status mb-2"></div>
+      <div class="row g-3" id="fixtureGrid"></div>
+      <nav class="mt-4">
+        <ul class="pagination justify-content-center" id="pagination"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="detailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="detailTitle"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="detailBody"></div>
+      </div>
+      <div class="modal-footer">
+        <input type="number" min="1" value="1" id="detailQtyInput" class="form-control form-control-sm qty-inline">
+        <button type="button" id="detailAddBtn" class="btn btn-dark btn-sm">+</button>
+        <button type="button" id="detailAddSetBtn" class="btn btn-outline-dark btn-sm">+ ชุด</button>
+        <span id="detailAdminArea"></span>
+        <a href="#" id="detailLinkBtn" class="btn btn-outline-dark btn-sm">เปิดหน้า Detail</a>
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">ปิด</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="itemEditorModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="itemEditorTitle">แก้ไขข้อมูล</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="itemEditorBody"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="js/database.js"></script>
+<script src="js/search.js"></script>
+<script src="js/setbuilder-helper.js"></script>
+<script src="js/accessory-store.js"></script>
+<script src="js/verification-store.js"></script>
+<script src="js/admin-auth.js"></script>
+<script src="js/inline-fixture-editor.js"></script>
+<script src="js/inline-accessory-editor.js"></script>
+<script>
+let allFixtures = [];
+let allAccessoryItems = [];
+let filtered = [];
+let page = 1;
+let currentModalItem = null;
+
+function currentPageSize() {
+  const value = document.getElementById('fPageSize')?.value || '9';
+  return value === 'all' ? null : Number(value);
+}
+
+function flashStatus(message, ok = true) {
+  const el = document.getElementById('equipActionStatus');
+  el.className = `small inline-status mb-2 ${ok ? 'text-success' : 'text-danger'}`;
+  el.textContent = message;
+  clearTimeout(window.__equipStatusTimer);
+  window.__equipStatusTimer = setTimeout(() => { el.textContent = ''; }, 2500);
+}
+
+function buildFixtureItems(fixtures) {
+  return (fixtures || []).map((item) => ({
+    ...item,
+    source: 'fixture',
+    _key: `fixture-${item.id}`,
+    compatibleWith: item.compatibleWith || [],
+    compatibleText: item.compatibleText || (Array.isArray(item.accessories) ? item.accessories.join(' ') : ''),
+  }));
+}
+
+function buildAccessoryItems(accessories) {
+  return (accessories || []).map((item) => {
+    const compatibleNames = (item.compatibleWith || [])
+      .map((id) => DB.getById(id))
+      .filter(Boolean)
+      .map((fixture) => `${fixture.brand} ${fixture.model}`);
+    return {
+      id: Number(item.id),
+      brand: item.brand || '',
+      model: item.name || '',
+      category: item.category || 'Accessory',
+      type: 'accessory',
+      power: null,
+      powerRaw: null,
+      weight: null,
+      weightRaw: null,
+      lux: null,
+      lumens: null,
+      beam: null,
+      wireless: null,
+      whiteLight: null,
+      color: null,
+      ip: null,
+      battery: null,
+      stock: item.stock || null,
+      stockCount: item.stock ? getStockCount(item) : 0,
+      stockNote: null,
+      dimensions: null,
+      image: item.image || '',
+      pdfPage: item.pdfPage || null,
+      accessories: [],
+      compatibleWith: item.compatibleWith || [],
+      compatibleText: compatibleNames.join(' '),
+      hidden: !!item.hidden,
+      source: 'accessory',
+      _key: `accessory-${item.id}`,
+    };
+  });
+}
+
+function getItemByKey(key) {
+  return [...allFixtures, ...allAccessoryItems].find((item) => item._key === key) || null;
+}
+
+function addToSet(item, qty = 1) {
+  if (!item || !isBuildableItem(item)) {
+    flashStatus('รายการนี้ไม่ใช่ fixture สำหรับ Set Builder', false);
+    return;
+  }
+  const safeQty = Math.max(Number(qty) || 1, 1);
+  addFixtureToCurrentSet(item.id, safeQty);
+  flashStatus(`เพิ่ม ${item.brand} ${item.model} จำนวน ${safeQty} เข้าชุดแล้ว`);
+}
+
+function getFilters() {
+  return {
+    q: document.getElementById('fSearch').value.trim(),
+    type: document.getElementById('fType').value,
+    brand: document.getElementById('fBrand').value,
+    category: document.getElementById('fCategory').value,
+    ip: document.getElementById('fIp').value,
+    wireless: document.getElementById('fWireless').value,
+    color: document.getElementById('fColor').value,
+    battery: document.getElementById('fBattery').value,
+    inStock: document.getElementById('fInStock').value,
+    maxWeight: document.getElementById('fMaxWeight').value,
+    maxPower: document.getElementById('fMaxPower').value,
+  };
+}
+
+function renderPagination(totalPages) {
+  const ul = document.getElementById('pagination');
+  ul.innerHTML = '';
+  const pageSize = currentPageSize();
+  if (!pageSize || filtered.length <= pageSize) return;
+  for (let i = 1; i <= totalPages; i++) {
+    const li = document.createElement('li');
+    li.className = 'page-item' + (i === page ? ' active' : '');
+    li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+    li.addEventListener('click', (e) => {
+      e.preventDefault();
+      page = i;
+      render();
+    });
+    ul.appendChild(li);
+  }
+}
+
+async function reloadCatalogData() {
+  const [fixtures, accessories] = await Promise.all([DB.load(), AccessoryStore.load()]);
+  allFixtures = buildFixtureItems(fixtures.filter((fixture) => inferItemType(fixture) !== 'accessory'));
+  allAccessoryItems = buildAccessoryItems(accessories);
+}
+
+function itemDisplayName(item) {
+  return item.source === 'accessory'
+    ? `${item.model}`.trim()
+    : `${item.brand} ${item.model}`.trim();
+}
+
+function getDetailModalInstance() {
+  return bootstrap.Modal.getOrCreateInstance(document.getElementById('detailModal'));
+}
+
+function getEditorModalInstance() {
+  return bootstrap.Modal.getOrCreateInstance(document.getElementById('itemEditorModal'));
+}
+
+function openItemEditor(item) {
+  const editorTitle = document.getElementById('itemEditorTitle');
+  const editorBody = document.getElementById('itemEditorBody');
+  const editorModal = getEditorModalInstance();
+
+  if (item.source === 'accessory') {
+    const current = AccessoryStore.getById(item.id);
+    if (!current) return;
+    editorTitle.textContent = `แก้ไข Accessory · ${current.name}`;
+    editorBody.innerHTML = accessoryEditorHtml(current, 'equipmentAccessoryEditor');
+    bindAccessoryEditor('equipmentAccessoryEditor', Number(item.id), async ({ item: savedItem }) => {
+      await reloadCatalogData();
+      render();
+      editorModal.hide();
+      const updated = savedItem ? getItemByKey(`accessory-${savedItem.id}`) : null;
+      if (updated) showDetail(updated._key);
+      flashStatus(`บันทึก ${current.name} แล้ว`);
+    }, {
+      onCancel: () => editorModal.hide(),
+    });
+  } else {
+    const current = DB.getById(item.id);
+    if (!current) return;
+    editorTitle.textContent = `แก้ไข Fixture · ${current.brand} ${current.model}`;
+    editorBody.innerHTML = fixtureEditorHtml(current, 'equipmentFixtureEditor');
+    bindFixtureEditor('equipmentFixtureEditor', Number(item.id), async ({ item: savedItem }) => {
+      await reloadCatalogData();
+      render();
+      editorModal.hide();
+      const updated = savedItem ? getItemByKey(`fixture-${savedItem.id}`) : null;
+      if (updated) showDetail(updated._key);
+      flashStatus(`บันทึก ${current.brand} ${current.model} แล้ว`);
+    }, {
+      onCancel: () => editorModal.hide(),
+    });
+  }
+
+  editorModal.show();
+}
+
+async function toggleItemHidden(item) {
+  if (item.source === 'accessory') {
+    const current = AccessoryStore.getById(item.id);
+    if (!current) return;
+    const nextHidden = !current.hidden;
+    AccessoryStore.update(item.id, { hidden: nextHidden });
+    await reloadCatalogData();
+    render();
+    getDetailModalInstance().hide();
+    flashStatus(nextHidden ? `ซ่อน ${current.name} แล้ว` : `ยกเลิกซ่อน ${current.name} แล้ว`);
+    return;
+  }
+
+  const current = DB.getById(item.id);
+  if (!current) return;
+  const nextHidden = !current.hidden;
+  DB.update(item.id, { hidden: nextHidden });
+  await reloadCatalogData();
+  render();
+  getDetailModalInstance().hide();
+  flashStatus(nextHidden ? `ซ่อน ${current.brand} ${current.model} แล้ว` : `ยกเลิกซ่อน ${current.brand} ${current.model} แล้ว`);
+}
+
+async function deleteItem(item) {
+  const label = itemDisplayName(item);
+  if (!window.confirm(`ลบรายการ “${label}” ใช่หรือไม่?`)) return;
+
+  if (item.source === 'accessory') {
+    deleteAccessoryAndRelations(item.id);
+  } else {
+    deleteFixtureAndRelations(item.id);
+  }
+
+  await reloadCatalogData();
+  render();
+  getEditorModalInstance().hide();
+  getDetailModalInstance().hide();
+  flashStatus(`ลบ ${label} แล้ว`);
+}
+
+function renderModalAdminTools(item) {
+  const area = document.getElementById('detailAdminArea');
+  area.innerHTML = '';
+
+  if (!isAdminUnlocked()) return;
+
+  const current = item.source === 'accessory' ? AccessoryStore.getById(item.id) : DB.getById(item.id);
+  if (!current) return;
+
+  area.innerHTML = `
+    <div class="d-flex gap-2 flex-wrap justify-content-end w-100">
+      <button type="button" id="detailEditBtn" class="btn btn-outline-danger btn-sm">แก้ไข</button>
+      <button type="button" id="detailHideBtn" class="btn btn-outline-warning btn-sm">${current.hidden ? 'ยกเลิกซ่อน' : 'ซ่อน'}</button>
+      <button type="button" id="detailDeleteBtn" class="btn btn-outline-danger btn-sm">ลบ</button>
+    </div>`;
+
+  document.getElementById('detailEditBtn').addEventListener('click', () => openItemEditor(item));
+  document.getElementById('detailHideBtn').addEventListener('click', () => toggleItemHidden(item));
+  document.getElementById('detailDeleteBtn').addEventListener('click', () => deleteItem(item));
+}
+
+function showDetail(key) {
+  const item = getItemByKey(key);
+  if (!item) return;
+  currentModalItem = item;
+
+  document.getElementById('detailTitle').textContent = item.source === 'accessory'
+    ? `${item.brand || ''} ${item.model}`.trim()
+    : `${item.brand} ${item.model}`;
+
+  const linkBtn = document.getElementById('detailLinkBtn');
+  if (item.source === 'fixture') {
+    linkBtn.style.display = 'inline-flex';
+    linkBtn.href = `fixture.html?id=${item.id}`;
+  } else {
+    linkBtn.style.display = 'none';
+  }
+
+  document.getElementById('detailAddBtn').style.display = (item.source === 'fixture' && isBuildableItem(item)) ? 'inline-flex' : 'none';
+  document.getElementById('detailAddSetBtn').style.display = (item.source === 'fixture' && hasSetOption(item)) ? 'inline-flex' : 'none';
+  document.getElementById('detailQtyInput').style.display = (item.source === 'fixture' && isBuildableItem(item)) ? 'block' : 'none';
+  document.getElementById('detailQtyInput').value = 1;
+
+  if (item.source === 'accessory') {
+    const compatible = (item.compatibleWith || [])
+      .map((id) => DB.getById(id))
+      .filter(Boolean)
+      .map((fixture) => `${fixture.brand} ${fixture.model}`);
+    document.getElementById('detailBody').innerHTML = `
+      <div class="row g-3">
+        <div class="col-md-5">
+          <img src="${item.image || ''}" class="img-fluid rounded" alt="${item.model}" onerror="this.style.display='none'">
+        </div>
+        <div class="col-md-7">
+          <div class="spec-row"><span>ID / Group</span><span>#${item.id} · ${itemTypeLabel(item)}</span></div>
+          <div class="spec-row"><span>Brand</span><span>${item.brand || '-'}</span></div>
+          <div class="spec-row"><span>Category</span><span>${item.category || '-'}</span></div>
+          <div class="spec-row"><span>Stock</span><span>${item.stock || '-'}</span></div>
+          <div class="filter-panel mt-3">
+            <h6 class="mb-2">ใช้กับอุปกรณ์</h6>
+            ${compatible.length
+              ? `<ul class="mb-0 small">${compatible.map((name) => `<li>${name}</li>`).join('')}</ul>`
+              : `<div class="text-muted small">ยังไม่ระบุ fixture ที่ใช้ร่วมกัน</div>`}
+          </div>
+        </div>
+      </div>`;
+  } else {
+    const stockCount = getStockCount(item);
+    document.getElementById('detailBody').innerHTML = `
+      <div class="row g-3">
+        <div class="col-md-5">
+          <img src="${item.image || ''}" class="img-fluid rounded" alt="${item.model}" onerror="this.style.display='none'">
+        </div>
+        <div class="col-md-7">
+          <div class="spec-row"><span>ID / Group</span><span>#${item.id} · ${itemTypeLabel(item)}</span></div>
+          <div class="spec-row"><span>ประเภท</span><span>${item.category || '-'}</span></div>
+          <div class="spec-row"><span>Lux</span><span>${item.lux || '-'}</span></div>
+          <div class="spec-row"><span>Lumens</span><span>${item.lumens ?? '-'}</span></div>
+          <div class="spec-row"><span>Beam Angle</span><span>${item.beam || '-'}</span></div>
+          <div class="spec-row"><span>Dimensions</span><span>${item.dimensions || '-'}</span></div>
+          <div class="spec-row"><span>กำลังไฟ</span><span>${item.powerRaw || (item.power != null ? `${item.power} W` : '-')}</span></div>
+          <div class="spec-row"><span>น้ำหนัก</span><span>${item.weightRaw || (item.weight != null ? `${item.weight} kg` : '-')}</span></div>
+          <div class="spec-row"><span>Wireless</span><span>${item.wireless || '-'}</span></div>
+          <div class="spec-row"><span>White Light</span><span>${item.whiteLight || '-'}</span></div>
+          <div class="spec-row"><span>Color Light</span><span>${item.color || '-'}</span></div>
+          <div class="spec-row"><span>Battery</span><span>${item.battery || '-'}</span></div>
+          <div class="spec-row"><span>IP Rating</span><span>${item.ip || '-'}</span></div>
+          <div class="spec-row"><span>Stock</span><span>${stockCount}${item.stockNote ? ` · ${item.stockNote}` : ''}</span></div>
+          <div class="filter-panel mt-3">
+            <h6 class="mb-2">Accessories / อุปกรณ์เสริม</h6>
+            ${Array.isArray(item.accessories) && item.accessories.length
+              ? `<ul class="mb-0 small">${item.accessories.map((acc) => `<li>${acc}</li>`).join('')}</ul>`
+              : `<div class="text-muted small">ไม่มีข้อมูลอุปกรณ์เสริม</div>`}
+          </div>
+          ${isAdminUnlocked() ? fixtureVerificationHtml(item.id) : ''}
+        </div>
+      </div>`;
+  }
+
+  renderModalAdminTools(item);
+  getDetailModalInstance().show();
+}
+
+function render() {
+  const filters = getFilters();
+  filters.includeHidden = isAdminUnlocked();
+  const sourceItems = filters.type === 'accessory'
+    ? visibleItems(allAccessoryItems, isAdminUnlocked())
+    : visibleItems(allFixtures, isAdminUnlocked());
+  filtered = sortFixtures(filterFixtures(sourceItems, filters), document.getElementById('fSort').value);
+  document.getElementById('resultCount').textContent = `พบ ${filtered.length} รายการ`;
+
+  const pageSize = currentPageSize();
+  const totalPages = pageSize ? Math.max(Math.ceil(filtered.length / pageSize), 1) : 1;
+  if (page > totalPages) page = totalPages;
+  const start = pageSize ? (page - 1) * pageSize : 0;
+  const pageItems = pageSize ? filtered.slice(start, start + pageSize) : filtered;
+
+  const grid = document.getElementById('fixtureGrid');
+  grid.innerHTML = '';
+
+  if (!pageItems.length) {
+    grid.innerHTML = `<div class="col-12"><div class="alert alert-warning">ไม่พบข้อมูลตามตัวกรองที่เลือก</div></div>`;
+    renderPagination(totalPages);
+    return;
+  }
+
+  pageItems.forEach((item) => {
+    const stockCount = getStockCount(item);
+    const typeLabel = itemTypeLabel(item);
+    const colorLabel = item.color || (isBiColorFixture(item) ? 'Bi-Color' : (isRgbFixture(item) ? 'RGB' : '-'));
+    const col = document.createElement('div');
+    col.className = 'col-sm-6 col-lg-4';
+
+    if (item.source === 'accessory') {
+      const compatible = (item.compatibleWith || [])
+        .map((id) => DB.getById(id))
+        .filter(Boolean)
+        .map((fixture) => `${fixture.brand} ${fixture.model}`);
+      col.innerHTML = `
+        <div class="filter-panel h-100 accessory-card" role="button" data-key="${item._key}">
+          <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+            <strong>${item.model}</strong>
+            <div class="d-flex gap-1 flex-wrap">
+              <span class="badge bg-light text-dark border">Accessory</span>
+              ${item.hidden ? `<span class="badge bg-danger">Hidden</span>` : ''}
+            </div>
+          </div>
+          <div class="small text-muted mb-1">${item.brand || '-'} · ${item.category || '-'}</div>
+          <div class="small mb-2">${item.stock || 'ไม่ระบุ stock'}</div>
+          <div class="small"><strong>ใช้กับ:</strong> ${compatible.length ? compatible.join(', ') : 'ยังไม่ระบุ'}</div>
+        </div>`;
+    } else {
+      col.innerHTML = `
+        <div class="fixture-card" role="button" data-key="${item._key}">
+          <img src="${item.image || ''}" alt="${item.model}" onerror="this.style.display='none'">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+              <strong>${item.model}</strong>
+              <div class="d-flex gap-1 flex-wrap">
+                ${item.ip ? `<span class="badge bg-secondary">${item.ip}</span>` : ''}
+                ${item.hidden ? `<span class="badge bg-danger">Hidden</span>` : ''}
+              </div>
+            </div>
+            <div class="text-muted small mb-2">#${item.id} · ${item.brand} · ${item.category}</div>
+            <div class="small mb-2">
+              <div><strong>${typeLabel}</strong> · Stock ${stockCount}</div>
+              <div>${item.power != null ? `${item.power} W` : '-'} · ${item.weight != null ? `${item.weight} kg` : '-'}</div>
+            </div>
+            <div class="d-flex flex-wrap gap-1 mb-2">
+              ${colorLabel && colorLabel !== '-' ? `<span class="badge bg-dark">${colorLabel}</span>` : ''}
+              ${item.wireless ? `<span class="badge bg-secondary">Wireless</span>` : ''}
+              ${item.stockNote ? `<span class="badge bg-light text-dark border">${item.stockNote}</span>` : ''}
+            </div>
+            <div class="card-add-row">
+              ${isBuildableItem(item) ? `<input type="number" min="1" value="1" class="form-control form-control-sm add-qty-input" data-key="${item._key}">` : ''}
+              ${isBuildableItem(item) ? `<button class="btn btn-dark btn-sm add-to-set-btn" data-key="${item._key}">+</button>` : ''}
+              ${isBuildableItem(item) && hasSetOption(item) ? `<button class="btn btn-outline-dark btn-sm add-set-btn" data-key="${item._key}">+ ชุด</button>` : ''}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    grid.appendChild(col);
+  });
+
+  grid.querySelectorAll('.add-to-set-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const item = getItemByKey(btn.dataset.key);
+      const card = btn.closest('.fixture-card');
+      const qtyInput = card.querySelector('.add-qty-input');
+      addToSet(item, qtyInput ? qtyInput.value : 1);
+    });
+  });
+
+  grid.querySelectorAll('.add-set-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const item = getItemByKey(btn.dataset.key);
+      const card = btn.closest('.fixture-card');
+      const qtyInput = card.querySelector('.add-qty-input');
+      const setCount = Math.max(Number(qtyInput?.value) || 1, 1);
+      addToSet(item, (getUnitsPerSet(item) || 1) * setCount);
+      flashStatus(`เพิ่ม ${item.brand} ${item.model} จำนวน ${setCount} ชุดแล้ว`);
+    });
+  });
+
+  grid.querySelectorAll('.add-qty-input').forEach((input) => {
+    ['click', 'dblclick', 'mousedown', 'mouseup', 'focus', 'keydown'].forEach((eventName) => {
+      input.addEventListener(eventName, (e) => e.stopPropagation());
+    });
+  });
+
+  grid.querySelectorAll('.fixture-card, .accessory-card').forEach((card) => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('button, a, input, select, textarea, label')) return;
+      showDetail(card.dataset.key);
+    });
+  });
+
+  renderPagination(totalPages);
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const [fixtures, accessories] = await Promise.all([DB.load(), AccessoryStore.load(), VerificationStore.load()]);
+  allFixtures = buildFixtureItems(fixtures.filter((item) => inferItemType(item) !== 'accessory'));
+  allAccessoryItems = buildAccessoryItems(accessories);
+
+  const brandSel = document.getElementById('fBrand');
+  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => item.brand).filter(Boolean))].sort().forEach((brand) => {
+    const o = document.createElement('option');
+    o.value = brand; o.textContent = brand;
+    brandSel.appendChild(o);
+  });
+
+  const catSel = document.getElementById('fCategory');
+  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => item.category).filter(Boolean))].sort().forEach((category) => {
+    const o = document.createElement('option');
+    o.value = category; o.textContent = category;
+    catSel.appendChild(o);
+  });
+
+  const ipSel = document.getElementById('fIp');
+  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => item.ip).filter(Boolean))].sort().forEach((ip) => {
+    const o = document.createElement('option');
+    o.value = ip; o.textContent = ip;
+    ipSel.appendChild(o);
+  });
+
+  ['fSearch','fType','fBrand','fCategory','fIp','fWireless','fColor','fBattery','fInStock','fMaxWeight','fMaxPower','fSort','fPageSize']
+    .forEach((id) => {
+      const el = document.getElementById(id);
+      el.addEventListener('input', () => { page = 1; render(); });
+      el.addEventListener('change', () => { page = 1; render(); });
+    });
+
+  document.getElementById('fReset').addEventListener('click', () => {
+    document.getElementById('fSearch').value = '';
+    ['fType','fBrand','fCategory','fIp','fWireless','fColor','fBattery','fInStock'].forEach((id) => document.getElementById(id).value = '');
+    document.getElementById('fMaxWeight').value = '';
+    document.getElementById('fMaxPower').value = '';
+    page = 1;
+    render();
+  });
+
+  document.getElementById('detailAddBtn').addEventListener('click', () => {
+    if (currentModalItem && currentModalItem.source === 'fixture') {
+      addToSet(currentModalItem, document.getElementById('detailQtyInput').value);
+    }
+  });
+
+  document.getElementById('detailAddSetBtn').addEventListener('click', () => {
+    if (currentModalItem && currentModalItem.source === 'fixture') {
+      const setCount = Math.max(Number(document.getElementById('detailQtyInput').value) || 1, 1);
+      addToSet(currentModalItem, (getUnitsPerSet(currentModalItem) || 1) * setCount);
+      flashStatus(`เพิ่ม ${currentModalItem.brand} ${currentModalItem.model} จำนวน ${setCount} ชุดแล้ว`);
+    }
+  });
+
+  const params = new URLSearchParams(location.search);
+  if (params.get('brand')) document.getElementById('fBrand').value = params.get('brand');
+  if (params.get('type')) document.getElementById('fType').value = params.get('type');
+  if (params.get('q')) document.getElementById('fSearch').value = params.get('q');
+
+  render();
+});
+</script>
+</body>
+</html>

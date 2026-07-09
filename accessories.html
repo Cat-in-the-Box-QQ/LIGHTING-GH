@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Accessories - Lighting GH</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="index.html">💡 Lighting GH</a>
+    <div class="d-flex gap-3 flex-wrap">
+      <a class="nav-link text-light" href="index.html">Dashboard</a>
+      <a class="nav-link text-light" href="equipment.html">Equipment</a>
+      <a class="nav-link text-light active" href="accessories.html">Accessories</a>
+      <a class="nav-link text-light" href="setbuilder.html">Set Builder</a>
+      <a class="nav-link text-light" href="inventory.html">Inventory</a>
+      <a class="nav-link text-light" href="admin.html">Admin</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container pb-5">
+  <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+    <div>
+      <h4 class="mb-1">Accessories</h4>
+      <p class="text-muted small mb-0">รายการอุปกรณ์เสริม แยกดูเป็นหมวดได้ พร้อมแสดงว่าใช้กับ fixture ตัวไหน และค้นหาด้วยชื่อ accessory ได้</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <input type="text" id="accessorySearch" class="form-control form-control-sm" style="min-width:220px" placeholder="ค้นหา accessory...">
+      <select id="accessoryCategory" class="form-select form-select-sm" style="width:220px">
+        <option value="">ทุกหมวด</option>
+      </select>
+      <select id="accessorySort" class="form-select form-select-sm" style="width:180px">
+        <option value="name_asc">ชื่อ A → Z</option>
+        <option value="name_desc">ชื่อ Z → A</option>
+        <option value="brand_asc">แบรนด์ A → Z</option>
+        <option value="brand_desc">แบรนด์ Z → A</option>
+        <option value="stock_desc">stock มาก → น้อย</option>
+        <option value="stock_asc">stock น้อย → มาก</option>
+      </select>
+      <select id="accessoryPageSize" class="form-select form-select-sm" style="width:140px">
+        <option value="6">แสดง 6</option>
+        <option value="12" selected>แสดง 12</option>
+        <option value="18">แสดง 18</option>
+        <option value="24">แสดง 24</option>
+        <option value="all">ทั้งหมด</option>
+      </select>
+    </div>
+  </div>
+  <div id="accessoryResult" class="text-muted mb-1"></div>
+  <div id="accessoryAdminInfo" class="small text-muted mb-1"></div>
+  <div id="accessoryActionStatus" class="small text-success inline-status mb-3"></div>
+  <div class="row g-3" id="accessoryGrid"></div>
+  <nav class="mt-4">
+    <ul class="pagination justify-content-center" id="accessoryPagination"></ul>
+  </nav>
+</div>
+
+<div class="modal fade" id="accessoryModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="accessoryTitle"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="accessoryBody"></div>
+      </div>
+      <div class="modal-footer">
+        <span id="accessoryAdminArea"></span>
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">ปิด</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="accessoryEditorModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="accessoryEditorTitle">แก้ไข Accessory</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="accessoryEditorBody"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="js/database.js"></script>
+<script src="js/search.js"></script>
+<script src="js/accessory-store.js"></script>
+<script src="js/admin-auth.js"></script>
+<script src="js/inline-accessory-editor.js"></script>
+<script src="js/accessories.js"></script>
+</body>
+</html>

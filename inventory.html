@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Inventory - Lighting GH</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="index.html">💡 Lighting GH</a>
+    <div class="d-flex gap-3 flex-wrap">
+      <a class="nav-link text-light" href="index.html">Dashboard</a>
+      <a class="nav-link text-light" href="equipment.html">Equipment</a>
+      <a class="nav-link text-light" href="accessories.html">Accessories</a>
+      <a class="nav-link text-light" href="setbuilder.html">Set Builder</a>
+      <a class="nav-link text-light active" href="inventory.html">Inventory</a>
+      <a class="nav-link text-light" href="admin.html">Admin</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container pb-5">
+  <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+    <div>
+      <h4 class="mb-1">สถานะสต็อกอุปกรณ์</h4>
+      <p class="text-muted small mb-0">กดปุ่มด้านซ้ายของรายการเพื่อขยายดู Accessories ที่ผูกอยู่กับอุปกรณ์นั้น</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <input type="text" id="inventorySearch" class="form-control form-control-sm" style="min-width:240px" placeholder="ค้นหา brand / model / category...">
+      <select id="inventoryType" class="form-select form-select-sm" style="width:180px">
+        <option value="">ทุกกลุ่ม</option>
+        <option value="fixture">Fixture</option>
+        <option value="accessory">มี Accessories</option>
+        <option value="controller">Controller</option>
+        <option value="power">Power / Battery</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table bg-white rounded shadow-sm align-middle inventory-table">
+      <thead>
+        <tr>
+          <th style="width:52px"></th>
+          <th>แบรนด์</th>
+          <th>รุ่น</th>
+          <th>Available</th>
+          <th>Reserved</th>
+          <th>In Use</th>
+          <th>Remaining</th>
+        </tr>
+      </thead>
+      <tbody id="inventoryBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="js/database.js"></script>
+<script src="js/search.js"></script>
+<script src="js/accessory-store.js"></script>
+<script src="js/inventory.js"></script>
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Set Builder - Lighting GH</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark mb-4 print-hidden">
+  <div class="container">
+    <a class="navbar-brand" href="index.html">💡 Lighting GH</a>
+    <div class="d-flex gap-3 flex-wrap">
+      <a class="nav-link text-light" href="index.html">Dashboard</a>
+      <a class="nav-link text-light" href="equipment.html">Equipment</a>
+      <a class="nav-link text-light" href="accessories.html">Accessories</a>
+      <a class="nav-link text-light active" href="setbuilder.html">Set Builder</a>
+      <a class="nav-link text-light" href="inventory.html">Inventory</a>
+      <a class="nav-link text-light" href="admin.html">Admin</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container pb-5 setbuilder-page">
+  <div class="print-header mb-3" style="display:none;">
+    <h2>รายการอุปกรณ์ในชุดงาน</h2>
+    <div class="small text-muted">Lighting GH</div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-8">
+      <div class="filter-panel">
+        <div class="cart-header mb-3">
+          <div>
+            <h5 class="mb-1">รายการอุปกรณ์ในชุดงาน</h5>
+            <div class="small text-muted">รายการอุปกรณ์ที่เลือกสำหรับงานนี้</div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <div class="small text-muted" id="cartMetaText">0 รายการในชุด</div>
+            <button id="openAddModalBtn" class="btn btn-dark add-circle-btn print-hidden" type="button" title="เพิ่มอุปกรณ์">+</button>
+          </div>
+        </div>
+
+        <div id="builderStatus" class="small text-success inline-status mb-2 print-hidden"></div>
+        <div id="cartItems" class="cart-items"></div>
+        <div class="text-muted" id="emptyMsg">ยังไม่มีอุปกรณ์ในชุด · กดปุ่ม + ด้านขวาบนเพื่อเพิ่มอุปกรณ์</div>
+      </div>
+    </div>
+
+    <div class="col-md-4 print-hidden">
+      <div class="set-summary-box cart-summary-box">
+        <h5>สรุปชุดอุปกรณ์</h5>
+        <div class="spec-row"><span>จำนวนรายการ</span><span id="sumCount">0</span></div>
+        <div class="spec-row"><span>จำนวนชิ้นรวม</span><span id="sumQty">0</span></div>
+        <div class="spec-row"><span>กำลังไฟรวม</span><span id="sumPower">0 W</span></div>
+        <div class="spec-row"><span>น้ำหนักรวม</span><span id="sumWeight">0 kg</span></div>
+        <hr>
+        <label class="form-label small mb-0">แรงดันไฟฟ้า (V) สำหรับคำนวณกระแส</label>
+        <select id="voltageSelect" class="form-select form-select-sm mb-2">
+          <option value="220">220V (มาตรฐานไทย)</option>
+          <option value="110">110V</option>
+          <option value="24">24V DC</option>
+        </select>
+        <div class="spec-row"><span>กระแสไฟที่ต้องใช้</span><span id="sumCurrent">0 A</span></div>
+        <hr>
+        <div class="d-grid gap-2">
+          <button id="savePdfBtn" class="btn btn-dark w-100">บันทึก / พิมพ์ PDF</button>
+          <button id="clearSetBtn" class="btn btn-outline-danger w-100">ล้างชุดทั้งหมด</button>
+        </div>
+        <div class="small text-muted mt-3">กดปุ่มนี้แล้วเลือก Save as PDF ในหน้าพิมพ์ได้ทันที</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addFixtureModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">เพิ่มอุปกรณ์</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label small mb-0">ค้นหา Fixture</label>
+            <input type="text" id="builderSearch" class="form-control form-control-sm" placeholder="ค้นหา brand / model / category...">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label small mb-0">เลือกรายการ</label>
+            <select id="addSelect" class="form-select"></select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small mb-0">Qty</label>
+            <input type="number" min="1" value="1" id="addQtyInput" class="form-control form-control-sm">
+          </div>
+        </div>
+        <div class="filter-panel selected-preview mt-3 mb-0" id="selectedPreview"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">ปิด</button>
+        <button type="button" id="addSetBtn" class="btn btn-outline-dark btn-sm">+ ชุด</button>
+        <button type="button" id="addBtn" class="btn btn-dark btn-sm">+</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="js/database.js"></script>
+<script src="js/search.js"></script>
+<script src="js/power.js"></script>
+<script src="js/weight.js"></script>
+<script src="js/setbuilder-helper.js"></script>
+<script>
+let fixtures = [];
+let visibleFixtures = [];
+let setItems = [];
+let addModal = null;
+
+function flashBuilderStatus(message, ok = true) {
+  const el = document.getElementById('builderStatus');
+  el.className = `small inline-status mb-2 print-hidden ${ok ? 'text-success' : 'text-danger'}`;
+  el.textContent = message;
+  clearTimeout(window.__builderStatusTimer);
+  window.__builderStatusTimer = setTimeout(() => {
+    el.textContent = '';
+  }, 2500);
+}
+
+function loadSavedSet() {
+  setItems = readCurrentSet()
+    .map((s) => ({ fixture: DB.getById(s.id), qty: s.qty }))
+    .filter((s) => s.fixture && isBuildableItem(s.fixture));
+}
+
+function persistSet() {
+  writeCurrentSet(setItems.map((s) => ({ id: s.fixture.id, qty: s.qty })));
+}
+
+function addFixture(fixtureId, qty = 1, closeModal = true) {
+  const f = DB.getById(fixtureId);
+  if (!f || !isBuildableItem(f)) {
+    flashBuilderStatus('เพิ่มรายการนี้เข้าชุดไม่ได้', false);
+    return;
+  }
+  const safeQty = Math.max(Number(qty) || 1, 1);
+  const existing = setItems.find((it) => it.fixture.id === f.id);
+  if (existing) existing.qty += safeQty;
+  else setItems.push({ fixture: f, qty: safeQty });
+  persistSet();
+  renderSet();
+  flashBuilderStatus(`เพิ่ม ${f.brand} ${f.model} จำนวน ${safeQty} เข้าชุดแล้ว`);
+  if (closeModal && addModal) addModal.hide();
+}
+
+function removeItem(idx) {
+  const removed = setItems[idx];
+  setItems.splice(idx, 1);
+  persistSet();
+  renderSet();
+  if (removed) flashBuilderStatus(`ลบ ${removed.fixture.brand} ${removed.fixture.model} ออกจากชุดแล้ว`);
+}
+
+function renderPreview() {
+  const fixture = DB.getById(document.getElementById('addSelect').value);
+  const el = document.getElementById('selectedPreview');
+  if (!fixture) {
+    el.innerHTML = '<div class="text-muted">ไม่พบรายการ</div>';
+    document.getElementById('addSetBtn').style.display = 'none';
+    return;
+  }
+  const stockCount = getStockCount(fixture);
+  el.innerHTML = `
+    <div class="row g-3 align-items-center">
+      <div class="col-md-4">
+        <img src="${fixture.image || ''}" alt="${fixture.model}" onerror="this.style.display='none'">
+      </div>
+      <div class="col-md-8">
+        <div class="d-flex justify-content-between align-items-start gap-2 mb-2 flex-wrap">
+          <div>
+            <h6 class="mb-1">${fixture.brand} ${fixture.model}</h6>
+            <div class="small text-muted">${fixture.category || '-'} · ${itemTypeLabel(fixture)}</div>
+          </div>
+        </div>
+        <div class="spec-row"><span>Power</span><span>${fixture.power != null ? `${fixture.power} W` : '-'}</span></div>
+        <div class="spec-row"><span>Weight</span><span>${fixture.weight != null ? `${fixture.weight} kg` : '-'}</span></div>
+        <div class="spec-row"><span>Stock</span><span>${stockCount}${fixture.stockNote ? ` · ${fixture.stockNote}` : ''}</span></div>
+        <div class="spec-row"><span>Color</span><span>${fixture.color || '-'}</span></div>
+        <div class="spec-row"><span>Wireless</span><span>${fixture.wireless || '-'}</span></div>
+      </div>
+    </div>`;
+  document.getElementById('addSetBtn').style.display = hasSetOption(fixture) ? 'inline-flex' : 'none';
+}
+
+function renderSelect() {
+  const q = (document.getElementById('builderSearch').value || '').trim().toLowerCase();
+  visibleFixtures = fixtures.filter((f) => {
+    if (!q) return true;
+    return `${f.brand} ${f.model} ${f.category || ''}`.toLowerCase().includes(q);
+  });
+
+  const sel = document.getElementById('addSelect');
+  const current = sel.value;
+  sel.innerHTML = '';
+  visibleFixtures.forEach((f) => {
+    const o = document.createElement('option');
+    o.value = f.id;
+    o.textContent = `${f.brand} - ${f.model} (${f.category || '-'})`;
+    sel.appendChild(o);
+  });
+
+  if (visibleFixtures.length) {
+    const stillExists = visibleFixtures.some((f) => String(f.id) === String(current));
+    sel.value = stillExists ? current : String(visibleFixtures[0].id);
+  }
+  renderPreview();
+}
+
+function renderSet() {
+  const cart = document.getElementById('cartItems');
+  cart.innerHTML = '';
+  document.getElementById('emptyMsg').style.display = setItems.length ? 'none' : 'block';
+  document.getElementById('cartMetaText').textContent = `${setItems.length} รายการในชุด`;
+
+  setItems.forEach((it, idx) => {
+    const p = (it.fixture.power || 0) * it.qty;
+    const w = (it.fixture.weight || 0) * it.qty;
+    const stockCount = getStockCount(it.fixture);
+    const item = document.createElement('div');
+    item.className = 'cart-item';
+    item.innerHTML = `
+      <div class="cart-item-image print-hidden">
+        <img src="${it.fixture.image || ''}" alt="${it.fixture.model}" onerror="this.style.display='none'">
+      </div>
+      <div class="cart-item-main">
+        <div class="d-flex justify-content-between gap-2 flex-wrap mb-2">
+          <div>
+            <h6 class="mb-1">${it.fixture.brand} ${it.fixture.model}</h6>
+            <div class="small text-muted">${it.fixture.category || '-'} · stock ${stockCount}${it.fixture.stockNote ? ` (${it.fixture.stockNote})` : ''}</div>
+            <div class="print-only cart-print-line">Power ${it.fixture.power ?? '-'} W · Weight ${it.fixture.weight ?? '-'} kg</div>
+          </div>
+          <div class="d-flex gap-2 flex-wrap print-hidden">
+            <a href="fixture.html?id=${it.fixture.id}" class="btn btn-outline-dark btn-sm">ดูรายละเอียด</a>
+            <button class="btn btn-outline-danger btn-sm removeBtn" data-idx="${idx}">ลบ</button>
+          </div>
+        </div>
+        <div class="cart-item-meta print-hidden">
+          <div class="cart-metric"><span>Power</span><strong>${it.fixture.power ?? '-'} W</strong></div>
+          <div class="cart-metric"><span>Weight</span><strong>${it.fixture.weight ?? '-'} kg</strong></div>
+          <div class="cart-metric"><span>Total Power</span><strong>${p.toFixed(0)} W</strong></div>
+          <div class="cart-metric"><span>Total Weight</span><strong>${w.toFixed(2)} kg</strong></div>
+        </div>
+      </div>
+      <div class="cart-item-side">
+        <label class="form-label small mb-1 print-hidden">Qty</label>
+        <input type="number" min="1" value="${it.qty}" class="form-control form-control-sm qtyInput print-hidden" data-idx="${idx}">
+        <div class="print-only cart-print-line"><strong>จำนวน: ${it.qty}</strong></div>
+      </div>
+    `;
+    cart.appendChild(item);
+  });
+
+  cart.querySelectorAll('.qtyInput').forEach((inp) => {
+    const commitQty = () => {
+      setItems[inp.dataset.idx].qty = Math.max(Number(inp.value) || 1, 1);
+      persistSet();
+      renderSet();
+    };
+    inp.addEventListener('change', commitQty);
+    inp.addEventListener('blur', commitQty);
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        commitQty();
+      }
+    });
+  });
+
+  cart.querySelectorAll('.removeBtn').forEach((btn) => {
+    btn.addEventListener('click', () => removeItem(btn.dataset.idx));
+  });
+
+  const totalQty = setItems.reduce((sum, item) => sum + item.qty, 0);
+  const p = totalPower(setItems);
+  const w = totalWeight(setItems);
+  document.getElementById('sumCount').textContent = setItems.length;
+  document.getElementById('sumQty').textContent = totalQty;
+  document.getElementById('sumPower').textContent = `${p.toFixed(0)} W`;
+  document.getElementById('sumWeight').textContent = `${w.toFixed(2)} kg`;
+  const voltage = Number(document.getElementById('voltageSelect').value);
+  document.getElementById('sumCurrent').textContent = `${currentAt(voltage, p).toFixed(2)} A`;
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  fixtures = (await DB.load()).filter(isBuildableItem);
+  loadSavedSet();
+  addModal = new bootstrap.Modal(document.getElementById('addFixtureModal'));
+
+  document.getElementById('openAddModalBtn').addEventListener('click', () => {
+    renderSelect();
+    document.getElementById('addQtyInput').value = 1;
+    addModal.show();
+  });
+
+  document.getElementById('builderSearch').addEventListener('input', renderSelect);
+  document.getElementById('addSelect').addEventListener('change', renderPreview);
+  document.getElementById('addBtn').addEventListener('click', () => addFixture(document.getElementById('addSelect').value, document.getElementById('addQtyInput').value, true));
+  document.getElementById('addSetBtn').addEventListener('click', () => {
+    const fixture = DB.getById(document.getElementById('addSelect').value);
+    const setCount = Math.max(Number(document.getElementById('addQtyInput').value) || 1, 1);
+    addFixture(fixture.id, (getUnitsPerSet(fixture) || 1) * setCount, true);
+    flashBuilderStatus(`เพิ่ม ${fixture.brand} ${fixture.model} จำนวน ${setCount} ชุดแล้ว`);
+  });
+  document.getElementById('voltageSelect').addEventListener('change', renderSet);
+
+  document.getElementById('clearSetBtn').addEventListener('click', () => {
+    if (confirm('ล้างชุดอุปกรณ์ทั้งหมด?')) {
+      setItems = [];
+      clearCurrentSet();
+      renderSet();
+      flashBuilderStatus('ล้างชุดทั้งหมดแล้ว');
+    }
+  });
+
+  document.getElementById('savePdfBtn').addEventListener('click', () => {
+    window.print();
+  });
+
+  const params = new URLSearchParams(location.search);
+  const addId = params.get('add');
+  if (addId) addFixture(addId, 1, false);
+
+  renderSelect();
+  renderSet();
+});
+</script>
+</body>
+</html>

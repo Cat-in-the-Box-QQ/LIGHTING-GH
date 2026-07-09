@@ -1,0 +1,4202 @@
+[
+  {
+    "id": 1,
+    "brand": "Aladdin",
+    "model": "Bi-Flex 1",
+    "verificationStatus": "partially_verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AL-2018-CAT",
+      "SRC-AL-2022-CAT"
+    ],
+    "notes": "Bi-Flex line checked at catalog/manual level; series-level values adjusted.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "200W Dimmer Unit",
+          "Metal Frame",
+          "Diffuser",
+          "2 m Extension Cable",
+          "5 m Extension Cable"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Bi-Color",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 32",
+        "new": "IP32",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 4,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,850 - 6,098 k",
+        "new": "2,850 - 6,098K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "brand": "Aladdin",
+    "model": "Bi-Flex 2",
+    "verificationStatus": "partially_verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AL-2018-CAT",
+      "SRC-AL-2022-CAT"
+    ],
+    "notes": "Bi-Flex line checked at catalog/manual level; series-level values adjusted.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "200W Dimmer Unit",
+          "Metal Frame",
+          "Diffuser",
+          "2 m Extension Cable",
+          "5 m Extension Cable"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Bi-Color",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 32",
+        "new": "IP32",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 4,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,850 - 6,098 k",
+        "new": "2,850 - 6,098K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "brand": "Aladdin",
+    "model": "Bi-Flex 4",
+    "verificationStatus": "partially_verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AL-2018-CAT",
+      "SRC-AL-2022-CAT"
+    ],
+    "notes": "Bi-Flex line checked at catalog/manual level; series-level values adjusted.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "200W Dimmer Unit",
+          "Metal Frame",
+          "Diffuser",
+          "2 m Extension Cable",
+          "5 m Extension Cable"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Bi-Color",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 32",
+        "new": "IP32",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "powerRaw",
+        "old": "48-12 VDC <200 W >",
+        "new": "12-48 VDC <200 W>",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 4,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,850 - 6,098 k",
+        "new": "2,850 - 6,098K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "brand": "Aputure",
+    "model": "MC",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "battery",
+        "old": "3.7 V (2,600 mAh)",
+        "new": "Built-in battery",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBWW",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "setCountInStock",
+        "old": null,
+        "new": 7,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stock",
+        "old": "7 Set of 4",
+        "new": "28 Pieces (7 sets of 4)",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 28,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockNote",
+        "old": null,
+        "new": "7 sets of 4",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "unitsPerSet",
+        "old": null,
+        "new": 4,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "whiteLight",
+        "old": "3,200-6,500 k",
+        "new": "3,200 - 6,500K",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "brand": "Aputure",
+    "model": "MC Pro",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AP-MCPRO-HC",
+      "SRC-AP-MCPRO-PROD"
+    ],
+    "notes": "MC Pro values corrected to manufacturer references.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Bubble Diffuser",
+          "Dome Diffuser",
+          "Flat Diffuser",
+          "30° Grid"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "battery",
+        "old": "3.7 V (4,200 mAh)",
+        "new": "Built-in battery",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBWW",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 65",
+        "new": "IP65",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "setCountInStock",
+        "old": null,
+        "new": 2,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stock",
+        "old": "2 Set of 8",
+        "new": "16 Pieces (2 sets of 8)",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 16,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockNote",
+        "old": null,
+        "new": "2 sets of 8",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "unitsPerSet",
+        "old": null,
+        "new": 8,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,000-10,000 k",
+        "new": "2,000 - 10,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "wireless",
+        "old": "Sidus Link",
+        "new": "Sidus Link / LumenRadio",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "brand": "Aputure",
+    "model": "Accent B7C",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AP-B7C-HC"
+    ],
+    "notes": "Accent B7c values aligned to manufacturer technical specifications.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "battery",
+        "old": "3.7 V (1,300 mAh)",
+        "new": "7.4V 1300mAh built-in battery",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "category",
+        "old": "Pocket Light",
+        "new": "Bulb",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBWW",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "setCountInStock",
+        "old": null,
+        "new": 3,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stock",
+        "old": "3 set of 8",
+        "new": "24 Pieces (3 sets of 8)",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 24,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockNote",
+        "old": null,
+        "new": "3 sets of 8",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "unitsPerSet",
+        "old": null,
+        "new": 8,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 0.13,
+        "new": 0.24,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "130 g",
+        "new": "240 g",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,000-10,000 k",
+        "new": "2,000 - 10,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "brand": "Aputure",
+    "model": "Light Storm 60X",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AP-LS60X"
+    ],
+    "notes": "LS 60x verified against manufacturer specifications.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Spotlight Mini Zoom",
+          "Dual NP-F Battery Plate",
+          "D-Tap Power Cable"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "beam",
+        "old": "15°- 45°",
+        "new": "15° - 45°",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Bi-Color",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 4,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,700 - 6,500 k",
+        "new": "2,700 - 6,500K",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "wireless",
+        "old": "Bluetooth/Remote",
+        "new": "Bluetooth / Remote / Sidus Link",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "brand": "Aputure",
+    "model": "Light Storm 300X",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AP-LS300X"
+    ],
+    "notes": "LS 300x weight and power consumption verified.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Fresnel 2X",
+          "Barn Doors",
+          "5-Pin Head Cable"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "beam",
+        "old": "93°",
+        "new": "62° (Hyper-Reflector) / 93° (No Reflector)",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Bi-Color",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 54",
+        "new": "IP54",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 5,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 7.3,
+        "new": 7.315,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "7.3 kg",
+        "new": "7.315 kg",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,700 - 6,500 k",
+        "new": "2,700 - 6,500K",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "wireless",
+        "old": "Bluetooth/Remote",
+        "new": "Bluetooth / Remote / Sidus Link",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "brand": "Aputure",
+    "model": "Light Storm 600X Pro",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AP-LS600XPRO"
+    ],
+    "notes": "LS 600x Pro weight and power checked.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Hyper Reflector",
+          "Spotlight Max",
+          "5-Pin Weatherproof Head Cable"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "beam",
+        "old": "93°",
+        "new": "62° (Hyper-Reflector) / 93° (No Reflector)",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Bi-Color",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 54",
+        "new": "IP54",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 2,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 10.0,
+        "new": 10.05,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "10 kg",
+        "new": "5.16 kg lamp head / 4.89 kg control box",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,700 - 6,500 k",
+        "new": "2,700 - 6,500K",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "wireless",
+        "old": "Bluetooth /Sidus Link/LumenRadio",
+        "new": "Bluetooth / Sidus Link / LumenRadio",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "brand": "Aputure",
+    "model": "Light Storm 600C Pro",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AP-LS600CPRO"
+    ],
+    "notes": "LS 600c Pro weight and RGBWW data checked.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Hyper Reflector",
+          "BM1215 Hyper Reflector (Narrow)",
+          "Rolling Carrying Case"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "beam",
+        "old": "93°",
+        "new": "62° (Hyper-Reflector) / 93° (No Reflector)",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 54",
+        "new": "IP54",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 17,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 11.0,
+        "new": 11.07,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "11 kg",
+        "new": "5.86 kg lamp head / 5.21 kg control box",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,300 - 10,000 k",
+        "new": "2,300 - 10,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "wireless",
+        "old": "Bluetooth /Sidus Link/LumenRadio",
+        "new": "Bluetooth / Sidus Link / LumenRadio",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "brand": "Aputure",
+    "model": "Light Storm 1200D Pro",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AP-LS1200DPRO"
+    ],
+    "notes": "LS 1200d Pro power and lamp-head weight checked.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Hyper Reflector 45°",
+          "Hyper Reflector 30°",
+          "Hyper Reflector 15°"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "beam",
+        "old": "66°",
+        "new": "45° / 30° / 15° (Hyper-Reflector) / 66° (No Reflector)",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Daylight",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 54",
+        "new": "IP54",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 2,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 16.4,
+        "new": 8.95,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "16.4 kg",
+        "new": "8.95 kg lamp head with yoke",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "only 5600 k",
+        "new": "5600K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "brand": "Aputure",
+    "model": "Storm 80C",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AP-STORM80C"
+    ],
+    "notes": "STORM 80c corrected to input/output power and weight with yoke.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "CF4 Fresnel",
+          "CF4 Barn Doors",
+          "Bowens Mount Adapter"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "beam",
+        "old": null,
+        "new": "35° (Reflector)",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "BLAIR-CG",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 65",
+        "new": "IP65",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "powerRaw",
+        "old": "100 W",
+        "new": "100 W input / 80 W output",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 3,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 1.3,
+        "new": 1.35,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "1.3 kg / 405 g",
+        "new": "1.35 kg lamp head with yoke / 1.01 kg without yoke",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "1,800 - 20,000 k",
+        "new": "1,800 - 20,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "wireless",
+        "old": "Bluetooth /Sidus Link/LumenRadio",
+        "new": "Bluetooth / Sidus Link / LumenRadio",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "brand": "Aputure",
+    "model": "Storm 1200X",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AP-STORM1200X"
+    ],
+    "notes": "STORM 1200x power and lamp head weight verified.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "CF12 Fresnel",
+          "CF12 Barn Doors",
+          "Reflector Kit"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "beam",
+        "old": "66°",
+        "new": "45° / 30° / 15° (Hyper-Reflector) / 66° (No Reflector)",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Bi-Color",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 65",
+        "new": "IP65",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "power",
+        "old": 1550.0,
+        "new": 1450.0,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "powerRaw",
+        "old": "1,550 W",
+        "new": "1450 W input / 1200 W output",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 3,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 9.5,
+        "new": 9.8,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "9.5 kg/5.9 kg",
+        "new": "9.8 kg lamp head / 6.12 kg control box",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,500 - 10,000 k",
+        "new": "2,500 - 10,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "wireless",
+        "old": "Bluetooth /Sidus Link/LumenRadio",
+        "new": "Bluetooth / Sidus Link / LumenRadio",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "brand": "Aputure",
+    "model": "Electro Storm XT 26",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AP-ESXT26"
+    ],
+    "notes": "Electro Storm XT26 verified against help center spec page.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Standard Reflector",
+          "Motorized F14 Fresnel",
+          "Barn Doors"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "beam",
+        "old": "62°",
+        "new": "50° / 35° / 20° (Reflector) / 62° (No Reflector)",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Bi-Color",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 65",
+        "new": "IP65",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 5,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "18 kg",
+        "new": "15.2 kg lamp / 21 kg control box / 3.2 kg yoke",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,700 - 6,500 K",
+        "new": "2,700 - 6,500K",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "wireless",
+        "old": "Bluetooth/",
+        "new": "Bluetooth / Sidus Link / LumenRadio",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "brand": "Aputure",
+    "model": "Amaran F21C",
+    "verificationStatus": "partially_verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AP-F21F22"
+    ],
+    "notes": "F21c family values retained from earlier extraction; family page used for power validation.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Softbox",
+          "Control Grid"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBWW",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 5,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,500 - 7,500 k",
+        "new": "2,500 - 7,500K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "brand": "Aputure",
+    "model": "Amaran F22C",
+    "verificationStatus": "partially_verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AP-F21F22"
+    ],
+    "notes": "F22c family values retained from earlier extraction; family page used for power validation.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Softbox",
+          "Control Grid"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBWW",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 8,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,500 - 7,500 k",
+        "new": "2,500 - 7,500K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "brand": "ARRI",
+    "model": "SkyPanel S30-C",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-ARRI-SKP-CLASSIC",
+      "SRC-ARRI-S30"
+    ],
+    "notes": "SkyPanel S30-C weight and power aligned to ARRI references.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Standard Diffusion Panel",
+          "SkyLink Receiver"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "brand",
+        "old": "Arri",
+        "new": "ARRI",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "power",
+        "old": null,
+        "new": 200.0,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "powerRaw",
+        "old": "48 VDC",
+        "new": "48 VDC <200 W Maximum>",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 22,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 7.0,
+        "new": 7.7,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "7 kg",
+        "new": "7.7 kg manual version / 6.3 kg fixture only",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,800 - 10,000 k",
+        "new": "2,800 - 10,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "brand": "ARRI",
+    "model": "SkyPanel S60-C",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-ARRI-SKP-CLASSIC"
+    ],
+    "notes": "SkyPanel S60-C adjusted to ARRI classic tech data.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Standard Diffusion Panel",
+          "SkyLink Receiver"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "brand",
+        "old": "Arri",
+        "new": "ARRI",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "power",
+        "old": null,
+        "new": 420.0,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "powerRaw",
+        "old": "48 VDC",
+        "new": "48 VDC <420 W Maximum>",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 115,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 13.0,
+        "new": 12.6,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "13 kg",
+        "new": "12.6 kg manual version / 10.6 kg fixture only",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,800 - 10,000 k",
+        "new": "2,800 - 10,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "brand": "ARRI",
+    "model": "SkyPanel S120-C",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-ARRI-SKP-CLASSIC"
+    ],
+    "notes": "SkyPanel S120-C adjusted to ARRI classic tech data.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Standard Diffusion Panel",
+          "SkyLink Receiver"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "brand",
+        "old": "Arri",
+        "new": "ARRI",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "power",
+        "old": null,
+        "new": 400.0,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "powerRaw",
+        "old": "48 VDC",
+        "new": "48 VDC <400 W Maximum>",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 16,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 14.0,
+        "new": 12.9,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "14 kg",
+        "new": "12.9 kg manual version",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,800 - 10,000 k",
+        "new": "2,800 - 10,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "brand": "ARRI",
+    "model": "SkyPanel S360-C",
+    "verificationStatus": "partially_verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-ARRI-SKP-CLASSIC"
+    ],
+    "notes": "S360-C power/weight confirmed at family tech-data level.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Standard Diffusion Panel",
+          "SkyLink Receiver"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "brand",
+        "old": "Arri",
+        "new": "ARRI",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 8,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,800 - 10,000 k",
+        "new": "2,800 - 10,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "brand": "ARRI",
+    "model": "SkyPanel X",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-ARRI-X"
+    ],
+    "notes": "SkyPanel X RGBACL, IP and weight adjusted from ARRI tech data.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "S60 Adapter",
+          "X21 Dome"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "brand",
+        "old": "Arri",
+        "new": "ARRI",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Full-RGBACL",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 66",
+        "new": "IP66",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "model",
+        "old": "Sky Panel X",
+        "new": "SkyPanel X",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 10,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 20.1,
+        "new": 18.5,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "20.1 kg",
+        "new": "18.5 kg with P.O. yoke / 15 kg fixture only",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "1,500 - 20,000 k",
+        "new": "1,500 - 20,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "brand": "ARRI",
+    "model": "Orbiter",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-ARRI-ORBITER"
+    ],
+    "notes": "Orbiter white light, CRMX and nominal power verified.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "30° Projection Optic",
+          "Control Panel",
+          "Rain Cover"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "brand",
+        "old": "Arri",
+        "new": "ARRI",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Full-RGBACL",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 20",
+        "new": "IP20",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 4,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,000 - 20,000 k",
+        "new": "2,000 - 20,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "brand": "ARRI",
+    "model": "L7-C",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-ARRI-L7C"
+    ],
+    "notes": "L7-C verified for 220W maximum and manual version weight.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Barn Doors",
+          "Pole-Operated Yoke"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "brand",
+        "old": "Arri",
+        "new": "ARRI",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 20",
+        "new": "IP20",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stock",
+        "old": "1 Pieces",
+        "new": "1 Piece",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 1,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "8.2 kg",
+        "new": "8.2 kg manual version",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,800 - 10,000 k",
+        "new": "2,800 - 10,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "brand": "Astera",
+    "model": "Lightdrop Ax3",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AST-AX3"
+    ],
+    "notes": "AX3 weight, beam, runtime and accessories aligned to Astera specs.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Magnet Mount",
+          "Adapter Disk",
+          "Waterproof Protection Cover"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "battery",
+        "old": "3.7 V (1,300 mAh)",
+        "new": "Built-in battery",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBW",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 66",
+        "new": "IP66",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "setCountInStock",
+        "old": null,
+        "new": 1,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stock",
+        "old": "1 Set of 8",
+        "new": "8 Pieces (1 set of 8)",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 8,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockNote",
+        "old": null,
+        "new": "1 set of 8",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "unitsPerSet",
+        "old": null,
+        "new": 8,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 0.001,
+        "new": 0.68,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "0.6 g",
+        "new": "0.68 kg",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "1,750-20,000 k",
+        "new": "1,750 - 20,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "brand": "Astera",
+    "model": "TriplePAR Ax5",
+    "verificationStatus": "partially_verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AST-AX5AX9"
+    ],
+    "notes": "AX5 total power and weight aligned using Astera family page; lux still based on rental source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Charging Case",
+          "Kickstand"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "battery",
+        "old": null,
+        "new": "Built-in battery",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBAW",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 66",
+        "new": "IP66",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 8,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "1,750-20,000 k",
+        "new": "1,750 - 20,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "brand": "Astera",
+    "model": "PowerPAR Ax9",
+    "verificationStatus": "partially_verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AST-AX5AX9"
+    ],
+    "notes": "AX9 power and weight aligned using Astera family page; lux still based on rental source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Charging Case",
+          "Kickstand"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "battery",
+        "old": null,
+        "new": "Built-in battery",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBAW",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 66",
+        "new": "IP66",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 16,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 5.6,
+        "new": 5.66,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "5.6 kg",
+        "new": "5.66 kg",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "1,750-20,000 k",
+        "new": "1,750 - 20,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "brand": "Astera",
+    "model": "HydraPanel",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AST-HYDRA"
+    ],
+    "notes": "HydraPanel corrected to manufacturer weight/power draw and accessory bundle.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "6 Light Modifiers",
+          "FlexBase",
+          "ConnectorPlate",
+          "BabyPin 1/4\"",
+          "Power/Data Cable"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "battery",
+        "old": null,
+        "new": "Built-in battery",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBMA",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 65",
+        "new": "IP65",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "model",
+        "old": "Hydra Panel",
+        "new": "HydraPanel",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "setCountInStock",
+        "old": null,
+        "new": 2,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stock",
+        "old": "2 sets,(Set of 4)",
+        "new": "8 Pieces (2 sets of 4)",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 8,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockNote",
+        "old": null,
+        "new": "2 sets of 4",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "unitsPerSet",
+        "old": null,
+        "new": 4,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 0.6,
+        "new": 0.604,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "0.6 kg",
+        "new": "604 g",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "1,750-20,000 k",
+        "new": "1,750 - 20,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "brand": "Astera",
+    "model": "Helios Tube 2FT",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AST-HELIOS",
+      "SRC-AST-TITAN-FAMILY"
+    ],
+    "notes": "Helios corrected to 24W draw and verified lux/weight.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "SnapGrid 40° 2FT (x8)",
+          "PowerBox",
+          "Power Supply"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "battery",
+        "old": null,
+        "new": "Built-in battery",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGB+Mint+Amber",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 65",
+        "new": "IP65",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "lumens",
+        "old": null,
+        "new": 1340,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "lux",
+        "old": "Luminous Flux: 1,340 Lm",
+        "new": "393 Lux @ 1 m",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "power",
+        "old": 36.0,
+        "new": 24.0,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "powerRaw",
+        "old": "24 VDC 1.2A <24-36 W Maximum>",
+        "new": "24 W LED power draw / 36 W total LED power",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "setCountInStock",
+        "old": null,
+        "new": 13,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stock",
+        "old": "13 sets,(Set of 8)",
+        "new": "104 Pieces (13 sets of 8)",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 104,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockNote",
+        "old": null,
+        "new": "13 sets of 8",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "unitsPerSet",
+        "old": null,
+        "new": 8,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 0.7,
+        "new": 0.765,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "0.7 kg",
+        "new": "0.765 kg",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "1,750 - 20,000 k",
+        "new": "1,750 - 20,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "wireless",
+        "old": "LumenRadio CRMX /Astera app",
+        "new": "LumenRadio CRMX / Astera app",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 29,
+    "brand": "Astera",
+    "model": "Titan Tube 4FT",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AST-TITAN-FAMILY"
+    ],
+    "notes": "Titan corrected to 48W LED draw and verified output data.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "SnapGrid 40° 4FT (x8)",
+          "PowerBox"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "battery",
+        "old": null,
+        "new": "Built-in battery",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGB+Mint+Amber",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 65",
+        "new": "IP65",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "lumens",
+        "old": null,
+        "new": 2900,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "lux",
+        "old": "Luminous Flux: 2,900 Lm",
+        "new": "785 Lux @ 1 m",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "power",
+        "old": 72.0,
+        "new": 48.0,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "powerRaw",
+        "old": "24 VDC 2A <48-72 W Maximum>",
+        "new": "48 W LED power draw / 72 W total LED power",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "setCountInStock",
+        "old": null,
+        "new": 17,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stock",
+        "old": "17 sets,(Set of 8)",
+        "new": "136 Pieces (17 sets of 8)",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 136,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockNote",
+        "old": null,
+        "new": "17 sets of 8",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "unitsPerSet",
+        "old": null,
+        "new": 8,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "1,750 - 20,000 k",
+        "new": "1,750 - 20,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "wireless",
+        "old": "LumenRadio CRMX /Astera app",
+        "new": "LumenRadio CRMX / Astera app",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "brand": "Astera",
+    "model": "Hyperion Tube 8FT",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AST-TITAN-FAMILY",
+      "SRC-AST-HYPERION"
+    ],
+    "notes": "Hyperion corrected to 92W LED draw and verified output data.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "PowerBox",
+          "Hyperion PSU"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "battery",
+        "old": null,
+        "new": "Built-in battery",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGB+Mint+Amber",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 65",
+        "new": "IP65",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "lumens",
+        "old": null,
+        "new": 5800,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "lux",
+        "old": "Luminous Flux: 5,800 Lm",
+        "new": "1,570 Lux @ 1 m",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "power",
+        "old": 144.0,
+        "new": 92.0,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "powerRaw",
+        "old": "24 VDC 4A <96-144 W Maximum>",
+        "new": "92 W LED power draw / 144 W total LED power",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "setCountInStock",
+        "old": null,
+        "new": 4,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stock",
+        "old": "4 sets,(Set of 4)",
+        "new": "16 Pieces (4 sets of 4)",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 16,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockNote",
+        "old": null,
+        "new": "4 sets of 4",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "unitsPerSet",
+        "old": null,
+        "new": 4,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "1,750 - 20,000 k",
+        "new": "1,750 - 20,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "wireless",
+        "old": "LumenRadio CRMX /Astera app",
+        "new": "LumenRadio CRMX / Astera app",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 31,
+    "brand": "Astera",
+    "model": "NYX Bulb",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-AST-NYX"
+    ],
+    "notes": "NYX corrected to 10W draw, 240g, 750lm reference and accessory mapping.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "PowerStation",
+          "PowerStation Charging Case",
+          "Lamp Socket"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "battery",
+        "old": null,
+        "new": "Built-in battery",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGB+Mint+Amber",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 44",
+        "new": "IP44",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "lumens",
+        "old": null,
+        "new": 750,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "lux",
+        "old": "Luminous Flux: 5,800 Lm",
+        "new": "124 Lux @ 1 m",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "power",
+        "old": 14.0,
+        "new": 10.0,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "powerRaw",
+        "old": "5-18 VDC 2.1A <10-14 W Maximum>",
+        "new": "10 W LED power draw / 14 W total LED power",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "setCountInStock",
+        "old": null,
+        "new": 8,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stock",
+        "old": "8 sets,(Set of 8)",
+        "new": "64 Pieces (8 sets of 8)",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 64,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockNote",
+        "old": null,
+        "new": "8 sets of 8",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "unitsPerSet",
+        "old": null,
+        "new": 8,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "1,750 - 20,000 k",
+        "new": "1,750 - 20,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "wireless",
+        "old": "LumenRadio",
+        "new": "LumenRadio CRMX / Astera app",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 32,
+    "brand": "Creamsource",
+    "model": "Vortex 8",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-CRM-V8"
+    ],
+    "notes": "Vortex 8 power/weight/color range aligned to Creamsource spec page.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Flat Diffuser",
+          "Secondary Lens Kit",
+          "Removable Yoke"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "brand",
+        "old": "Cream Source",
+        "new": "Creamsource",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "category",
+        "old": "COB",
+        "new": "Panel",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Full-RGBW",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP 65",
+        "new": "IP65",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 12,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,200 - 15,000 k",
+        "new": "2,200 - 15,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 33,
+    "brand": "Digital Sputnik",
+    "model": "DS1",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBW",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 6,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "whiteLight",
+        "old": "1,500 - 10,000 k",
+        "new": "1,500 - 10,000K",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "wireless",
+        "old": null,
+        "new": "2.4 GHz WiFi / Art-Net / sACN",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 34,
+    "brand": "Digital Sputnik",
+    "model": "DS6",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Full RGBW",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 2,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "whiteLight",
+        "old": "1,500 - 10,000 k",
+        "new": "1,500 - 10,000K",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "wireless",
+        "old": null,
+        "new": "2.4 GHz WiFi / Art-Net / sACN",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 35,
+    "brand": "Digital Sputnik",
+    "model": "Voyager 2FT (60cm)",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "battery",
+        "old": "45Wh",
+        "new": "45Wh battery",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Full RGBW",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stock",
+        "old": null,
+        "new": "4 Pieces",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 4,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 36,
+    "brand": "Digital Sputnik",
+    "model": "Voyager 4FT (120cm)",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "battery",
+        "old": "90Wh",
+        "new": "90Wh battery",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Full RGBW",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stock",
+        "old": null,
+        "new": "6 Pieces",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 6,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 37,
+    "brand": "Falcon Eyes",
+    "model": "RX-818",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "brand",
+        "old": "FalconEye",
+        "new": "Falcon Eyes",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBW",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 4,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,800 - 10,000 k",
+        "new": "2,800 - 10,000K",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 38,
+    "brand": "Fiilex",
+    "model": "Q5 Color",
+    "verificationStatus": "verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-FIILEX-Q5"
+    ],
+    "notes": "Fiilex Q5 Color verified for beam, power, weight and IP rating.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Flexible Energy Source 270 Battery",
+          "Juice Box Station"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "beam",
+        "old": "12°-55°",
+        "new": "12° - 55° (80° without Fresnel)",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBW",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "ip",
+        "old": "IP X5",
+        "new": "IPX5",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 2,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,000 - 10,000 k",
+        "new": "2,000 - 10,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 39,
+    "brand": "LiteGear",
+    "model": "Litemat Spectrum 1",
+    "verificationStatus": "partially_verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-LG-PLUS-FAMILY",
+      "SRC-LG-SPECTRUM-SHEET"
+    ],
+    "notes": "LiteMat Spectrum 1 corrected using LiteGear family and spectrum sheet references.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "LiteDimmer Pro Hybrid",
+          "PDX Extension Cable"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "brand",
+        "old": "Lite Gear",
+        "new": "LiteGear",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBW",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "dimensions",
+        "old": null,
+        "new": "533 x 292 mm",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 6,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 533.0,
+        "new": 1.2,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "533 x 292 mm",
+        "new": "1.2 kg",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,000-1,100 k",
+        "new": "2,000 - 11,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 40,
+    "brand": "LiteGear",
+    "model": "Litemat Plus 2",
+    "verificationStatus": "partially_verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-LG-PLUS-FAMILY"
+    ],
+    "notes": "LiteMat Plus 2 weight/power aligned at family level.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "LiteDimmer Pro Hybrid",
+          "LiteMount"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "brand",
+        "old": "Lite Gear",
+        "new": "LiteGear",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Bi-Color",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "dimensions",
+        "old": null,
+        "new": "533 x 533 mm",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stock",
+        "old": "1 Pieces",
+        "new": "1 Piece",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 1,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 533.0,
+        "new": 1.9,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "533 x 533 mm",
+        "new": "1.9 kg",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,600-6,000 k",
+        "new": "2,600 - 6,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 41,
+    "brand": "LiteGear",
+    "model": "Litemat Spectrum 2L",
+    "verificationStatus": "partially_verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-LG-PLUS-FAMILY",
+      "SRC-LG-SPECTRUM-SHEET"
+    ],
+    "notes": "LiteMat Spectrum 2L corrected using LiteGear references.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "LiteDimmer Pro Hybrid",
+          "PDX Extension Cable"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "brand",
+        "old": "Lite Gear",
+        "new": "LiteGear",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBW",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "dimensions",
+        "old": null,
+        "new": "1016 x 292 mm",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 8,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 1016.0,
+        "new": 2.1,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "1016 x 292 mm",
+        "new": "2.1 kg",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,000-1,100 k",
+        "new": "2,000 - 11,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 42,
+    "brand": "LiteGear",
+    "model": "Litemat Plus 2L",
+    "verificationStatus": "partially_verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-LG-PLUS-FAMILY"
+    ],
+    "notes": "LiteMat Plus 2L family-level verification only.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "LiteDimmer Pro Hybrid",
+          "LiteMount"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "brand",
+        "old": "Lite Gear",
+        "new": "LiteGear",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Bi-Color",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "dimensions",
+        "old": null,
+        "new": "1016 x 292 mm",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 2,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 1016.0,
+        "new": 1.72,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "1016 x 292 mm",
+        "new": "1.72 kg",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,600-6,000 k",
+        "new": "2,600 - 6,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 43,
+    "brand": "LiteGear",
+    "model": "Litemat Spectrum 4",
+    "verificationStatus": "partially_verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-LG-PLUS-FAMILY",
+      "SRC-LG-SPECTRUM-SHEET"
+    ],
+    "notes": "LiteMat Spectrum 4 corrected using LiteGear references.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "LiteDimmer Pro Hybrid",
+          "PDX Extension Cable"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "brand",
+        "old": "Lite Gear",
+        "new": "LiteGear",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBW",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "dimensions",
+        "old": null,
+        "new": "1016 x 533 mm",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 6,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 1016.0,
+        "new": 1.9,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "1016 x 533 mm",
+        "new": "1.9 kg",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,000-1,100 k",
+        "new": "2,000 - 11,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 44,
+    "brand": "LiteGear",
+    "model": "Litemat Plus 4",
+    "verificationStatus": "partially_verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-LG-PLUS-FAMILY"
+    ],
+    "notes": "LiteMat Plus 4 family-level verification only.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "LiteDimmer Pro Hybrid",
+          "LiteMount"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "brand",
+        "old": "Lite Gear",
+        "new": "LiteGear",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Bi-Color",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "dimensions",
+        "old": null,
+        "new": "1016 x 533 mm",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 4,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 1016.0,
+        "new": 2.81,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "1016 x 533 mm",
+        "new": "2.81 kg",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,600-6,000 k",
+        "new": "2,600 - 6,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 45,
+    "brand": "LiteGear",
+    "model": "Litemat Plus 8",
+    "verificationStatus": "partially_verified",
+    "verificationDate": "2026-07-09",
+    "verifiedBy": "Arena Agent",
+    "sourceIds": [
+      "SRC-LG-PLUS-FAMILY"
+    ],
+    "notes": "LiteMat Plus 8 family-level verification only.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "LiteDimmer Pro Hybrid",
+          "LiteMount"
+        ],
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "brand",
+        "old": "Lite Gear",
+        "new": "LiteGear",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Bi-Color",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "dimensions",
+        "old": null,
+        "new": "1,016 x 1,016 mm",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stock",
+        "old": "1 Pieces",
+        "new": "1 Piece",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 1,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weight",
+        "old": 1016.0,
+        "new": 4.7,
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "weightRaw",
+        "old": "1,016 x 1,016 mm",
+        "new": "4.7 kg",
+        "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,600-6,000 k",
+        "new": "2,600 - 6,000K",
+        "reason": "Normalized / corrected during verification workflow"
+      }
+    ]
+  },
+  {
+    "id": 46,
+    "brand": "LiteGear",
+    "model": "LiteDimmer Pro Hybrid",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "brand",
+        "old": "Lite Gear",
+        "new": "LiteGear",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 10,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "accessory",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 47,
+    "brand": "Rosco",
+    "model": "DMG Dash",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "DMG Dash 8-Light Kit Case"
+        ],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "battery",
+        "old": null,
+        "new": "Built-in battery",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBLAW",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "setCountInStock",
+        "old": null,
+        "new": 1,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stock",
+        "old": "1 Set of 8",
+        "new": "8 Pieces (1 set of 8)",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 8,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockNote",
+        "old": null,
+        "new": "1 set of 8",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "unitsPerSet",
+        "old": null,
+        "new": 8,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "whiteLight",
+        "old": "1,700 - 10,000 k",
+        "new": "1,700 - 10,000K",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 48,
+    "brand": "Other Light",
+    "model": "Dj Par Led 18X18W",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGBWA+UV",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 2,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,000 - 10,000 k Color",
+        "new": "2,000 - 10,000K",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 49,
+    "brand": "Litepanels",
+    "model": "Astra Soft Bi-Color LED Panel",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "beam",
+        "old": "5°-90°",
+        "new": "49°",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "brand",
+        "old": "Other Light",
+        "new": "Litepanels",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Bi-Color",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "lux",
+        "old": "Lux @ 1 m: 70 Lux                  Power Consumption: 167 W 0.78",
+        "new": "70 Lux @ 1 m",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "power",
+        "old": 167.0,
+        "new": 105.0,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "powerRaw",
+        "old": "167 W 0.78",
+        "new": "13-24 VDC <105 W>",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stock",
+        "old": "4 Pieces",
+        "new": "8 Pieces",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 8,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "weight",
+        "old": 8.3,
+        "new": 3.2,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "weightRaw",
+        "old": "8.3 kg",
+        "new": "3.2 kg",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "whiteLight",
+        "old": "3,200 - 5,600k",
+        "new": "3,200 - 5,600K",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 50,
+    "brand": "ETC",
+    "model": "Source Four LED Series 2",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Normalized from rental sheet; external manufacturer verification still recommended.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Lens Zoom 25°-50° (x4)",
+          "Lens Zoom 15°-30° (x4)"
+        ],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "beam",
+        "old": null,
+        "new": "5° - 90°",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "brand",
+        "old": "Other Light",
+        "new": "ETC",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Bi-Color",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "lux",
+        "old": null,
+        "new": "Max Lumens: 8,667",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "power",
+        "old": null,
+        "new": 167.0,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "powerRaw",
+        "old": null,
+        "new": "167 W / 0.78 A",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stock",
+        "old": null,
+        "new": "4 Pieces",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 4,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "weight",
+        "old": null,
+        "new": 8.3,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "weightRaw",
+        "old": null,
+        "new": "8.3 kg",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "whiteLight",
+        "old": null,
+        "new": "3,200 - 5,600K",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 51,
+    "brand": "Kino Flo",
+    "model": "Kino Flo FreeStyle 21",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Normalized from rental sheet; external Kino Flo verification still recommended.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Louver / Grid",
+          "Controller"
+        ],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "brand",
+        "old": "Other Light",
+        "new": "Kino Flo",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "category",
+        "old": "LED Tube",
+        "new": "Panel",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGB",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "lux",
+        "old": "Lux @ 1 m: 2409 Lux",
+        "new": "2,409 Lux @ 1 m",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "powerRaw",
+        "old": "24 VDC < 150 W 6.25 A>",
+        "new": "24 VDC <150 W / 6.25 A>",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 2,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,500 - 9,900 k",
+        "new": "2,500 - 9,900K",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 52,
+    "brand": "Kino Flo",
+    "model": "Kino Flo FreeStyle 31",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Normalized from rental sheet; external Kino Flo verification still recommended.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [
+          "Louver / Grid",
+          "Controller"
+        ],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "brand",
+        "old": "Other Light",
+        "new": "Kino Flo",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "category",
+        "old": "LED Tube",
+        "new": "Panel",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "RGB",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "lux",
+        "old": "Lux @1m: 2470Lux",
+        "new": "2,470 Lux @ 1 m",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "power",
+        "old": null,
+        "new": 150.0,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "powerRaw",
+        "old": "240 VAC",
+        "new": "24 VDC <150 W / 6.25 A>",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 2,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "fixture",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "weight",
+        "old": 2.7,
+        "new": 0.6,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "weightRaw",
+        "old": "2.7 kg",
+        "new": "0.6 kg",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "whiteLight",
+        "old": "2,600 - 6,000k",
+        "new": "2,500 - 9,900K",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "wireless",
+        "old": "LumenRadio CRMX Color Light: Bi-Color",
+        "new": "LumenRadio CRMX",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 53,
+    "brand": "Chimera",
+    "model": "Chimera Panel Lantern",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Lantern/accessory data retained from rental sheet; supplier confirmation recommended.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "brand",
+        "old": "Other Light",
+        "new": "Chimera",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "color",
+        "old": null,
+        "new": "Bi-Color",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "powerRaw",
+        "old": null,
+        "new": "240 VAC",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stock",
+        "old": null,
+        "new": "2 Pieces",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 2,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "accessory",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "weight",
+        "old": null,
+        "new": 2.7,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "weightRaw",
+        "old": null,
+        "new": "2.7 kg",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "whiteLight",
+        "old": null,
+        "new": "2,600 - 6,000K",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 54,
+    "brand": "DMX Control",
+    "model": "Avolite Tiger Touch 2",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stock",
+        "old": "1 Pieces",
+        "new": "1 Piece",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 1,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "controller",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 55,
+    "brand": "DMX Control",
+    "model": "Gaffer Control",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stock",
+        "old": "1 Pieces",
+        "new": "1 Piece",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 1,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "controller",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "wireless",
+        "old": null,
+        "new": "LumenRadio CRMX",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 56,
+    "brand": "DMX Control",
+    "model": "Kingkong KK 1024",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 2,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "controller",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 57,
+    "brand": "DMX Control",
+    "model": "iPad 11 Pro (Black Out / Luminair)",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 4,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "controller",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "wireless",
+        "old": null,
+        "new": "Wi-Fi / Black Out / Luminair",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 58,
+    "brand": "DMX Control",
+    "model": "Moonlite",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 95,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "controller",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "wireless",
+        "old": null,
+        "new": "LumenRadio CRMX",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 59,
+    "brand": "DMX Control",
+    "model": "Aurora",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 7,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "controller",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "wireless",
+        "old": null,
+        "new": "LumenRadio CRMX",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 60,
+    "brand": "DMX Control",
+    "model": "TX2",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 3,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "controller",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "wireless",
+        "old": null,
+        "new": "LumenRadio CRMX / RDM",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 61,
+    "brand": "Battery",
+    "model": "V-Mount 14.8V",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "battery",
+        "old": null,
+        "new": "14.8V battery",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 35,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "power",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 62,
+    "brand": "Battery",
+    "model": "V-Mount 26V",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "battery",
+        "old": null,
+        "new": "26V battery",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 23,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "power",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  },
+  {
+    "id": 63,
+    "brand": "Battery",
+    "model": "EcoFlow Delta Pro",
+    "verificationStatus": "pending",
+    "verificationDate": null,
+    "verifiedBy": null,
+    "sourceIds": [],
+    "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
+    "changes": [
+      {
+        "field": "accessories",
+        "old": null,
+        "new": [],
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "battery",
+        "old": null,
+        "new": "3.6kWh power station",
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "stockCount",
+        "old": null,
+        "new": 6,
+        "reason": "Current working database differs from original extraction"
+      },
+      {
+        "field": "type",
+        "old": null,
+        "new": "power",
+        "reason": "Current working database differs from original extraction"
+      }
+    ]
+  }
+]
