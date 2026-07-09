@@ -25,26 +25,44 @@
 <div class="container pb-5" style="max-width:980px">
   <div id="adminLockScreen" class="filter-panel" style="max-width:480px; margin:0 auto;">
     <h4 class="mb-3">Admin Access</h4>
-    <p class="text-muted small">หน้านี้ใช้สำหรับปลดล็อกสิทธิ์ Admin เพื่อแก้ข้อมูลจากหน้า Detail และหน้ารายการ</p>
-<form id="adminLoginForm">
-  <label class="form-label small mb-0">Email</label>
-  <input type="email" id="adminEmailInput" class="form-control mb-2" placeholder="admin@email.com">
+    <p class="text-muted small">
+      เข้าสู่ระบบด้วยบัญชี Admin ของ Supabase เพื่อจัดการข้อมูลกลางที่ใช้ร่วมกันทุกเครื่อง
+    </p>
 
-  <label class="form-label small mb-0">Password</label>
-  <input type="password" id="adminPasswordInput" class="form-control mb-3" placeholder="รหัสผ่าน">
+    <form id="adminLoginForm">
+      <label class="form-label small mb-0">Email</label>
+      <input
+        type="email"
+        id="adminEmailInput"
+        class="form-control mb-2"
+        placeholder="admin@email.com"
+        autocomplete="username"
+      >
 
-  <button class="btn btn-dark w-100">เข้าสู่ระบบ Admin</button>
-  <div id="adminLoginStatus" class="small text-danger mt-2"></div>
-</form>
+      <label class="form-label small mb-0">Password</label>
+      <input
+        type="password"
+        id="adminPasswordInput"
+        class="form-control mb-3"
+        placeholder="รหัสผ่าน"
+        autocomplete="current-password"
+      >
+
+      <button class="btn btn-dark w-100" type="submit">เข้าสู่ระบบ Admin</button>
+      <div id="adminLoginStatus" class="small text-danger mt-2"></div>
+    </form>
+  </div>
 
   <div id="adminApp" style="display:none;">
     <div class="filter-panel mb-3">
       <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
         <div>
           <h4 class="mb-1">Admin Mode เปิดใช้งานแล้ว</h4>
-          <div class="small text-muted">ตอนนี้ปุ่ม “แก้ไข” จะปรากฏในหน้า Detail ของอุปกรณ์และ Accessories</div>
+          <div class="small text-muted">
+            ตอนนี้ปุ่ม “แก้ไข / ซ่อน / ลบ” จะปรากฏในหน้า Detail ของอุปกรณ์และ Accessories
+          </div>
         </div>
-        <button id="adminLogoutBtn" class="btn btn-outline-danger btn-sm" type="button">ล็อกออกจาก Admin</button>
+        <button id="adminLogoutBtn" class="btn btn-outline-danger btn-sm" type="button">ออกจากระบบ Admin</button>
       </div>
     </div>
 
@@ -76,6 +94,7 @@
           </button>
         </div>
       </div>
+
       <div class="row g-3 mb-3">
         <div class="col-6 col-md-3">
           <button class="stat-card text-center w-100" id="hiddenItemsBtn" type="button">
@@ -84,6 +103,7 @@
           </button>
         </div>
       </div>
+
       <div class="small text-muted" id="verifyMetaText"></div>
     </div>
 
@@ -93,25 +113,31 @@
         <li>เปิดหน้า <strong>Equipment</strong> หรือ <strong>Accessories</strong> แล้วกดดูรายละเอียดของรายการที่ต้องการ</li>
         <li>เมื่ออยู่ใน Admin Mode จะเห็นปุ่ม <strong>แก้ไข / ซ่อน / ลบ</strong> ใน popup รายละเอียด</li>
         <li>ปุ่ม <strong>+ เพิ่ม Fixture</strong> และ <strong>+ เพิ่ม Accessory</strong> อยู่ในส่วนจัดการข้อมูลของหน้านี้</li>
-        <li>บันทึกการแก้ไข แล้วตรวจผลได้ทันทีในหน้าเดิม</li>
+        <li>ข้อมูลที่บันทึกจะเขียนลงฐานข้อมูลกลาง Supabase</li>
         <li>กดที่กล่อง Verified / Partial / Pending เพื่อดูรายการในสถานะนั้นแบบ Popup</li>
       </ol>
     </div>
 
     <div class="filter-panel">
       <h5 class="mb-3">จัดการข้อมูล</h5>
+
       <div class="d-flex gap-2 flex-wrap mb-2">
         <button id="addFixtureBtn" class="btn btn-dark btn-sm" type="button">+ เพิ่ม Fixture</button>
         <button id="addAccessoryBtn" class="btn btn-outline-dark btn-sm" type="button">+ เพิ่ม Accessory</button>
       </div>
+
       <div id="adminDataSummary" class="small text-muted mb-3"></div>
+
       <div class="d-flex gap-2 flex-wrap mb-3">
         <button id="exportFixturesBtn" class="btn btn-dark btn-sm" type="button">Export Fixtures JSON</button>
         <button id="exportAccessoriesBtn" class="btn btn-outline-dark btn-sm" type="button">Export Accessories JSON</button>
-        <button id="resetAllDataBtn" class="btn btn-outline-danger btn-sm" type="button">รีเซ็ตข้อมูล local ทั้งหมด</button>
+        <button id="resetAllDataBtn" class="btn btn-outline-danger btn-sm" type="button">ปิดโหมด reset local เดิม</button>
       </div>
+
       <div id="adminStatus" class="small text-success"></div>
-      <div class="small text-muted">ถ้าต้องการให้ข้อมูลที่แก้มีผลกับเว็บจริง ให้ export ไฟล์ JSON แล้วนำไปแทน <code>data/fixtures.json</code> และ <code>data/accessories.json</code></div>
+      <div class="small text-muted">
+        ตอนนี้ข้อมูลหลักรันจาก Supabase แล้ว การ export ใช้สำหรับสำรองข้อมูลหรือดึง snapshot ออกมา
+      </div>
     </div>
   </div>
 </div>
