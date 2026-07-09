@@ -1,175 +1,74 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<title>Admin - Lighting GH</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
-<link href="css/style.css" rel="stylesheet">
-</head>
-<body>
-<nav class="navbar navbar-dark bg-dark mb-4">
-  <div class="container">
-    <a class="navbar-brand" href="index.html">💡 Lighting GH</a>
-    <div class="d-flex gap-3 flex-wrap">
-      <a class="nav-link text-light" href="index.html">Dashboard</a>
-      <a class="nav-link text-light" href="equipment.html">Equipment</a>
-      <a class="nav-link text-light" href="accessories.html">Accessories</a>
-      <a class="nav-link text-light" href="setbuilder.html">Set Builder</a>
-      <a class="nav-link text-light" href="inventory.html">Inventory</a>
-      <a class="nav-link text-light active" href="admin.html">Admin</a>
-    </div>
-  </div>
-</nav>
+const AdminAuth = (() => {
+  let unlocked = false;
+  let currentUser = null;
 
-<div class="container pb-5" style="max-width:980px">
-  <div id="adminLockScreen" class="filter-panel" style="max-width:480px; margin:0 auto;">
-    <h4 class="mb-3">Admin Access</h4>
-    <p class="text-muted small">หน้านี้ใช้สำหรับปลดล็อกสิทธิ์ Admin เพื่อแก้ข้อมูลจากหน้า Detail และหน้ารายการ</p>
-    <form id="adminLoginForm">
-      <label class="form-label small mb-0">PIN / รหัสผ่าน</label>
-      <input type="password" id="adminPinInput" class="form-control mb-3" placeholder="กรอกรหัส Admin">
-      <button class="btn btn-dark w-100">ปลดล็อก</button>
-      <div id="adminLoginStatus" class="small text-danger mt-2"></div>
-    </form>
-  </div>
+  async function refresh() {
+    try {
+      const { data: userData, error: userError } = await window.sb.auth.getUser();
+      if (userError || !userData?.user) {
+        unlocked = false;
+        currentUser = null;
+        return false;
+      }
 
-  <div id="adminApp" style="display:none;">
-    <div class="filter-panel mb-3">
-      <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
-        <div>
-          <h4 class="mb-1">Admin Mode เปิดใช้งานแล้ว</h4>
-          <div class="small text-muted">ตอนนี้ปุ่ม “แก้ไข” จะปรากฏในหน้า Detail ของอุปกรณ์และ Accessories</div>
-        </div>
-        <button id="adminLogoutBtn" class="btn btn-outline-danger btn-sm" type="button">ล็อกออกจาก Admin</button>
-      </div>
-    </div>
+      currentUser = userData.user;
 
-    <div class="filter-panel mb-3">
-      <h5 class="mb-3">สถานะการตรวจสอบข้อมูล</h5>
-      <div class="row g-3 mb-3">
-        <div class="col-6 col-md-3">
-          <button class="stat-card text-center w-100 verify-filter-btn" data-status="all" type="button">
-            <div class="stat-value" id="verifyTotal">-</div>
-            <div class="text-muted">ทั้งหมด</div>
-          </button>
-        </div>
-        <div class="col-6 col-md-3">
-          <button class="stat-card text-center w-100 verify-filter-btn" data-status="verified" type="button">
-            <div class="stat-value" id="verifyVerified">-</div>
-            <div class="text-muted">Verified</div>
-          </button>
-        </div>
-        <div class="col-6 col-md-3">
-          <button class="stat-card text-center w-100 verify-filter-btn" data-status="partially_verified" type="button">
-            <div class="stat-value" id="verifyPartial">-</div>
-            <div class="text-muted">Partial</div>
-          </button>
-        </div>
-        <div class="col-6 col-md-3">
-          <button class="stat-card text-center w-100 verify-filter-btn" data-status="pending" type="button">
-            <div class="stat-value" id="verifyPending">-</div>
-            <div class="text-muted">Pending</div>
-          </button>
-        </div>
-      </div>
-      <div class="row g-3 mb-3">
-        <div class="col-6 col-md-3">
-          <button class="stat-card text-center w-100" id="hiddenItemsBtn" type="button">
-            <div class="stat-value" id="hiddenCount">-</div>
-            <div class="text-muted">ซ่อนอยู่</div>
-          </button>
-        </div>
-      </div>
-      <div class="small text-muted" id="verifyMetaText"></div>
-    </div>
+      const { data, error } = await window.sb
+        .from('admin_users')
+        .select('user_id')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
 
-    <div class="filter-panel mb-3">
-      <h5 class="mb-3">คำแนะนำการใช้งาน</h5>
-      <ol class="small text-muted mb-0" style="padding-left:1.1rem;">
-        <li>เปิดหน้า <strong>Equipment</strong> หรือ <strong>Accessories</strong> แล้วกดดูรายละเอียดของรายการที่ต้องการ</li>
-        <li>เมื่ออยู่ใน Admin Mode จะเห็นปุ่ม <strong>แก้ไข / ซ่อน / ลบ</strong> ใน popup รายละเอียด</li>
-        <li>ปุ่ม <strong>+ เพิ่ม Fixture</strong> และ <strong>+ เพิ่ม Accessory</strong> อยู่ในส่วนจัดการข้อมูลของหน้านี้</li>
-        <li>บันทึกการแก้ไข แล้วตรวจผลได้ทันทีในหน้าเดิม</li>
-        <li>กดที่กล่อง Verified / Partial / Pending เพื่อดูรายการในสถานะนั้นแบบ Popup</li>
-      </ol>
-    </div>
+      if (error || !data) {
+        unlocked = false;
+        return false;
+      }
 
-    <div class="filter-panel">
-      <h5 class="mb-3">จัดการข้อมูล</h5>
-      <div class="d-flex gap-2 flex-wrap mb-2">
-        <button id="addFixtureBtn" class="btn btn-dark btn-sm" type="button">+ เพิ่ม Fixture</button>
-        <button id="addAccessoryBtn" class="btn btn-outline-dark btn-sm" type="button">+ เพิ่ม Accessory</button>
-      </div>
-      <div id="adminDataSummary" class="small text-muted mb-3"></div>
-      <div class="d-flex gap-2 flex-wrap mb-3">
-        <button id="exportFixturesBtn" class="btn btn-dark btn-sm" type="button">Export Fixtures JSON</button>
-        <button id="exportAccessoriesBtn" class="btn btn-outline-dark btn-sm" type="button">Export Accessories JSON</button>
-        <button id="resetAllDataBtn" class="btn btn-outline-danger btn-sm" type="button">รีเซ็ตข้อมูล local ทั้งหมด</button>
-      </div>
-      <div id="adminStatus" class="small text-success"></div>
-      <div class="small text-muted">ถ้าต้องการให้ข้อมูลที่แก้มีผลกับเว็บจริง ให้ export ไฟล์ JSON แล้วนำไปแทน <code>data/fixtures.json</code> และ <code>data/accessories.json</code></div>
-    </div>
-  </div>
-</div>
+      unlocked = true;
+      return true;
+    } catch (err) {
+      console.error('AdminAuth.refresh error:', err);
+      unlocked = false;
+      currentUser = null;
+      return false;
+    }
+  }
 
-<div class="modal fade" id="verifyStatusModal" tabindex="-1">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="verifyModalTitle">รายการตามสถานะการตรวจสอบ</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div class="small text-muted mb-3" id="verifyFilterLabel">แสดงทั้งหมด</div>
-        <div id="verifyList" class="small"></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">ปิด</button>
-      </div>
-    </div>
-  </div>
-</div>
+  const ready = refresh();
 
-<div class="modal fade" id="hiddenItemsModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">รายการที่ถูกซ่อน</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div id="hiddenItemsList" class="small"></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">ปิด</button>
-      </div>
-    </div>
-  </div>
-</div>
+  async function unlock(email, password) {
+    const { error } = await window.sb.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-<div class="modal fade" id="adminItemModal" tabindex="-1">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="adminItemModalTitle">เพิ่มข้อมูล</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body" id="adminItemModalBody"></div>
-    </div>
-  </div>
-</div>
+    if (error) {
+      return false;
+    }
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-config.js"></script>
-<script src="js/supabase-client.js"></script>
-<script src="js/database.js"></script>
-<script src="js/accessory-store.js"></script>
-<script src="js/verification-store.js"></script>
-<script src="js/admin-auth.js"></script>
-<script src="js/inline-fixture-editor.js"></script>
-<script src="js/inline-accessory-editor.js"></script>
-<script src="js/admin.js"></script>
-</body>
-</html>
+    return refresh();
+  }
+
+  async function lock() {
+    await window.sb.auth.signOut();
+    unlocked = false;
+    currentUser = null;
+  }
+
+  function isUnlocked() {
+    return unlocked;
+  }
+
+  function getUser() {
+    return currentUser;
+  }
+
+  return {
+    ready,
+    refresh,
+    unlock,
+    lock,
+    isUnlocked,
+    getUser,
+  };
+})();
