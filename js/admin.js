@@ -209,9 +209,11 @@ const passwordInput = document.getElementById('adminPasswordInput');
   }
 });
 
-  if (AdminAuth.isUnlocked()) {
-    await showApp();
-  }
+ await AdminAuth.ready;
+
+if (AdminAuth.isUnlocked()) {
+  await showApp();
+}
 
   document.getElementById('adminLogoutBtn')?.addEventListener('click', () => {
     AdminAuth.lock();
