@@ -25,7 +25,8 @@
 <div class="container pb-5">
   <div class="row g-3">
     <div class="col-md-3">
-      <div class="filter-panel">
+      <div id="equipmentFiltersPanel" class="mobile-filter-panel">
+        <div class="filter-panel">
         <h6 class="mb-3">ค้นหา / กรอง</h6>
         <input type="text" id="fSearch" class="form-control mb-2" placeholder="ค้นหา id / ยี่ห้อ / รุ่น / ชื่ออุปกรณ์เสริม...">
 
@@ -87,9 +88,11 @@
 
         <button id="fReset" class="btn btn-sm btn-outline-secondary w-100">ล้างตัวกรอง</button>
       </div>
+      </div>
     </div>
 
     <div class="col-md-9">
+      <button id="mobileFilterToggle" class="btn btn-outline-dark btn-sm d-md-none w-100 mb-2" type="button">เปิดค้นหา / กรอง</button>
       <div class="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">
         <div id="resultCount" class="text-muted">กำลังโหลด...</div>
         <div class="d-flex gap-2 flex-wrap">
@@ -158,9 +161,6 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-config.js"></script>
-<script src="js/supabase-client.js"></script>
 <script src="js/database.js"></script>
 <script src="js/search.js"></script>
 <script src="js/setbuilder-helper.js"></script>
@@ -205,7 +205,6 @@ function buildAccessoryItems(accessories) {
       .map((id) => DB.getById(id))
       .filter(Boolean)
       .map((fixture) => `${fixture.brand} ${fixture.model}`);
-
     return {
       id: Number(item.id),
       brand: item.brand || '',
@@ -275,7 +274,6 @@ function renderPagination(totalPages) {
   ul.innerHTML = '';
   const pageSize = currentPageSize();
   if (!pageSize || filtered.length <= pageSize) return;
-
   for (let i = 1; i <= totalPages; i++) {
     const li = document.createElement('li');
     li.className = 'page-item' + (i === page ? ' active' : '');
@@ -317,18 +315,14 @@ function openItemEditor(item) {
   if (item.source === 'accessory') {
     const current = AccessoryStore.getById(item.id);
     if (!current) return;
-
     editorTitle.textContent = `แก้ไข Accessory · ${current.name}`;
     editorBody.innerHTML = accessoryEditorHtml(current, 'equipmentAccessoryEditor');
-
     bindAccessoryEditor('equipmentAccessoryEditor', Number(item.id), async ({ item: savedItem }) => {
       await reloadCatalogData();
       render();
       editorModal.hide();
-
       const updated = savedItem ? getItemByKey(`accessory-${savedItem.id}`) : null;
       if (updated) showDetail(updated._key);
-
       flashStatus(`บันทึก ${current.name} แล้ว`);
     }, {
       onCancel: () => editorModal.hide(),
@@ -336,18 +330,14 @@ function openItemEditor(item) {
   } else {
     const current = DB.getById(item.id);
     if (!current) return;
-
     editorTitle.textContent = `แก้ไข Fixture · ${current.brand} ${current.model}`;
     editorBody.innerHTML = fixtureEditorHtml(current, 'equipmentFixtureEditor');
-
     bindFixtureEditor('equipmentFixtureEditor', Number(item.id), async ({ item: savedItem }) => {
       await reloadCatalogData();
       render();
       editorModal.hide();
-
       const updated = savedItem ? getItemByKey(`fixture-${savedItem.id}`) : null;
       if (updated) showDetail(updated._key);
-
       flashStatus(`บันทึก ${current.brand} ${current.model} แล้ว`);
     }, {
       onCancel: () => editorModal.hide(),
@@ -361,9 +351,8 @@ async function toggleItemHidden(item) {
   if (item.source === 'accessory') {
     const current = AccessoryStore.getById(item.id);
     if (!current) return;
-
     const nextHidden = !current.hidden;
-    await AccessoryStore.update(item.id, { hidden: nextHidden });
+    AccessoryStore.update(item.id, { hidden: nextHidden });
     await reloadCatalogData();
     render();
     getDetailModalInstance().hide();
@@ -373,9 +362,8 @@ async function toggleItemHidden(item) {
 
   const current = DB.getById(item.id);
   if (!current) return;
-
   const nextHidden = !current.hidden;
-  await DB.update(item.id, { hidden: nextHidden });
+  DB.update(item.id, { hidden: nextHidden });
   await reloadCatalogData();
   render();
   getDetailModalInstance().hide();
@@ -387,9 +375,9 @@ async function deleteItem(item) {
   if (!window.confirm(`ลบรายการ “${label}” ใช่หรือไม่?`)) return;
 
   if (item.source === 'accessory') {
-    await deleteAccessoryAndRelations(item.id);
+    deleteAccessoryAndRelations(item.id);
   } else {
-    await deleteFixtureAndRelations(item.id);
+    deleteFixtureAndRelations(item.id);
   }
 
   await reloadCatalogData();
@@ -405,10 +393,7 @@ function renderModalAdminTools(item) {
 
   if (!isAdminUnlocked()) return;
 
-  const current = item.source === 'accessory'
-    ? AccessoryStore.getById(item.id)
-    : DB.getById(item.id);
-
+  const current = item.source === 'accessory' ? AccessoryStore.getById(item.id) : DB.getById(item.id);
   if (!current) return;
 
   area.innerHTML = `
@@ -426,7 +411,6 @@ function renderModalAdminTools(item) {
 function showDetail(key) {
   const item = getItemByKey(key);
   if (!item) return;
-
   currentModalItem = item;
 
   document.getElementById('detailTitle').textContent = item.source === 'accessory'
@@ -451,7 +435,6 @@ function showDetail(key) {
       .map((id) => DB.getById(id))
       .filter(Boolean)
       .map((fixture) => `${fixture.brand} ${fixture.model}`);
-
     document.getElementById('detailBody').innerHTML = `
       <div class="row g-3">
         <div class="col-md-5">
@@ -472,7 +455,6 @@ function showDetail(key) {
       </div>`;
   } else {
     const stockCount = getStockCount(item);
-
     document.getElementById('detailBody').innerHTML = `
       <div class="row g-3">
         <div class="col-md-5">
@@ -511,22 +493,15 @@ function showDetail(key) {
 function render() {
   const filters = getFilters();
   filters.includeHidden = isAdminUnlocked();
-
   const sourceItems = filters.type === 'accessory'
     ? visibleItems(allAccessoryItems, isAdminUnlocked())
     : visibleItems(allFixtures, isAdminUnlocked());
-
-  filtered = sortFixtures(
-    filterFixtures(sourceItems, filters),
-    document.getElementById('fSort').value
-  );
-
+  filtered = sortFixtures(filterFixtures(sourceItems, filters), document.getElementById('fSort').value);
   document.getElementById('resultCount').textContent = `พบ ${filtered.length} รายการ`;
 
   const pageSize = currentPageSize();
   const totalPages = pageSize ? Math.max(Math.ceil(filtered.length / pageSize), 1) : 1;
   if (page > totalPages) page = totalPages;
-
   const start = pageSize ? (page - 1) * pageSize : 0;
   const pageItems = pageSize ? filtered.slice(start, start + pageSize) : filtered;
 
@@ -544,14 +519,13 @@ function render() {
     const typeLabel = itemTypeLabel(item);
     const colorLabel = item.color || (isBiColorFixture(item) ? 'Bi-Color' : (isRgbFixture(item) ? 'RGB' : '-'));
     const col = document.createElement('div');
-    col.className = 'col-sm-6 col-lg-4';
+    col.className = 'col-6 col-lg-4';
 
     if (item.source === 'accessory') {
       const compatible = (item.compatibleWith || [])
         .map((id) => DB.getById(id))
         .filter(Boolean)
         .map((fixture) => `${fixture.brand} ${fixture.model}`);
-
       col.innerHTML = `
         <div class="filter-panel h-100 accessory-card" role="button" data-key="${item._key}">
           <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
@@ -638,45 +612,39 @@ function render() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const [fixtures, accessories] = await Promise.all([
-    DB.load(),
-    AccessoryStore.load(),
-    VerificationStore.load(),
-    AdminAuth.ready
-  ]);
-
+  const [fixtures, accessories] = await Promise.all([DB.load(), AccessoryStore.load(), VerificationStore.load()]);
   allFixtures = buildFixtureItems(fixtures.filter((item) => inferItemType(item) !== 'accessory'));
   allAccessoryItems = buildAccessoryItems(accessories);
 
-  const brandSel = document.getElementById('fBrand');
-  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => item.brand).filter(Boolean))]
-    .sort()
-    .forEach((brand) => {
-      const o = document.createElement('option');
-      o.value = brand;
-      o.textContent = brand;
-      brandSel.appendChild(o);
+  const mobileFilterToggle = document.getElementById('mobileFilterToggle');
+  const mobileFilterPanel = document.getElementById('equipmentFiltersPanel');
+  if (mobileFilterToggle && mobileFilterPanel) {
+    mobileFilterToggle.addEventListener('click', () => {
+      const open = mobileFilterPanel.classList.toggle('is-open');
+      mobileFilterToggle.textContent = open ? 'ซ่อนค้นหา / กรอง' : 'เปิดค้นหา / กรอง';
     });
+  }
+
+  const brandSel = document.getElementById('fBrand');
+  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => item.brand).filter(Boolean))].sort().forEach((brand) => {
+    const o = document.createElement('option');
+    o.value = brand; o.textContent = brand;
+    brandSel.appendChild(o);
+  });
 
   const catSel = document.getElementById('fCategory');
-  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => item.category).filter(Boolean))]
-    .sort()
-    .forEach((category) => {
-      const o = document.createElement('option');
-      o.value = category;
-      o.textContent = category;
-      catSel.appendChild(o);
-    });
+  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => item.category).filter(Boolean))].sort().forEach((category) => {
+    const o = document.createElement('option');
+    o.value = category; o.textContent = category;
+    catSel.appendChild(o);
+  });
 
   const ipSel = document.getElementById('fIp');
-  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => item.ip).filter(Boolean))]
-    .sort()
-    .forEach((ip) => {
-      const o = document.createElement('option');
-      o.value = ip;
-      o.textContent = ip;
-      ipSel.appendChild(o);
-    });
+  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => item.ip).filter(Boolean))].sort().forEach((ip) => {
+    const o = document.createElement('option');
+    o.value = ip; o.textContent = ip;
+    ipSel.appendChild(o);
+  });
 
   ['fSearch','fType','fBrand','fCategory','fIp','fWireless','fColor','fBattery','fInStock','fMaxWeight','fMaxPower','fSort','fPageSize']
     .forEach((id) => {
@@ -687,12 +655,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('fReset').addEventListener('click', () => {
     document.getElementById('fSearch').value = '';
-    ['fType','fBrand','fCategory','fIp','fWireless','fColor','fBattery','fInStock']
-      .forEach((id) => document.getElementById(id).value = '');
+    ['fType','fBrand','fCategory','fIp','fWireless','fColor','fBattery','fInStock'].forEach((id) => document.getElementById(id).value = '');
     document.getElementById('fMaxWeight').value = '';
     document.getElementById('fMaxPower').value = '';
     page = 1;
     render();
+
+    if (mobileFilterPanel) {
+      mobileFilterPanel.classList.remove('is-open');
+      if (mobileFilterToggle) mobileFilterToggle.textContent = 'เปิดค้นหา / กรอง';
+    }
   });
 
   document.getElementById('detailAddBtn').addEventListener('click', () => {
@@ -717,5 +689,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   render();
 });
 </script>
-</body>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a18d326939c5c021',t:'MTc4MzY2MTY0MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
