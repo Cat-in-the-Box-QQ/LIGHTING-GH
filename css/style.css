@@ -57,8 +57,11 @@ img {
 .fixture-card img {
   width: 100%;
   height: 180px;
-  object-fit: cover;
-  background: #e9ecef;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  padding: 10px;
+  background: #f8f9fa;
 }
 
 .fixture-card .card-body {
