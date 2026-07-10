@@ -2011,13 +2011,13 @@
   },
   {
     "id": 54,
-    "brand": "DMX Control",
-    "model": "Avolite Tiger Touch 2",
+    "brand": "Avolites",
+    "model": "Tiger Touch II",
     "category": "Controller",
-    "power": null,
-    "powerRaw": null,
-    "weight": null,
-    "weightRaw": null,
+    "power": 80.0,
+    "powerRaw": "80 W / 110-240V AC 50-60Hz",
+    "weight": 15.2,
+    "weightRaw": "15.2 kg",
     "lux": null,
     "beam": null,
     "wireless": null,
@@ -2034,30 +2034,33 @@
     "unitsPerSet": null,
     "setCountInStock": null,
     "verification": {
-      "status": "pending",
-      "date": null,
-      "verifiedBy": null,
-      "sourceIds": [],
-      "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
-      "changeCount": 4
-    }
+      "status": "verified",
+      "date": "2026-07-10",
+      "verifiedBy": "Arena Agent",
+      "sourceIds": [
+        "SRC-AVO-TIGER2"
+      ],
+      "notes": "Tiger Touch II dimensions, weight and power consumption verified from Avolites spec sheet.",
+      "changeCount": 11
+    },
+    "dimensions": "674 x 435 x 147 mm"
   },
   {
     "id": 55,
-    "brand": "DMX Control",
-    "model": "Gaffer Control",
+    "brand": "Gaffer's Control",
+    "model": "GC-28",
     "category": "Controller",
-    "power": null,
-    "powerRaw": null,
-    "weight": null,
-    "weightRaw": null,
+    "power": 15.0,
+    "powerRaw": "15 W / 100-240V AC 50-60Hz",
+    "weight": 2.725,
+    "weightRaw": "2.725 kg",
     "lux": null,
     "beam": null,
     "wireless": "LumenRadio CRMX",
     "whiteLight": null,
     "color": null,
     "ip": null,
-    "battery": null,
+    "battery": "Li-ion 70Wh built-in battery",
     "stock": "1 Piece",
     "image": "images/products/055-dmx-control-gaffer-control.jpg",
     "pdfPage": 91,
@@ -2067,23 +2070,26 @@
     "unitsPerSet": null,
     "setCountInStock": null,
     "verification": {
-      "status": "pending",
-      "date": null,
-      "verifiedBy": null,
-      "sourceIds": [],
-      "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
-      "changeCount": 5
-    }
+      "status": "verified",
+      "date": "2026-07-10",
+      "verifiedBy": "Arena Agent",
+      "sourceIds": [
+        "SRC-GAF-GC28"
+      ],
+      "notes": "Gaffer's Control GC-28 verified for integrated CRMX, battery, dimensions and power draw.",
+      "changeCount": 12
+    },
+    "dimensions": "300 x 249 x 119 mm"
   },
   {
     "id": 56,
-    "brand": "DMX Control",
-    "model": "Kingkong KK 1024",
+    "brand": "Kingkong",
+    "model": "KK 1024",
     "category": "Controller",
     "power": null,
-    "powerRaw": null,
-    "weight": null,
-    "weightRaw": null,
+    "powerRaw": "AC 90-240V / 50-60Hz",
+    "weight": 9.53,
+    "weightRaw": "9.53 kg",
     "lux": null,
     "beam": null,
     "wireless": null,
@@ -2100,13 +2106,16 @@
     "unitsPerSet": null,
     "setCountInStock": null,
     "verification": {
-      "status": "pending",
-      "date": null,
-      "verifiedBy": null,
-      "sourceIds": [],
-      "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
-      "changeCount": 3
-    }
+      "status": "partially_verified",
+      "date": "2026-07-10",
+      "verifiedBy": "Arena Agent",
+      "sourceIds": [
+        "SRC-KK1024-MANUAL"
+      ],
+      "notes": "KK 1024 brand, dimensions and electrical input aligned to manual-level source; official manufacturer spec still recommended.",
+      "changeCount": 9
+    },
+    "dimensions": "485 x 420 x 105 mm"
   },
   {
     "id": 57,
@@ -2143,20 +2152,20 @@
   },
   {
     "id": 58,
-    "brand": "DMX Control",
-    "model": "Moonlite",
+    "brand": "LumenRadio",
+    "model": "MoonLite",
     "category": "Controller",
     "power": null,
-    "powerRaw": null,
-    "weight": null,
-    "weightRaw": null,
+    "powerRaw": "5VDC input",
+    "weight": 0.14,
+    "weightRaw": "140 g",
     "lux": null,
     "beam": null,
-    "wireless": "LumenRadio CRMX",
+    "wireless": "LumenRadio CRMX / W-DMX / Bluetooth 5.0 / RDM",
     "whiteLight": null,
     "color": null,
     "ip": null,
-    "battery": null,
+    "battery": "Built-in rechargeable battery (10h CRMX RX / 20h Bluetooth Smart mode)",
     "stock": "95 Pieces",
     "image": "images/products/058-dmx-control-moonlite.jpg",
     "pdfPage": 94,
@@ -2166,26 +2175,30 @@
     "unitsPerSet": null,
     "setCountInStock": null,
     "verification": {
-      "status": "pending",
-      "date": null,
-      "verifiedBy": null,
-      "sourceIds": [],
-      "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
-      "changeCount": 4
-    }
+      "status": "partially_verified",
+      "date": "2026-07-10",
+      "verifiedBy": "Arena Agent",
+      "sourceIds": [
+        "SRC-LR-MOONLITE-BROCHURE",
+        "SRC-LR-MOONLITE-PROD"
+      ],
+      "notes": "Confirmed as the original MoonLite model (not MoonLite2); protocol support and runtime verified from LumenRadio MoonLite materials.",
+      "changeCount": 11
+    },
+    "dimensions": "100 x 50 x 26 mm"
   },
   {
     "id": 59,
-    "brand": "DMX Control",
+    "brand": "LumenRadio",
     "model": "Aurora",
     "category": "Controller",
     "power": null,
-    "powerRaw": null,
+    "powerRaw": "DC 10-20V / AC 100-240VAC",
     "weight": null,
     "weightRaw": null,
     "lux": null,
     "beam": null,
-    "wireless": "LumenRadio CRMX",
+    "wireless": "LumenRadio CRMX / W-DMX / Wi‑Fi / Bluetooth 5.0 / RDM / Art-Net / sACN",
     "whiteLight": null,
     "color": null,
     "ip": null,
@@ -2199,23 +2212,26 @@
     "unitsPerSet": null,
     "setCountInStock": null,
     "verification": {
-      "status": "pending",
-      "date": null,
-      "verifiedBy": null,
-      "sourceIds": [],
-      "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
-      "changeCount": 4
-    }
+      "status": "partially_verified",
+      "date": "2026-07-10",
+      "verifiedBy": "Arena Agent",
+      "sourceIds": [
+        "SRC-LR-AURORA-PROD"
+      ],
+      "notes": "Aurora manufacturer and protocol support verified from LumenRadio product page; exact weight still not confirmed from official source.",
+      "changeCount": 7
+    },
+    "dimensions": "200 x 140 x 44 mm"
   },
   {
     "id": 60,
-    "brand": "DMX Control",
-    "model": "TX2",
+    "brand": "LumenRadio",
+    "model": "CRMX Nova TX2 RDM",
     "category": "Wireless DMX Transmitter",
-    "power": null,
-    "powerRaw": null,
-    "weight": null,
-    "weightRaw": null,
+    "power": 12.0,
+    "powerRaw": "12 W / 100-240VAC 47-70Hz / 0.12A",
+    "weight": 0.9,
+    "weightRaw": "900 g",
     "lux": null,
     "beam": null,
     "wireless": "LumenRadio CRMX / RDM",
@@ -2232,17 +2248,21 @@
     "unitsPerSet": null,
     "setCountInStock": null,
     "verification": {
-      "status": "pending",
-      "date": null,
-      "verifiedBy": null,
-      "sourceIds": [],
-      "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
-      "changeCount": 4
-    }
+      "status": "verified",
+      "date": "2026-07-10",
+      "verifiedBy": "Arena Agent",
+      "sourceIds": [
+        "SRC-LR-TX2",
+        "SRC-LR-TX2-SPEC"
+      ],
+      "notes": "Nova TX2 RDM verified from official LumenRadio product and specification pages.",
+      "changeCount": 10
+    },
+    "dimensions": "220 x 44 x 160 mm"
   },
   {
     "id": 61,
-    "brand": "Battery",
+    "brand": "FXLION",
     "model": "V-Mount 14.8V",
     "category": "Battery",
     "power": null,
@@ -2255,7 +2275,7 @@
     "whiteLight": null,
     "color": null,
     "ip": null,
-    "battery": "14.8V battery",
+    "battery": "14.8V V-Mount battery",
     "stock": "35 Pieces",
     "image": "images/products/061-battery-v-mount-14-8v.jpg",
     "pdfPage": 98,
@@ -2265,17 +2285,19 @@
     "unitsPerSet": null,
     "setCountInStock": null,
     "verification": {
-      "status": "pending",
-      "date": null,
-      "verifiedBy": null,
-      "sourceIds": [],
-      "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
-      "changeCount": 4
+      "status": "partially_verified",
+      "date": "2026-07-10",
+      "verifiedBy": "Arena Agent",
+      "sourceIds": [
+        "SRC-FXLION-VM14-FAMILY"
+      ],
+      "notes": "FXLION confirmed as manufacturer family for the 14.8V V-mount entry, but the exact Wh / dimensions / weight variant still needs isolation.",
+      "changeCount": 5
     }
   },
   {
     "id": 62,
-    "brand": "Battery",
+    "brand": "FXLION",
     "model": "V-Mount 26V",
     "category": "Battery",
     "power": null,
@@ -2288,7 +2310,7 @@
     "whiteLight": null,
     "color": null,
     "ip": null,
-    "battery": "26V battery",
+    "battery": "26V V-Mount battery",
     "stock": "23 Pieces",
     "image": "images/products/062-battery-v-mount-26v.jpg",
     "pdfPage": 99,
@@ -2298,30 +2320,32 @@
     "unitsPerSet": null,
     "setCountInStock": null,
     "verification": {
-      "status": "pending",
-      "date": null,
-      "verifiedBy": null,
-      "sourceIds": [],
-      "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
-      "changeCount": 4
+      "status": "partially_verified",
+      "date": "2026-07-10",
+      "verifiedBy": "Arena Agent",
+      "sourceIds": [
+        "SRC-FXLION-VM26-FAMILY"
+      ],
+      "notes": "FXLION confirmed as manufacturer family for the 26V V-mount entry; exact Wh / size / weight variant still needs isolation.",
+      "changeCount": 5
     }
   },
   {
     "id": 63,
-    "brand": "Battery",
-    "model": "EcoFlow Delta Pro",
+    "brand": "EcoFlow",
+    "model": "DELTA Pro",
     "category": "Power Station",
-    "power": null,
-    "powerRaw": null,
-    "weight": null,
-    "weightRaw": null,
+    "power": 3600.0,
+    "powerRaw": "3600W AC output / 7200W surge / 3600Wh capacity",
+    "weight": 45.0,
+    "weightRaw": "Approx. 45 kg",
     "lux": null,
     "beam": null,
-    "wireless": null,
+    "wireless": "Wi‑Fi / Bluetooth",
     "whiteLight": null,
     "color": null,
     "ip": null,
-    "battery": "3.6kWh power station",
+    "battery": "3.6kWh LFP power station",
     "stock": "6 Pieces",
     "image": "images/products/063-battery-ecoflow-delta-pro.jpg",
     "pdfPage": 100,
@@ -2331,12 +2355,15 @@
     "unitsPerSet": null,
     "setCountInStock": null,
     "verification": {
-      "status": "pending",
-      "date": null,
-      "verifiedBy": null,
-      "sourceIds": [],
-      "notes": "Imported from current working database; not yet manually verified against manufacturer source.",
-      "changeCount": 4
-    }
+      "status": "verified",
+      "date": "2026-07-10",
+      "verifiedBy": "Arena Agent",
+      "sourceIds": [
+        "SRC-ECO-DELTAPRO"
+      ],
+      "notes": "EcoFlow DELTA Pro capacity, output, weight and connectivity verified from official product page.",
+      "changeCount": 12
+    },
+    "dimensions": "635 x 284 x 420 mm"
   }
 ]

@@ -26,28 +26,6 @@
     "notes": "Used for Bi-Flex series weight/CCT comparison."
   },
   {
-    "id": "SRC-AP-MCPRO-HC",
-    "type": "manufacturer_help_center",
-    "manufacturer": "Aputure",
-    "title": "MC Pro Photometrics & Technical Specifications",
-    "url": "https://help.aputure.com/en/mc-pro/photometrics-technical-specifications",
-    "relatedFixtureIds": [
-      5
-    ],
-    "notes": "Direct MC Pro power, battery, weight, lux, IP, control methods."
-  },
-  {
-    "id": "SRC-AP-MCPRO-PROD",
-    "type": "manufacturer_product_page",
-    "manufacturer": "Aputure",
-    "title": "MC Pro Product Page",
-    "url": "https://aputure.com/en-US/products/mc-pro",
-    "relatedFixtureIds": [
-      5
-    ],
-    "notes": "Used as product overview and photometric cross-check."
-  },
-  {
     "id": "SRC-AP-B7C-HC",
     "type": "manufacturer_help_center",
     "manufacturer": "Aputure",
@@ -57,83 +35,6 @@
       6
     ],
     "notes": "Direct Accent B7c electrical and weight reference."
-  },
-  {
-    "id": "SRC-AP-LS60X",
-    "type": "manufacturer_spec_page",
-    "manufacturer": "Aputure",
-    "title": "LS 60x Specifications",
-    "url": "https://archive.aputure.com/products/ls60x/",
-    "relatedFixtureIds": [
-      7
-    ],
-    "notes": "Beam, lamp head weight, max draw, CCT."
-  },
-  {
-    "id": "SRC-AP-LS300X",
-    "type": "manufacturer_spec_page",
-    "manufacturer": "Aputure",
-    "title": "LS 300x Specifications",
-    "url": "https://archive.aputure.com/products/ls-300x/",
-    "relatedFixtureIds": [
-      8
-    ],
-    "notes": "Weight, power consumption, CCT, control methods."
-  },
-  {
-    "id": "SRC-AP-LS600XPRO",
-    "type": "manufacturer_help_center",
-    "manufacturer": "Aputure",
-    "title": "LS 600x Pro Photometrics & Specifications",
-    "url": "https://help.aputure.com/en/ls600x-pro/photometrics-and-specifications",
-    "relatedFixtureIds": [
-      9
-    ],
-    "notes": "Head/control box weight breakdown and max draw."
-  },
-  {
-    "id": "SRC-AP-LS600CPRO",
-    "type": "manufacturer_help_center",
-    "manufacturer": "Aputure",
-    "title": "LS 600c Pro Photometrics & Technical Specifications",
-    "url": "https://help.aputure.com/en/ls600c-pro/photometrics-technical-specifications",
-    "relatedFixtureIds": [
-      10
-    ],
-    "notes": "Direct RGBWW spec and head/control box weight reference."
-  },
-  {
-    "id": "SRC-AP-LS1200DPRO",
-    "type": "manufacturer_help_center",
-    "manufacturer": "Aputure",
-    "title": "LS 1200d Pro Photometrics & Technical Specifications",
-    "url": "https://help.aputure.com/en/ls1200d-pro/photometrics-technical-specifications-ls-1200d-pro",
-    "relatedFixtureIds": [
-      11
-    ],
-    "notes": "Input power and photometrics used for verification."
-  },
-  {
-    "id": "SRC-AP-STORM80C",
-    "type": "manufacturer_help_center",
-    "manufacturer": "Aputure",
-    "title": "STORM 80c Technical Specifications and Photometrics",
-    "url": "https://help.aputure.com/en/storm-80c/technical-specifications-and-photometrics",
-    "relatedFixtureIds": [
-      12
-    ],
-    "notes": "Input/output power and weight with yoke."
-  },
-  {
-    "id": "SRC-AP-STORM1200X",
-    "type": "manufacturer_help_center",
-    "manufacturer": "Aputure",
-    "title": "STORM 1200x Technical Specifications and Photometrics",
-    "url": "https://help.aputure.com/en/storm-1200x-technical-specifications-and-photometrics",
-    "relatedFixtureIds": [
-      13
-    ],
-    "notes": "Input power, lamp head weight, IP and CCT."
   },
   {
     "id": "SRC-AP-ESXT26",
@@ -159,6 +60,138 @@
     "notes": "Flexible mat family power references."
   },
   {
+    "id": "SRC-AP-LS1200DPRO",
+    "type": "manufacturer_help_center",
+    "manufacturer": "Aputure",
+    "title": "LS 1200d Pro Photometrics & Technical Specifications",
+    "url": "https://help.aputure.com/en/ls1200d-pro/photometrics-technical-specifications-ls-1200d-pro",
+    "relatedFixtureIds": [
+      11
+    ],
+    "notes": "Input power and photometrics used for verification."
+  },
+  {
+    "id": "SRC-AP-LS300X",
+    "type": "manufacturer_spec_page",
+    "manufacturer": "Aputure",
+    "title": "LS 300x Specifications",
+    "url": "https://archive.aputure.com/products/ls-300x/",
+    "relatedFixtureIds": [
+      8
+    ],
+    "notes": "Weight, power consumption, CCT, control methods."
+  },
+  {
+    "id": "SRC-AP-LS600CPRO",
+    "type": "manufacturer_help_center",
+    "manufacturer": "Aputure",
+    "title": "LS 600c Pro Photometrics & Technical Specifications",
+    "url": "https://help.aputure.com/en/ls600c-pro/photometrics-technical-specifications",
+    "relatedFixtureIds": [
+      10
+    ],
+    "notes": "Direct RGBWW spec and head/control box weight reference."
+  },
+  {
+    "id": "SRC-AP-LS600XPRO",
+    "type": "manufacturer_help_center",
+    "manufacturer": "Aputure",
+    "title": "LS 600x Pro Photometrics & Specifications",
+    "url": "https://help.aputure.com/en/ls600x-pro/photometrics-and-specifications",
+    "relatedFixtureIds": [
+      9
+    ],
+    "notes": "Head/control box weight breakdown and max draw."
+  },
+  {
+    "id": "SRC-AP-LS60X",
+    "type": "manufacturer_spec_page",
+    "manufacturer": "Aputure",
+    "title": "LS 60x Specifications",
+    "url": "https://archive.aputure.com/products/ls60x/",
+    "relatedFixtureIds": [
+      7
+    ],
+    "notes": "Beam, lamp head weight, max draw, CCT."
+  },
+  {
+    "id": "SRC-AP-MCPRO-HC",
+    "type": "manufacturer_help_center",
+    "manufacturer": "Aputure",
+    "title": "MC Pro Photometrics & Technical Specifications",
+    "url": "https://help.aputure.com/en/mc-pro/photometrics-technical-specifications",
+    "relatedFixtureIds": [
+      5
+    ],
+    "notes": "Direct MC Pro power, battery, weight, lux, IP, control methods."
+  },
+  {
+    "id": "SRC-AP-MCPRO-PROD",
+    "type": "manufacturer_product_page",
+    "manufacturer": "Aputure",
+    "title": "MC Pro Product Page",
+    "url": "https://aputure.com/en-US/products/mc-pro",
+    "relatedFixtureIds": [
+      5
+    ],
+    "notes": "Used as product overview and photometric cross-check."
+  },
+  {
+    "id": "SRC-AP-STORM1200X",
+    "type": "manufacturer_help_center",
+    "manufacturer": "Aputure",
+    "title": "STORM 1200x Technical Specifications and Photometrics",
+    "url": "https://help.aputure.com/en/storm-1200x-technical-specifications-and-photometrics",
+    "relatedFixtureIds": [
+      13
+    ],
+    "notes": "Input power, lamp head weight, IP and CCT."
+  },
+  {
+    "id": "SRC-AP-STORM80C",
+    "type": "manufacturer_help_center",
+    "manufacturer": "Aputure",
+    "title": "STORM 80c Technical Specifications and Photometrics",
+    "url": "https://help.aputure.com/en/storm-80c/technical-specifications-and-photometrics",
+    "relatedFixtureIds": [
+      12
+    ],
+    "notes": "Input/output power and weight with yoke."
+  },
+  {
+    "id": "SRC-ARRI-L7C",
+    "type": "manufacturer_product_page",
+    "manufacturer": "ARRI",
+    "title": "L7-C",
+    "url": "https://www.arri.com/en/lighting/led-spotlights/discontinued/l-series-c/l7-c",
+    "relatedFixtureIds": [
+      23
+    ],
+    "notes": "220W max power and manual weight reference."
+  },
+  {
+    "id": "SRC-ARRI-ORBITER",
+    "type": "manufacturer_tech_data",
+    "manufacturer": "ARRI",
+    "title": "Orbiter Tech Specs",
+    "url": "https://microsites.arri.com/orbiter/orbiter-tech-specs.html",
+    "relatedFixtureIds": [
+      22
+    ],
+    "notes": "Power range, white light, CRMX and IP references."
+  },
+  {
+    "id": "SRC-ARRI-S30",
+    "type": "manufacturer_product_page",
+    "manufacturer": "ARRI",
+    "title": "SkyPanel S30-C",
+    "url": "https://www.arri.com/en/lighting/led-panel-lights/skypanel-classic/s30-c",
+    "relatedFixtureIds": [
+      17
+    ],
+    "notes": "Manual version weight and product details."
+  },
+  {
     "id": "SRC-ARRI-SKP-CLASSIC",
     "type": "manufacturer_tech_data",
     "manufacturer": "ARRI",
@@ -173,17 +206,6 @@
     "notes": "Power and weight references for SkyPanel classic family."
   },
   {
-    "id": "SRC-ARRI-S30",
-    "type": "manufacturer_product_page",
-    "manufacturer": "ARRI",
-    "title": "SkyPanel S30-C",
-    "url": "https://www.arri.com/en/lighting/led-panel-lights/skypanel-classic/s30-c",
-    "relatedFixtureIds": [
-      17
-    ],
-    "notes": "Manual version weight and product details."
-  },
-  {
     "id": "SRC-ARRI-X",
     "type": "manufacturer_tech_data",
     "manufacturer": "ARRI",
@@ -193,28 +215,6 @@
       21
     ],
     "notes": "RGBACL, IP66, weight and beam references."
-  },
-  {
-    "id": "SRC-ARRI-ORBITER",
-    "type": "manufacturer_tech_data",
-    "manufacturer": "ARRI",
-    "title": "Orbiter Tech Specs",
-    "url": "https://microsites.arri.com/orbiter/orbiter-tech-specs.html",
-    "relatedFixtureIds": [
-      22
-    ],
-    "notes": "Power range, white light, CRMX and IP references."
-  },
-  {
-    "id": "SRC-ARRI-L7C",
-    "type": "manufacturer_product_page",
-    "manufacturer": "ARRI",
-    "title": "L7-C",
-    "url": "https://www.arri.com/en/lighting/led-spotlights/discontinued/l-series-c/l7-c",
-    "relatedFixtureIds": [
-      23
-    ],
-    "notes": "220W max power and manual weight reference."
   },
   {
     "id": "SRC-AST-AX3",
@@ -240,17 +240,6 @@
     "notes": "AX5 total power and AX9 power/weight reference."
   },
   {
-    "id": "SRC-AST-HYDRA",
-    "type": "manufacturer_spec_page",
-    "manufacturer": "Astera",
-    "title": "HydraPanel Specs",
-    "url": "https://astera-led.com/products/hydrapanel/specs/",
-    "relatedFixtureIds": [
-      27
-    ],
-    "notes": "Power draw, weight, beam, wireless and runtime."
-  },
-  {
     "id": "SRC-AST-HELIOS",
     "type": "manufacturer_spec_page",
     "manufacturer": "Astera",
@@ -262,17 +251,15 @@
     "notes": "Helios specific power draw, lux and weight."
   },
   {
-    "id": "SRC-AST-TITAN-FAMILY",
+    "id": "SRC-AST-HYDRA",
     "type": "manufacturer_spec_page",
     "manufacturer": "Astera",
-    "title": "Titan / Helios / Hyperion family overview",
-    "url": "https://astera-led.com/titan/",
+    "title": "HydraPanel Specs",
+    "url": "https://astera-led.com/products/hydrapanel/specs/",
     "relatedFixtureIds": [
-      28,
-      29,
-      30
+      27
     ],
-    "notes": "Tube family total power, LED draw, light output and IP."
+    "notes": "Power draw, weight, beam, wireless and runtime."
   },
   {
     "id": "SRC-AST-HYPERION",
@@ -297,6 +284,30 @@
     "notes": "Power draw, lumens, weight, wireless and IP."
   },
   {
+    "id": "SRC-AST-TITAN-FAMILY",
+    "type": "manufacturer_spec_page",
+    "manufacturer": "Astera",
+    "title": "Titan / Helios / Hyperion family overview",
+    "url": "https://astera-led.com/titan/",
+    "relatedFixtureIds": [
+      28,
+      29,
+      30
+    ],
+    "notes": "Tube family total power, LED draw, light output and IP."
+  },
+  {
+    "id": "SRC-AVO-TIGER2",
+    "type": "manufacturer_spec_sheet",
+    "manufacturer": "Avolites",
+    "title": "Tiger Touch II Spec Sheet 2022.2",
+    "url": "https://www.avolites.com/app/uploads/2022/05/Tiger_Touch_II_Spec_Sheet_2022.2.pdf",
+    "relatedFixtureIds": [
+      54
+    ],
+    "notes": "Official Avolites Tiger Touch II dimensions, weight and power consumption."
+  },
+  {
     "id": "SRC-CRM-V8",
     "type": "manufacturer_knowledge_base",
     "manufacturer": "Creamsource",
@@ -308,6 +319,17 @@
     "notes": "650W, 15.9kg, RGBW, 2200K-15000K, IP65."
   },
   {
+    "id": "SRC-ECO-DELTAPRO",
+    "type": "manufacturer_product_page",
+    "manufacturer": "EcoFlow",
+    "title": "DELTA Pro Portable Power Station",
+    "url": "https://us.ecoflow.com/products/delta-pro-portable-power-station",
+    "relatedFixtureIds": [
+      63
+    ],
+    "notes": "Official DELTA Pro capacity, AC output, weight and wireless/app connectivity."
+  },
+  {
     "id": "SRC-FIILEX-Q5",
     "type": "manufacturer_product_page",
     "manufacturer": "Fiilex",
@@ -317,6 +339,50 @@
       38
     ],
     "notes": "175W, 3.3kg, beam 12°-55°, IP-X5."
+  },
+  {
+    "id": "SRC-FXLION-VM14-FAMILY",
+    "type": "manufacturer_family_page",
+    "manufacturer": "FXLION",
+    "title": "FXLION 14.8V V-Mount Battery Family",
+    "url": "https://fxlion.net/v-mount-battery/square-battery/",
+    "relatedFixtureIds": [
+      61
+    ],
+    "notes": "Official family page confirms manufacturer and 14.8V V-mount battery range, but exact capacity variant is not isolated yet."
+  },
+  {
+    "id": "SRC-FXLION-VM26-FAMILY",
+    "type": "manufacturer_family_page",
+    "manufacturer": "FXLION",
+    "title": "FXLION 26V V-Mount Battery Family",
+    "url": "https://fxlion.net/v-mount-battery/26v-v-mount-battery/",
+    "relatedFixtureIds": [
+      62
+    ],
+    "notes": "Official family page confirms manufacturer and 26V V-mount battery range, matching the 26V entry in this database; exact capacity variant is not isolated yet."
+  },
+  {
+    "id": "SRC-GAF-GC28",
+    "type": "manufacturer_spec_sheet",
+    "manufacturer": "Gaffer's Control",
+    "title": "Gaffer's Control Specs PDF",
+    "url": "https://gopher-clementine-ygwy.squarespace.com/s/Gaffers-control-specs.pdf",
+    "relatedFixtureIds": [
+      55
+    ],
+    "notes": "Spec sheet listing integrated CRMX, 70Wh battery, power draw, dimensions and operating time."
+  },
+  {
+    "id": "SRC-KK1024-MANUAL",
+    "type": "third_party_manual",
+    "manufacturer": "Kingkong",
+    "title": "Kingkong DMX Stage Lighting Controller 1024 Channels User Manual",
+    "url": "https://manuals.plus/asin/B09WRDVMNT",
+    "relatedFixtureIds": [
+      56
+    ],
+    "notes": "Manual-style source for KK 1024 power, dimensions and controller capacity; manufacturer-source verification still recommended."
   },
   {
     "id": "SRC-LG-PLUS-FAMILY",
@@ -347,5 +413,60 @@
       43
     ],
     "notes": "Spectrum line dimensional and weight references."
+  },
+  {
+    "id": "SRC-LR-AURORA-PROD",
+    "type": "manufacturer_product_page",
+    "manufacturer": "LumenRadio",
+    "title": "Aurora Product Page",
+    "url": "https://lumenradio.com/products/aurora/",
+    "relatedFixtureIds": [
+      59
+    ],
+    "notes": "Official Aurora product page confirming protocol support and AC/DC input."
+  },
+  {
+    "id": "SRC-LR-MOONLITE-BROCHURE",
+    "type": "manufacturer_brochure",
+    "manufacturer": "LumenRadio",
+    "title": "MoonLite Salesfolder",
+    "url": "https://dl.lumenradio.com/brochures/MoonLite%20Salesfolder_LumenRadio_180416.pdf",
+    "relatedFixtureIds": [
+      58
+    ],
+    "notes": "Official brochure for the original MoonLite model (not MoonLite2), covering protocol support, battery runtime and 5VDC input."
+  },
+  {
+    "id": "SRC-LR-MOONLITE-PROD",
+    "type": "manufacturer_product_page",
+    "manufacturer": "LumenRadio",
+    "title": "MoonLite Product Page",
+    "url": "https://lumenradio.com/product/moonlite/",
+    "relatedFixtureIds": [
+      58
+    ],
+    "notes": "Official product page for the original MoonLite model."
+  },
+  {
+    "id": "SRC-LR-TX2",
+    "type": "manufacturer_product_page",
+    "manufacturer": "LumenRadio",
+    "title": "CRMX Nova TX2 RDM",
+    "url": "https://lumenradio.com/product/crmx-nova-tx2-rdm/",
+    "relatedFixtureIds": [
+      60
+    ],
+    "notes": "Official Nova TX2 RDM dimensions and product positioning."
+  },
+  {
+    "id": "SRC-LR-TX2-SPEC",
+    "type": "manufacturer_specifications",
+    "manufacturer": "LumenRadio",
+    "title": "CRMX Nova Specifications",
+    "url": "https://lumenradio.com/support-materials/crmx-nova-specifications/",
+    "relatedFixtureIds": [
+      60
+    ],
+    "notes": "Official Nova family power and weight reference for TX2 RDM."
   }
 ]
