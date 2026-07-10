@@ -301,9 +301,9 @@ footer {
   }
 
   .navbar {
-    position: sticky;
-    top: 0;
-    z-index: 1030;
+    position: static;
+    top: auto;
+    z-index: auto;
   }
 
   .navbar .container {
@@ -332,8 +332,21 @@ footer {
     border-radius: 14px;
   }
 
+  .mobile-filter-panel {
+    display: none;
+  }
+
+  .mobile-filter-panel.is-open {
+    display: block;
+    margin-bottom: 1rem;
+  }
+
   .fixture-card img {
-    height: 150px;
+    height: 140px;
+  }
+
+  .fixture-card .card-body {
+    padding: .7rem;
   }
 
   .spec-row {
@@ -426,6 +439,27 @@ footer {
     align-items: stretch;
   }
 
+  #detailModal .modal-footer,
+  #accessoryModal .modal-footer {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: .5rem;
+  }
+
+  #detailModal .modal-footer .btn,
+  #detailModal .modal-footer .form-control,
+  #accessoryModal .modal-footer .btn,
+  #accessoryModal .modal-footer .form-control {
+    width: auto !important;
+  }
+
+  #detailModal .qty-inline {
+    width: 74px !important;
+    max-width: 74px;
+  }
+
   .inventory-table {
     min-width: 720px;
   }
@@ -477,6 +511,11 @@ footer {
   .modal-footer {
     position: sticky;
     bottom: 0;
+  }
+
+  #detailModal .modal-footer,
+  #accessoryModal .modal-footer {
+    position: static;
   }
 }
 
