@@ -58,6 +58,7 @@
         <select id="fWireless" class="form-select form-select-sm mb-2">
           <option value="">ทั้งหมด</option>
           <option value="yes">มี</option>
+          <option value="crmx">CRMX</option>
           <option value="no">ไม่มี</option>
         </select>
 
@@ -529,12 +530,14 @@ function render() {
         .map((id) => DB.getById(id))
         .filter(Boolean)
         .map((fixture) => `${fixture.brand} ${fixture.model}`);
+      const crmxBadge = hasCrmx(item) ? `<span class="badge bg-warning text-dark">CRMX</span>` : '';
       col.innerHTML = `
         <div class="filter-panel h-100 accessory-card" role="button" data-key="${item._key}">
           <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
             <strong>${item.model}</strong>
             <div class="d-flex gap-1 flex-wrap">
               <span class="badge bg-light text-dark border">Accessory</span>
+              ${crmxBadge}
               ${item.hidden ? `<span class="badge bg-danger">Hidden</span>` : ''}
             </div>
           </div>
@@ -543,6 +546,7 @@ function render() {
           <div class="small"><strong>ใช้กับ:</strong> ${compatible.length ? compatible.join(', ') : 'ยังไม่ระบุ'}</div>
         </div>`;
     } else {
+      const crmxBadge = hasCrmx(item) ? `<span class="badge bg-warning text-dark">CRMX</span>` : '';
       col.innerHTML = `
         <div class="fixture-card" role="button" data-key="${item._key}">
           <img src="${item.image || ''}" alt="${item.model}" onerror="this.style.display='none'">
@@ -550,6 +554,7 @@ function render() {
             <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
               <strong>${item.model}</strong>
               <div class="d-flex gap-1 flex-wrap">
+                ${crmxBadge}
                 ${item.ip ? `<span class="badge bg-secondary">${item.ip}</span>` : ''}
                 ${item.hidden ? `<span class="badge bg-danger">Hidden</span>` : ''}
               </div>
@@ -692,6 +697,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   render();
 });
 </script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a18d326939c5c021',t:'MTc4MzY2MTY0MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a18eb7a4b915a738',t:'MTc4MzY3NzU4NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
