@@ -69,6 +69,11 @@ function hasWireless(item) {
   return !!normalizeText(item?.wireless);
 }
 
+function hasCrmx(item) {
+  const wireless = normalizeText(item?.wireless);
+  return /crmx|lumenradio/.test(wireless);
+}
+
 function hasBattery(item) {
   return !!normalizeText(item?.battery);
 }
@@ -110,6 +115,7 @@ function filterFixtures(fixtures, filters) {
     if (filters.ip && f.ip !== filters.ip) return false;
     if (filters.wireless === "yes" && !hasWireless(f)) return false;
     if (filters.wireless === "no" && hasWireless(f)) return false;
+    if (filters.wireless === "crmx" && !hasCrmx(f)) return false;
     if (filters.color === "rgb" && !isRgbFixture(f)) return false;
     if (filters.color === "bicolor" && !isBiColorFixture(f)) return false;
     if (filters.battery === "yes" && !hasBattery(f)) return false;
