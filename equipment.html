@@ -537,12 +537,15 @@ function render() {
             <strong>${item.model}</strong>
             <div class="d-flex gap-1 flex-wrap">
               <span class="badge bg-light text-dark border">Accessory</span>
-              ${crmxBadge}
               ${item.hidden ? `<span class="badge bg-danger">Hidden</span>` : ''}
             </div>
           </div>
           <div class="small text-muted mb-1">${item.brand || '-'} · ${item.category || '-'}</div>
           <div class="small mb-2">${item.stock || 'ไม่ระบุ stock'}</div>
+          <div class="d-flex flex-wrap gap-1 mb-2">
+            ${crmxBadge}
+            ${item.wireless ? `<span class="badge bg-secondary">Wireless</span>` : ''}
+          </div>
           <div class="small"><strong>ใช้กับ:</strong> ${compatible.length ? compatible.join(', ') : 'ยังไม่ระบุ'}</div>
         </div>`;
     } else {
@@ -554,7 +557,6 @@ function render() {
             <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
               <strong>${item.model}</strong>
               <div class="d-flex gap-1 flex-wrap">
-                ${crmxBadge}
                 ${item.ip ? `<span class="badge bg-secondary">${item.ip}</span>` : ''}
                 ${item.hidden ? `<span class="badge bg-danger">Hidden</span>` : ''}
               </div>
@@ -567,6 +569,7 @@ function render() {
             <div class="d-flex flex-wrap gap-1 mb-2">
               ${colorLabel && colorLabel !== '-' ? `<span class="badge bg-dark">${colorLabel}</span>` : ''}
               ${item.wireless ? `<span class="badge bg-secondary">Wireless</span>` : ''}
+              ${crmxBadge}
               ${item.stockNote ? `<span class="badge bg-light text-dark border">${item.stockNote}</span>` : ''}
             </div>
             <div class="card-add-row">
@@ -697,5 +700,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   render();
 });
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a18eb7a4b915a738',t:'MTc4MzY3NzU4NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a18ebf377e0ca738',t:'MTc4MzY3Nzg5NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
