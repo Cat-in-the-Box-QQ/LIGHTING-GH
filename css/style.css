@@ -247,6 +247,10 @@ img {
   justify-content: center;
 }
 
+.cart-side-metric {
+  width: 100%;
+}
+
 .cart-summary-box {
   border: 1px solid var(--line);
 }
