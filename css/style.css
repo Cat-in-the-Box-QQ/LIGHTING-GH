@@ -287,15 +287,7 @@ img {
 }
 
 .print-only {
-  display: none;
-}
-
-.cart-print-details {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: .35rem .8rem;
-  margin-top: .5rem;
-  font-size: .92rem;
+  display: none !important;
 }
 
 .cart-print-summary-grid {
@@ -303,6 +295,19 @@ img {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: .75rem 1rem;
   font-size: .95rem;
+}
+
+.cart-print-table th,
+.cart-print-table td {
+  padding: .45rem .55rem;
+  vertical-align: top;
+  border-color: #d8d8d8;
+}
+
+.cart-print-table thead th {
+  font-size: .82rem;
+  color: #555;
+  background: #f7f7f7;
 }
 
 footer {
@@ -589,13 +594,18 @@ footer {
     margin-bottom: .75rem;
   }
 
+  .cart-items,
+  #emptyMsg {
+    display: none !important;
+  }
+
   .cart-print-summary-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: .5rem .8rem;
   }
 
-  .cart-print-details {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .cart-print-table {
+    font-size: 11px;
   }
 
   .cart-item-image img {
