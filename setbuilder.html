@@ -227,9 +227,13 @@ function renderSet() {
   document.getElementById('emptyMsg').style.display = setItems.length ? 'none' : 'block';
   document.getElementById('cartMetaText').textContent = `${setItems.length} รายการในชุด`;
 
+  const voltage = Number(document.getElementById('voltageSelect').value);
+
   setItems.forEach((it, idx) => {
     const p = (it.fixture.power || 0) * it.qty;
     const w = (it.fixture.weight || 0) * it.qty;
+    const currentPerUnit = currentAt(voltage, Number(it.fixture.power || 0));
+    const currentTotal = currentAt(voltage, p);
     const stockCount = getStockCount(it.fixture);
     const item = document.createElement('div');
     item.className = 'cart-item';
@@ -242,7 +246,7 @@ function renderSet() {
           <div>
             <h6 class="mb-1">${it.fixture.brand} ${it.fixture.model}</h6>
             <div class="small text-muted">${it.fixture.category || '-'} · stock ${stockCount}${it.fixture.stockNote ? ` (${it.fixture.stockNote})` : ''}</div>
-            <div class="print-only cart-print-line">Power ${it.fixture.power ?? '-'} W · Weight ${it.fixture.weight ?? '-'} kg</div>
+            <div class="print-only cart-print-line">Power ${it.fixture.power ?? '-'} W · Weight ${it.fixture.weight ?? '-'} kg · Current ${currentTotal.toFixed(2)} A @ ${voltage}V</div>
           </div>
           <div class="d-flex gap-2 flex-wrap print-hidden">
             <a href="fixture.html?id=${it.fixture.id}" class="btn btn-outline-dark btn-sm">ดูรายละเอียด</a>
@@ -250,10 +254,12 @@ function renderSet() {
           </div>
         </div>
         <div class="cart-item-meta print-hidden">
-          <div class="cart-metric"><span>Power</span><strong>${it.fixture.power ?? '-'} W</strong></div>
-          <div class="cart-metric"><span>Weight</span><strong>${it.fixture.weight ?? '-'} kg</strong></div>
+          <div class="cart-metric"><span>Power / 1 ชิ้น</span><strong>${it.fixture.power ?? '-'} W</strong></div>
+          <div class="cart-metric"><span>Weight / 1 ชิ้น</span><strong>${it.fixture.weight ?? '-'} kg</strong></div>
+          <div class="cart-metric"><span>Amp / 1 ชิ้น @ ${voltage}V</span><strong>${currentPerUnit.toFixed(2)} A</strong></div>
           <div class="cart-metric"><span>Total Power</span><strong>${p.toFixed(0)} W</strong></div>
           <div class="cart-metric"><span>Total Weight</span><strong>${w.toFixed(2)} kg</strong></div>
+          <div class="cart-metric"><span>Total Amp @ ${voltage}V</span><strong>${currentTotal.toFixed(2)} A</strong></div>
         </div>
       </div>
       <div class="cart-item-side">
@@ -292,7 +298,6 @@ function renderSet() {
   document.getElementById('sumQty').textContent = totalQty;
   document.getElementById('sumPower').textContent = `${p.toFixed(0)} W`;
   document.getElementById('sumWeight').textContent = `${w.toFixed(2)} kg`;
-  const voltage = Number(document.getElementById('voltageSelect').value);
   document.getElementById('sumCurrent').textContent = `${currentAt(voltage, p).toFixed(2)} A`;
 }
 
@@ -339,5 +344,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSet();
 });
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a70b346cd23150',t:'MTc4MzkzMjY2NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
