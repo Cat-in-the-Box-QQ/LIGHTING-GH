@@ -256,15 +256,14 @@ function renderSet() {
         <div class="cart-item-meta print-hidden">
           <div class="cart-metric"><span>Power / 1 ชิ้น</span><strong>${it.fixture.power ?? '-'} W</strong></div>
           <div class="cart-metric"><span>Weight / 1 ชิ้น</span><strong>${it.fixture.weight ?? '-'} kg</strong></div>
-          <div class="cart-metric"><span>Amp / 1 ชิ้น @ ${voltage}V</span><strong>${currentPerUnit.toFixed(2)} A</strong></div>
           <div class="cart-metric"><span>Total Power</span><strong>${p.toFixed(0)} W</strong></div>
           <div class="cart-metric"><span>Total Weight</span><strong>${w.toFixed(2)} kg</strong></div>
-          <div class="cart-metric"><span>Total Amp @ ${voltage}V</span><strong>${currentTotal.toFixed(2)} A</strong></div>
         </div>
       </div>
       <div class="cart-item-side">
         <label class="form-label small mb-1 print-hidden">Qty</label>
         <input type="number" min="1" value="${it.qty}" class="form-control form-control-sm qtyInput print-hidden" data-idx="${idx}">
+        <div class="cart-metric cart-side-metric print-hidden mt-2"><span>Total Amp @ ${voltage}V</span><strong>${currentTotal.toFixed(2)} A</strong></div>
         <div class="print-only cart-print-line"><strong>จำนวน: ${it.qty}</strong></div>
       </div>
     `;
@@ -344,5 +343,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSet();
 });
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a70b346cd23150',t:'MTc4MzkzMjY2NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a71da67a8a3150',t:'MTc4MzkzMzQyMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
