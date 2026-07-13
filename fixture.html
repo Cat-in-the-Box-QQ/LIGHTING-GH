@@ -111,17 +111,17 @@ document.addEventListener("DOMContentLoaded", async () => {
           ${f.hidden ? `<span class="badge bg-danger">Hidden</span>` : ''}
         </div>
 
-        <div class="spec-row"><span>Power</span><span>${f.powerRaw || (f.power != null ? `${f.power} W` : '-')}</span></div>
-        <div class="spec-row"><span>Weight</span><span>${f.weightRaw || (f.weight != null ? `${f.weight} kg` : '-')}</span></div>
+        ${specRowHtml('Power', f.powerRaw || (f.power != null ? `${f.power} W` : '-'), isAdminUnlocked() ? f.id : null, 'powerRaw')}
+        ${specRowHtml('Weight', f.weightRaw || (f.weight != null ? `${f.weight} kg` : '-'), isAdminUnlocked() ? f.id : null, 'weightRaw')}
         <div class="spec-row"><span>Current @ 220V</span><span>${current220} A</span></div>
         <div class="spec-row"><span>Lux</span><span>${f.lux || '-'}</span></div>
         <div class="spec-row"><span>Lumens</span><span>${f.lumens ?? '-'}</span></div>
         <div class="spec-row"><span>Beam Angle</span><span>${f.beam || '-'}</span></div>
-        <div class="spec-row"><span>Dimensions</span><span>${f.dimensions || '-'}</span></div>
-        <div class="spec-row"><span>Wireless Control</span><span>${f.wireless || '-'}</span></div>
+        ${specRowHtml('Dimensions', f.dimensions || '-', isAdminUnlocked() ? f.id : null, 'dimensions')}
+        ${specRowHtml('Wireless Control', f.wireless || '-', isAdminUnlocked() ? f.id : null, 'wireless')}
         <div class="spec-row"><span>White Light</span><span>${f.whiteLight || '-'}</span></div>
         <div class="spec-row"><span>Color Light</span><span>${f.color || '-'}</span></div>
-        <div class="spec-row"><span>Battery</span><span>${f.battery || '-'}</span></div>
+        ${specRowHtml('Battery', f.battery || '-', isAdminUnlocked() ? f.id : null, 'battery')}
 
         <div class="filter-panel mt-3">
           <h5 class="mb-2">Accessories / อุปกรณ์เสริม</h5>
@@ -231,5 +231,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderAdminTools();
 });
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a70b97ef043150',t:'MTc4MzkzMjY4MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
 </html>

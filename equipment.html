@@ -483,13 +483,13 @@ function showDetail(key) {
           <div class="spec-row"><span>Lux</span><span>${item.lux || '-'}</span></div>
           <div class="spec-row"><span>Lumens</span><span>${item.lumens ?? '-'}</span></div>
           <div class="spec-row"><span>Beam Angle</span><span>${item.beam || '-'}</span></div>
-          <div class="spec-row"><span>Dimensions</span><span>${item.dimensions || '-'}</span></div>
-          <div class="spec-row"><span>กำลังไฟ</span><span>${item.powerRaw || (item.power != null ? `${item.power} W` : '-')}</span></div>
-          <div class="spec-row"><span>น้ำหนัก</span><span>${item.weightRaw || (item.weight != null ? `${item.weight} kg` : '-')}</span></div>
-          <div class="spec-row"><span>Wireless</span><span>${item.wireless || '-'}</span></div>
+          ${specRowHtml('Dimensions', item.dimensions || '-', isAdminUnlocked() ? item.id : null, 'dimensions')}
+          ${specRowHtml('กำลังไฟ', item.powerRaw || (item.power != null ? `${item.power} W` : '-'), isAdminUnlocked() ? item.id : null, 'powerRaw')}
+          ${specRowHtml('น้ำหนัก', item.weightRaw || (item.weight != null ? `${item.weight} kg` : '-'), isAdminUnlocked() ? item.id : null, 'weightRaw')}
+          ${specRowHtml('Wireless', item.wireless || '-', isAdminUnlocked() ? item.id : null, 'wireless')}
           <div class="spec-row"><span>White Light</span><span>${item.whiteLight || '-'}</span></div>
           <div class="spec-row"><span>Color Light</span><span>${item.color || '-'}</span></div>
-          <div class="spec-row"><span>Battery</span><span>${item.battery || '-'}</span></div>
+          ${specRowHtml('Battery', item.battery || '-', isAdminUnlocked() ? item.id : null, 'battery')}
           <div class="spec-row"><span>IP Rating</span><span>${item.ip || '-'}</span></div>
           <div class="spec-row"><span>Stock</span><span>${stockCount}${item.stockNote ? ` · ${item.stockNote}` : ''}</span></div>
           <div class="filter-panel mt-3">
@@ -717,5 +717,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   render();
 });
 </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
