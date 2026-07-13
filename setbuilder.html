@@ -28,6 +28,7 @@
     <div class="small text-muted">Lighting GH</div>
   </div>
   <div id="printSummaryBox" class="print-only filter-panel mb-3"></div>
+  <div id="printListTable" class="print-only filter-panel mb-3"></div>
 
   <div class="row g-3">
     <div class="col-md-8">
@@ -247,13 +248,6 @@ function renderSet() {
           <div>
             <h6 class="mb-1">${it.fixture.brand} ${it.fixture.model}</h6>
             <div class="small text-muted">${it.fixture.category || '-'} · stock ${stockCount}${it.fixture.stockNote ? ` (${it.fixture.stockNote})` : ''}</div>
-            <div class="print-only cart-print-details">
-              <div><strong>จำนวน:</strong> ${it.qty}</div>
-              <div><strong>กำลังไฟ / 1 ชิ้น:</strong> ${it.fixture.power ?? '-'} W</div>
-              <div><strong>กำลังไฟรวม:</strong> ${p.toFixed(0)} W</div>
-              <div><strong>น้ำหนักรวม:</strong> ${w.toFixed(2)} kg</div>
-              <div><strong>กระแสรวม @ ${voltage}V:</strong> ${currentTotal.toFixed(2)} A</div>
-            </div>
           </div>
           <div class="d-flex gap-2 flex-wrap print-hidden">
             <a href="fixture.html?id=${it.fixture.id}" class="btn btn-outline-dark btn-sm">ดูรายละเอียด</a>
@@ -271,7 +265,6 @@ function renderSet() {
         <label class="form-label small mb-1 print-hidden">Qty</label>
         <input type="number" min="1" value="${it.qty}" class="form-control form-control-sm qtyInput print-hidden" data-idx="${idx}">
         <div class="cart-metric cart-side-metric print-hidden mt-2"><span>Total Amp @ ${voltage}V</span><strong>${currentTotal.toFixed(2)} A</strong></div>
-        <div class="print-only cart-print-line"><strong>จำนวน: ${it.qty}</strong></div>
       </div>
     `;
     cart.appendChild(item);
@@ -321,6 +314,49 @@ function renderSet() {
       </div>
     `;
   }
+
+  const printList = document.getElementById('printListTable');
+  if (printList) {
+    if (!setItems.length) {
+      printList.innerHTML = '';
+    } else {
+      printList.innerHTML = `
+        <h5 class="mb-2">รายการอุปกรณ์</h5>
+        <div class="table-responsive">
+          <table class="table table-sm cart-print-table mb-0">
+            <thead>
+              <tr>
+                <th style="width:38px;">#</th>
+                <th>รายการ</th>
+                <th>จำนวน</th>
+                <th>กำลังไฟ / 1 ชิ้น</th>
+                <th>กำลังไฟรวม</th>
+                <th>กระแสรวม @ ${voltage}V</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${setItems.map((it, idx) => {
+                const totalPowerItem = (it.fixture.power || 0) * it.qty;
+                const totalCurrentItem = currentAt(voltage, totalPowerItem);
+                return `
+                  <tr>
+                    <td>${idx + 1}</td>
+                    <td>
+                      <strong>${it.fixture.brand} ${it.fixture.model}</strong><br>
+                      <span class="small text-muted">${it.fixture.category || '-'} · stock ${getStockCount(it.fixture)}</span>
+                    </td>
+                    <td>${it.qty}</td>
+                    <td>${it.fixture.power ?? '-'} W</td>
+                    <td>${totalPowerItem.toFixed(0)} W</td>
+                    <td>${totalCurrentItem.toFixed(2)} A</td>
+                  </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+  }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -366,5 +402,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSet();
 });
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a728d5be9e3150',t:'MTc4MzkzMzg3OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a7332e7f013150',t:'MTc4MzkzNDMwMg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
