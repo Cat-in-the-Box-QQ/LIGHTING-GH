@@ -27,6 +27,7 @@
     <h2>รายการอุปกรณ์ในชุดงาน</h2>
     <div class="small text-muted">Lighting GH</div>
   </div>
+  <div id="printSummaryBox" class="print-only filter-panel mb-3"></div>
 
   <div class="row g-3">
     <div class="col-md-8">
@@ -246,7 +247,13 @@ function renderSet() {
           <div>
             <h6 class="mb-1">${it.fixture.brand} ${it.fixture.model}</h6>
             <div class="small text-muted">${it.fixture.category || '-'} · stock ${stockCount}${it.fixture.stockNote ? ` (${it.fixture.stockNote})` : ''}</div>
-            <div class="print-only cart-print-line">Power ${it.fixture.power ?? '-'} W · Weight ${it.fixture.weight ?? '-'} kg · Current ${currentTotal.toFixed(2)} A @ ${voltage}V</div>
+            <div class="print-only cart-print-details">
+              <div><strong>จำนวน:</strong> ${it.qty}</div>
+              <div><strong>กำลังไฟ / 1 ชิ้น:</strong> ${it.fixture.power ?? '-'} W</div>
+              <div><strong>กำลังไฟรวม:</strong> ${p.toFixed(0)} W</div>
+              <div><strong>น้ำหนักรวม:</strong> ${w.toFixed(2)} kg</div>
+              <div><strong>กระแสรวม @ ${voltage}V:</strong> ${currentTotal.toFixed(2)} A</div>
+            </div>
           </div>
           <div class="d-flex gap-2 flex-wrap print-hidden">
             <a href="fixture.html?id=${it.fixture.id}" class="btn btn-outline-dark btn-sm">ดูรายละเอียด</a>
@@ -293,11 +300,27 @@ function renderSet() {
   const totalQty = setItems.reduce((sum, item) => sum + item.qty, 0);
   const p = totalPower(setItems);
   const w = totalWeight(setItems);
+  const totalCurrent = currentAt(voltage, p);
   document.getElementById('sumCount').textContent = setItems.length;
   document.getElementById('sumQty').textContent = totalQty;
   document.getElementById('sumPower').textContent = `${p.toFixed(0)} W`;
   document.getElementById('sumWeight').textContent = `${w.toFixed(2)} kg`;
-  document.getElementById('sumCurrent').textContent = `${currentAt(voltage, p).toFixed(2)} A`;
+  document.getElementById('sumCurrent').textContent = `${totalCurrent.toFixed(2)} A`;
+
+  const printSummary = document.getElementById('printSummaryBox');
+  if (printSummary) {
+    printSummary.innerHTML = `
+      <h5 class="mb-2">สรุปรายการ</h5>
+      <div class="cart-print-summary-grid">
+        <div><strong>จำนวนรายการ</strong><br>${setItems.length}</div>
+        <div><strong>จำนวนชิ้นรวม</strong><br>${totalQty}</div>
+        <div><strong>กำลังไฟรวม</strong><br>${p.toFixed(0)} W</div>
+        <div><strong>น้ำหนักรวม</strong><br>${w.toFixed(2)} kg</div>
+        <div><strong>แรงดันที่ใช้คำนวณ</strong><br>${voltage} V</div>
+        <div><strong>กระแสรวม</strong><br>${totalCurrent.toFixed(2)} A</div>
+      </div>
+    `;
+  }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -343,5 +366,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSet();
 });
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a71da67a8a3150',t:'MTc4MzkzMzQyMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a728d5be9e3150',t:'MTc4MzkzMzg3OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
