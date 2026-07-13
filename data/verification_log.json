@@ -1210,7 +1210,20 @@
         "new": "PSU input 48 VDC / Battery adapter 23-36 VDC (26V compatible), 100% output in battery mode",
         "reason": "Verified against manufacturer battery-mode compatibility documentation"
       }
-    ]
+    ],
+    "fieldSources": {
+      "powerRaw": [
+        "SRC-ARRI-S30"
+      ],
+      "weightRaw": [
+        "SRC-ARRI-S30"
+      ],
+      "battery": [
+        "SRC-ARRI-BMOUNT",
+        "SRC-ARRI-S30",
+        "SRC-ARRI-SKP-FAQ"
+      ]
+    }
   },
   {
     "id": 18,
@@ -1290,7 +1303,20 @@
         "new": "PSU input 48 VDC / Battery adapter 23-36 VDC (26V compatible), 50% output in battery mode",
         "reason": "Verified against manufacturer battery-mode compatibility documentation"
       }
-    ]
+    ],
+    "fieldSources": {
+      "powerRaw": [
+        "SRC-ARRI-S60-BATTERY"
+      ],
+      "weightRaw": [
+        "SRC-ARRI-S60-BATTERY"
+      ],
+      "battery": [
+        "SRC-ARRI-BMOUNT",
+        "SRC-ARRI-S60-BATTERY",
+        "SRC-ARRI-SKP-FAQ"
+      ]
+    }
   },
   {
     "id": 19,
@@ -1370,7 +1396,20 @@
         "new": "PSU input 48 VDC / Battery adapter 23-36 VDC (26V compatible), 50% output in battery mode",
         "reason": "Verified against manufacturer battery-mode compatibility documentation"
       }
-    ]
+    ],
+    "fieldSources": {
+      "powerRaw": [
+        "SRC-ARRI-S120-BATTERY"
+      ],
+      "weightRaw": [
+        "SRC-ARRI-S120-BATTERY"
+      ],
+      "battery": [
+        "SRC-ARRI-BMOUNT",
+        "SRC-ARRI-S120-BATTERY",
+        "SRC-ARRI-SKP-FAQ"
+      ]
+    }
   },
   {
     "id": 20,
@@ -1424,7 +1463,21 @@
         "new": "Battery mode not supported",
         "reason": "Verified against manufacturer battery-mode compatibility documentation"
       }
-    ]
+    ],
+    "fieldSources": {
+      "powerRaw": [
+        "SRC-ARRI-SKP-CLASSIC"
+      ],
+      "weightRaw": [
+        "SRC-ARRI-SKP-CLASSIC"
+      ],
+      "battery": [
+        "SRC-ARRI-SKP-FAQ"
+      ],
+      "wireless": [
+        "SRC-ARRI-SKP-CLASSIC"
+      ]
+    }
   },
   {
     "id": 21,
@@ -3950,7 +4003,18 @@
         "new": "674 x 435 x 147 mm",
         "reason": "Verified against manufacturer or official product documentation"
       }
-    ]
+    ],
+    "fieldSources": {
+      "powerRaw": [
+        "SRC-AVO-TIGER2"
+      ],
+      "weightRaw": [
+        "SRC-AVO-TIGER2"
+      ],
+      "dimensions": [
+        "SRC-AVO-TIGER2"
+      ]
+    }
   },
   {
     "id": 55,
@@ -4036,7 +4100,24 @@
         "new": "300 x 249 x 119 mm",
         "reason": "Verified against manufacturer or official product documentation"
       }
-    ]
+    ],
+    "fieldSources": {
+      "powerRaw": [
+        "SRC-GAF-GC28"
+      ],
+      "battery": [
+        "SRC-GAF-GC28"
+      ],
+      "weightRaw": [
+        "SRC-GAF-GC28"
+      ],
+      "dimensions": [
+        "SRC-GAF-GC28"
+      ],
+      "wireless": [
+        "SRC-GAF-GC28"
+      ]
+    }
   },
   {
     "id": 56,
@@ -4221,7 +4302,26 @@
         "new": "100 x 50 x 26 mm",
         "reason": "Verified against manufacturer, official family page, or best-available technical documentation"
       }
-    ]
+    ],
+    "fieldSources": {
+      "powerRaw": [
+        "SRC-LR-MOONLITE-BROCHURE"
+      ],
+      "battery": [
+        "SRC-LR-MOONLITE-BROCHURE",
+        "SRC-LR-MOONLITE-PROD"
+      ],
+      "wireless": [
+        "SRC-LR-MOONLITE-BROCHURE",
+        "SRC-LR-MOONLITE-PROD"
+      ],
+      "weightRaw": [
+        "SRC-LR-MOONLITE-BROCHURE"
+      ],
+      "dimensions": [
+        "SRC-LR-MOONLITE-BROCHURE"
+      ]
+    }
   },
   {
     "id": 59,
@@ -4277,7 +4377,18 @@
         "new": "200 x 140 x 44 mm",
         "reason": "Verified against manufacturer, official family page, or best-available technical documentation"
       }
-    ]
+    ],
+    "fieldSources": {
+      "powerRaw": [
+        "SRC-LR-AURORA-PROD"
+      ],
+      "wireless": [
+        "SRC-LR-AURORA-PROD"
+      ],
+      "dimensions": [
+        "SRC-LR-AURORA-PROD"
+      ]
+    }
   },
   {
     "id": 60,
@@ -4352,7 +4463,22 @@
         "new": "220 x 44 x 160 mm",
         "reason": "Verified against manufacturer or official product documentation"
       }
-    ]
+    ],
+    "fieldSources": {
+      "powerRaw": [
+        "SRC-LR-TX2-SPEC"
+      ],
+      "weightRaw": [
+        "SRC-LR-TX2",
+        "SRC-LR-TX2-SPEC"
+      ],
+      "dimensions": [
+        "SRC-LR-TX2"
+      ],
+      "wireless": [
+        "SRC-LR-TX2"
+      ]
+    }
   },
   {
     "id": 61,
@@ -4396,7 +4522,12 @@
         "new": "14.8V V-Mount battery",
         "reason": "Verified against manufacturer, official family page, or best-available technical documentation"
       }
-    ]
+    ],
+    "fieldSources": {
+      "battery": [
+        "SRC-FXLION-VM14-FAMILY"
+      ]
+    }
   },
   {
     "id": 62,
@@ -4440,7 +4571,12 @@
         "new": "26V V-Mount battery",
         "reason": "Verified against manufacturer, official family page, or best-available technical documentation"
       }
-    ]
+    ],
+    "fieldSources": {
+      "battery": [
+        "SRC-FXLION-VM26-FAMILY"
+      ]
+    }
   },
   {
     "id": 63,
@@ -4526,6 +4662,23 @@
         "new": "635 x 284 x 420 mm",
         "reason": "Verified against manufacturer or official product documentation"
       }
-    ]
+    ],
+    "fieldSources": {
+      "powerRaw": [
+        "SRC-ECO-DELTAPRO"
+      ],
+      "weightRaw": [
+        "SRC-ECO-DELTAPRO"
+      ],
+      "battery": [
+        "SRC-ECO-DELTAPRO"
+      ],
+      "wireless": [
+        "SRC-ECO-DELTAPRO"
+      ],
+      "dimensions": [
+        "SRC-ECO-DELTAPRO"
+      ]
+    }
   }
 ]
