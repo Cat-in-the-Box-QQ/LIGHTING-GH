@@ -589,6 +589,17 @@ footer {
     border: 1px solid #d0d0d0 !important;
   }
 
+  #cartPanelScreen {
+    display: none !important;
+  }
+
+  #printSummaryBox,
+  #printListTable {
+    padding: .8rem 1rem !important;
+    border-radius: 10px !important;
+    margin-bottom: .8rem !important;
+  }
+
   .cart-item {
     break-inside: avoid;
     margin-bottom: .75rem;
@@ -600,8 +611,16 @@ footer {
   }
 
   .cart-print-summary-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: .5rem .8rem;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: .35rem .6rem;
+    font-size: 11px;
+  }
+
+  .cart-print-summary-grid strong {
+    display: block;
+    font-size: 10px;
+    color: #555;
+    margin-bottom: .1rem;
   }
 
   .cart-print-table {
