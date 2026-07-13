@@ -640,7 +640,7 @@
     "whiteLight": "2,800 - 10,000K",
     "color": "Full-RGBW",
     "ip": null,
-    "battery": null,
+    "battery": "PSU input 48 VDC / Battery adapter 23-36 VDC (26V compatible), 100% output in battery mode",
     "stock": "22 Pieces",
     "image": "images/products/017-arri-skypanel-s30-c.jpg",
     "pdfPage": 38,
@@ -654,14 +654,16 @@
     "setCountInStock": null,
     "verification": {
       "status": "verified",
-      "date": "2026-07-09",
+      "date": "2026-07-13",
       "verifiedBy": "Arena Agent",
       "sourceIds": [
         "SRC-ARRI-SKP-CLASSIC",
-        "SRC-ARRI-S30"
+        "SRC-ARRI-S30",
+        "SRC-ARRI-BMOUNT",
+        "SRC-ARRI-SKP-FAQ"
       ],
-      "notes": "SkyPanel S30-C weight and power aligned to ARRI references.",
-      "changeCount": 9
+      "notes": "SkyPanel S30-C supports 23-36V DC battery mode (26V compatible) while normal lamphead input remains 48V DC; battery mode retains 100% output.",
+      "changeCount": 10
     }
   },
   {
@@ -679,7 +681,7 @@
     "whiteLight": "2,800 - 10,000K",
     "color": "Full-RGBW",
     "ip": null,
-    "battery": null,
+    "battery": "PSU input 48 VDC / Battery adapter 23-36 VDC (26V compatible), 50% output in battery mode",
     "stock": "115 Pieces",
     "image": "images/products/018-arri-skypanel-s60-c.jpg",
     "pdfPage": 39,
@@ -693,13 +695,16 @@
     "setCountInStock": null,
     "verification": {
       "status": "verified",
-      "date": "2026-07-09",
+      "date": "2026-07-13",
       "verifiedBy": "Arena Agent",
       "sourceIds": [
-        "SRC-ARRI-SKP-CLASSIC"
+        "SRC-ARRI-SKP-CLASSIC",
+        "SRC-ARRI-BMOUNT",
+        "SRC-ARRI-S60-BATTERY",
+        "SRC-ARRI-SKP-FAQ"
       ],
-      "notes": "SkyPanel S60-C adjusted to ARRI classic tech data.",
-      "changeCount": 9
+      "notes": "SkyPanel S60-C supports 23-36V DC battery mode (26V compatible) while normal lamphead input remains 48V DC; battery mode output is reduced to 50%.",
+      "changeCount": 10
     }
   },
   {
@@ -717,7 +722,7 @@
     "whiteLight": "2,800 - 10,000K",
     "color": "Full-RGBW",
     "ip": null,
-    "battery": null,
+    "battery": "PSU input 48 VDC / Battery adapter 23-36 VDC (26V compatible), 50% output in battery mode",
     "stock": "16 Pieces",
     "image": "images/products/019-arri-skypanel-s120-c.jpg",
     "pdfPage": 40,
@@ -731,13 +736,16 @@
     "setCountInStock": null,
     "verification": {
       "status": "verified",
-      "date": "2026-07-09",
+      "date": "2026-07-13",
       "verifiedBy": "Arena Agent",
       "sourceIds": [
-        "SRC-ARRI-SKP-CLASSIC"
+        "SRC-ARRI-SKP-CLASSIC",
+        "SRC-ARRI-BMOUNT",
+        "SRC-ARRI-S120-BATTERY",
+        "SRC-ARRI-SKP-FAQ"
       ],
-      "notes": "SkyPanel S120-C adjusted to ARRI classic tech data.",
-      "changeCount": 9
+      "notes": "SkyPanel S120-C supports 23-36V DC battery mode (26V compatible) while normal lamphead input remains 48V DC; battery mode output is reduced to 50%.",
+      "changeCount": 10
     }
   },
   {
@@ -755,7 +763,7 @@
     "whiteLight": "2,800 - 10,000K",
     "color": "Full-RGBW",
     "ip": null,
-    "battery": null,
+    "battery": "Battery mode not supported",
     "stock": "8 Pieces",
     "image": "images/products/020-arri-skypanel-s360-c.jpg",
     "pdfPage": 41,
@@ -769,13 +777,14 @@
     "setCountInStock": null,
     "verification": {
       "status": "partially_verified",
-      "date": "2026-07-09",
+      "date": "2026-07-13",
       "verifiedBy": "Arena Agent",
       "sourceIds": [
-        "SRC-ARRI-SKP-CLASSIC"
+        "SRC-ARRI-SKP-CLASSIC",
+        "SRC-ARRI-SKP-FAQ"
       ],
-      "notes": "S360-C power/weight confirmed at family tech-data level.",
-      "changeCount": 5
+      "notes": "S360-C normal lamphead input remains 54V DC; ARRI FAQ confirms battery mode is not supported.",
+      "changeCount": 6
     }
   },
   {

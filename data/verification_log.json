@@ -1137,13 +1137,15 @@
     "brand": "ARRI",
     "model": "SkyPanel S30-C",
     "verificationStatus": "verified",
-    "verificationDate": "2026-07-09",
+    "verificationDate": "2026-07-13",
     "verifiedBy": "Arena Agent",
     "sourceIds": [
       "SRC-ARRI-SKP-CLASSIC",
-      "SRC-ARRI-S30"
+      "SRC-ARRI-S30",
+      "SRC-ARRI-BMOUNT",
+      "SRC-ARRI-SKP-FAQ"
     ],
-    "notes": "SkyPanel S30-C weight and power aligned to ARRI references.",
+    "notes": "SkyPanel S30-C supports 23-36V DC battery mode (26V compatible) while normal lamphead input remains 48V DC; battery mode retains 100% output.",
     "changes": [
       {
         "field": "accessories",
@@ -1201,6 +1203,12 @@
         "old": "2,800 - 10,000 k",
         "new": "2,800 - 10,000K",
         "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "battery",
+        "old": null,
+        "new": "PSU input 48 VDC / Battery adapter 23-36 VDC (26V compatible), 100% output in battery mode",
+        "reason": "Verified against manufacturer battery-mode compatibility documentation"
       }
     ]
   },
@@ -1209,12 +1217,15 @@
     "brand": "ARRI",
     "model": "SkyPanel S60-C",
     "verificationStatus": "verified",
-    "verificationDate": "2026-07-09",
+    "verificationDate": "2026-07-13",
     "verifiedBy": "Arena Agent",
     "sourceIds": [
-      "SRC-ARRI-SKP-CLASSIC"
+      "SRC-ARRI-SKP-CLASSIC",
+      "SRC-ARRI-BMOUNT",
+      "SRC-ARRI-S60-BATTERY",
+      "SRC-ARRI-SKP-FAQ"
     ],
-    "notes": "SkyPanel S60-C adjusted to ARRI classic tech data.",
+    "notes": "SkyPanel S60-C supports 23-36V DC battery mode (26V compatible) while normal lamphead input remains 48V DC; battery mode output is reduced to 50%.",
     "changes": [
       {
         "field": "accessories",
@@ -1272,6 +1283,12 @@
         "old": "2,800 - 10,000 k",
         "new": "2,800 - 10,000K",
         "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "battery",
+        "old": null,
+        "new": "PSU input 48 VDC / Battery adapter 23-36 VDC (26V compatible), 50% output in battery mode",
+        "reason": "Verified against manufacturer battery-mode compatibility documentation"
       }
     ]
   },
@@ -1280,12 +1297,15 @@
     "brand": "ARRI",
     "model": "SkyPanel S120-C",
     "verificationStatus": "verified",
-    "verificationDate": "2026-07-09",
+    "verificationDate": "2026-07-13",
     "verifiedBy": "Arena Agent",
     "sourceIds": [
-      "SRC-ARRI-SKP-CLASSIC"
+      "SRC-ARRI-SKP-CLASSIC",
+      "SRC-ARRI-BMOUNT",
+      "SRC-ARRI-S120-BATTERY",
+      "SRC-ARRI-SKP-FAQ"
     ],
-    "notes": "SkyPanel S120-C adjusted to ARRI classic tech data.",
+    "notes": "SkyPanel S120-C supports 23-36V DC battery mode (26V compatible) while normal lamphead input remains 48V DC; battery mode output is reduced to 50%.",
     "changes": [
       {
         "field": "accessories",
@@ -1343,6 +1363,12 @@
         "old": "2,800 - 10,000 k",
         "new": "2,800 - 10,000K",
         "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "battery",
+        "old": null,
+        "new": "PSU input 48 VDC / Battery adapter 23-36 VDC (26V compatible), 50% output in battery mode",
+        "reason": "Verified against manufacturer battery-mode compatibility documentation"
       }
     ]
   },
@@ -1351,12 +1377,13 @@
     "brand": "ARRI",
     "model": "SkyPanel S360-C",
     "verificationStatus": "partially_verified",
-    "verificationDate": "2026-07-09",
+    "verificationDate": "2026-07-13",
     "verifiedBy": "Arena Agent",
     "sourceIds": [
-      "SRC-ARRI-SKP-CLASSIC"
+      "SRC-ARRI-SKP-CLASSIC",
+      "SRC-ARRI-SKP-FAQ"
     ],
-    "notes": "S360-C power/weight confirmed at family tech-data level.",
+    "notes": "S360-C normal lamphead input remains 54V DC; ARRI FAQ confirms battery mode is not supported.",
     "changes": [
       {
         "field": "accessories",
@@ -1390,6 +1417,12 @@
         "old": "2,800 - 10,000 k",
         "new": "2,800 - 10,000K",
         "reason": "Normalized / corrected during verification workflow"
+      },
+      {
+        "field": "battery",
+        "old": null,
+        "new": "Battery mode not supported",
+        "reason": "Verified against manufacturer battery-mode compatibility documentation"
       }
     ]
   },

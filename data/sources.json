@@ -159,6 +159,19 @@
     "notes": "Input/output power and weight with yoke."
   },
   {
+    "id": "SRC-ARRI-BMOUNT",
+    "type": "manufacturer_product_page",
+    "manufacturer": "ARRI",
+    "title": "B-Mount",
+    "url": "https://www.arri.com/en/camera-systems/camera-components/b-mount",
+    "relatedFixtureIds": [
+      17,
+      18,
+      19
+    ],
+    "notes": "ARRI confirms a single 24V B-Mount battery can power SkyPanel S30, S60 and S120; S60/S120 run at reduced output with a single battery."
+  },
+  {
     "id": "SRC-ARRI-L7C",
     "type": "manufacturer_product_page",
     "manufacturer": "ARRI",
@@ -181,6 +194,17 @@
     "notes": "Power range, white light, CRMX and IP references."
   },
   {
+    "id": "SRC-ARRI-S120-BATTERY",
+    "type": "manufacturer_product_page",
+    "manufacturer": "ARRI",
+    "title": "SkyPanel S120-C",
+    "url": "https://www.arri.com/en/lighting/led-panel-lights/skypanel-classic/s120-c",
+    "relatedFixtureIds": [
+      19
+    ],
+    "notes": "Battery DC voltage range 23-36V and 50% battery mode light output for S120-C."
+  },
+  {
     "id": "SRC-ARRI-S30",
     "type": "manufacturer_product_page",
     "manufacturer": "ARRI",
@@ -190,6 +214,17 @@
       17
     ],
     "notes": "Manual version weight and product details."
+  },
+  {
+    "id": "SRC-ARRI-S60-BATTERY",
+    "type": "manufacturer_datasheet",
+    "manufacturer": "ARRI",
+    "title": "ARRI SkyPanel S60-C Data Sheet",
+    "url": "https://www.arri.com/resource/blob/31124/ce5e382c3c5828ef76fb8878ea1ce6f1/arri-skypanel-s60-c-data-sheet-en-sep2018-data.pdf",
+    "relatedFixtureIds": [
+      18
+    ],
+    "notes": "Battery DC voltage range 23-36V and 50% battery mode light output for S60-C."
   },
   {
     "id": "SRC-ARRI-SKP-CLASSIC",
@@ -204,6 +239,20 @@
       20
     ],
     "notes": "Power and weight references for SkyPanel classic family."
+  },
+  {
+    "id": "SRC-ARRI-SKP-FAQ",
+    "type": "manufacturer_faq",
+    "manufacturer": "ARRI",
+    "title": "SkyPanel FAQ",
+    "url": "https://arri.com/en/lighting/led/skypanel/skypanel-faq",
+    "relatedFixtureIds": [
+      17,
+      18,
+      19,
+      20
+    ],
+    "notes": "ARRI FAQ confirms S30, S60 and S120 can be powered by battery, while S360 cannot."
   },
   {
     "id": "SRC-ARRI-X",
