@@ -290,6 +290,21 @@ img {
   display: none;
 }
 
+.cart-print-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .35rem .8rem;
+  margin-top: .5rem;
+  font-size: .92rem;
+}
+
+.cart-print-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .75rem 1rem;
+  font-size: .95rem;
+}
+
 footer {
   color: #999;
   font-size: .85rem;
@@ -552,6 +567,10 @@ footer {
     display: block !important;
   }
 
+  .print-only {
+    display: block !important;
+  }
+
   .container {
     max-width: none !important;
     width: 100% !important;
@@ -568,6 +587,15 @@ footer {
   .cart-item {
     break-inside: avoid;
     margin-bottom: .75rem;
+  }
+
+  .cart-print-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .5rem .8rem;
+  }
+
+  .cart-print-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .cart-item-image img {
