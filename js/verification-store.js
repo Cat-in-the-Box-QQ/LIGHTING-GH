@@ -30,9 +30,16 @@ const VerificationStore = (() => {
     return summary;
   }
 
+  function getFieldSources(id, fieldName) {
+    const entry = getLogByFixtureId(id);
+    if (!entry || !fieldName) return [];
+    const ids = entry.fieldSources?.[fieldName] || [];
+    return ids.map((sourceId) => getSourceById(sourceId)).filter(Boolean);
+  }
+
   function getAllLogs() {
     return [...log];
   }
 
-  return { load, getLogByFixtureId, getSourceById, getSummary, getAllLogs };
+  return { load, getLogByFixtureId, getSourceById, getFieldSources, getSummary, getAllLogs };
 })();

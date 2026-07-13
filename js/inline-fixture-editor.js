@@ -4,8 +4,10 @@ function isAdminUnlocked() {
 
 async function promptAdminUnlock() {
   if (isAdminUnlocked()) return true;
-  alert('กรุณาเข้าสู่ระบบผ่านหน้า Admin ก่อน');
-  window.location.href = 'admin.html';
+  const pin = window.prompt('กรอกรหัส Admin');
+  if (!pin) return false;
+  if (AdminAuth.unlock(pin.trim())) return true;
+  alert('รหัส Admin ไม่ถูกต้อง');
   return false;
 }
 
@@ -15,6 +17,21 @@ function editorEscape(value) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function fixtureFieldReferenceHtml(fixtureId, fieldName) {
+  if (typeof VerificationStore === 'undefined' || !fixtureId || !fieldName) return '';
+  const sources = VerificationStore.getFieldSources(fixtureId, fieldName) || [];
+  if (!sources.length) return '';
+  const links = sources
+    .map((source) => `<a href="${source.url}" target="_blank" rel="noopener">${source.title}</a>`)
+    .join(' · ');
+  return `<div class="field-reference-row small text-muted">อ้างอิง: ${links}</div>`;
+}
+
+function specRowHtml(label, value, fixtureId = null, fieldName = null) {
+  const reference = fixtureId && fieldName ? fixtureFieldReferenceHtml(fixtureId, fieldName) : '';
+  return `<div class="spec-row"><span>${label}</span><span>${value}</span></div>${reference}`;
 }
 
 function fixtureVerificationHtml(fixtureId) {
@@ -135,27 +152,21 @@ function normalizeFixturePatchFromForm(form) {
   return { patch, reserved, inUse };
 }
 
-async function removeFixtureFromAccessoryCompatibility(fixtureId) {
+function removeFixtureFromAccessoryCompatibility(fixtureId) {
   if (typeof AccessoryStore === 'undefined') return;
-
-  const items = AccessoryStore.getAll();
-  for (const accessory of items) {
-    const compatibleWith = Array.isArray(accessory.compatibleWith)
-      ? accessory.compatibleWith.map(Number)
-      : [];
-
-    if (!compatibleWith.includes(Number(fixtureId))) continue;
-
-    await AccessoryStore.update(accessory.id, {
+  AccessoryStore.getAll().forEach((accessory) => {
+    const compatibleWith = Array.isArray(accessory.compatibleWith) ? accessory.compatibleWith.map(Number) : [];
+    if (!compatibleWith.includes(Number(fixtureId))) return;
+    AccessoryStore.update(accessory.id, {
       compatibleWith: compatibleWith.filter((id) => Number(id) !== Number(fixtureId)),
     });
-  }
+  });
 }
 
-async function deleteFixtureAndRelations(fixtureId) {
+function deleteFixtureAndRelations(fixtureId) {
   const current = DB.getById(fixtureId);
   if (!current) return false;
-  await removeFixtureFromAccessoryCompatibility(fixtureId);
+  removeFixtureFromAccessoryCompatibility(fixtureId);
   return DB.remove(fixtureId);
 }
 
@@ -179,27 +190,23 @@ function bindFixtureEditor(formId, fixtureId, onSaved, options = {}) {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const { patch, reserved, inUse } = normalizeFixturePatchFromForm(form);
 
-    try {
-      const { patch, reserved, inUse } = normalizeFixturePatchFromForm(form);
-
-      let savedItem;
-      if (isCreate) {
-        savedItem = await DB.create(patch);
-        savedItem = await DB.updateInventory(savedItem.id, { reserved, inUse });
-        status.textContent = 'เพิ่มรายการแล้ว';
-        if (typeof onSaved === 'function') onSaved({ action: 'created', item: savedItem });
-        return;
-      }
-
-      savedItem = await DB.update(fixtureId, patch);
-      savedItem = await DB.updateInventory(fixtureId, { reserved, inUse });
-      status.textContent = 'บันทึกแล้ว';
-      if (typeof onSaved === 'function') onSaved({ action: 'saved', item: savedItem });
-    } catch (err) {
-      console.error(err);
-      status.textContent = 'บันทึกไม่สำเร็จ';
+    let savedItem;
+    if (isCreate) {
+      savedItem = DB.create(patch);
+      DB.updateInventory(savedItem.id, { reserved, inUse });
+      savedItem = DB.getById(savedItem.id);
+      status.textContent = 'เพิ่มรายการแล้ว';
+      if (typeof onSaved === 'function') onSaved({ action: 'created', item: savedItem });
+      return;
     }
+
+    DB.update(fixtureId, patch);
+    DB.updateInventory(fixtureId, { reserved, inUse });
+    savedItem = DB.getById(fixtureId);
+    status.textContent = 'บันทึกแล้ว';
+    if (typeof onSaved === 'function') onSaved({ action: 'saved', item: savedItem });
   });
 
   cancelBtn?.addEventListener('click', () => {
