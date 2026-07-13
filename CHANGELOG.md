@@ -128,3 +128,84 @@
 - **ARRI SkyPanel S60-C** (verified)
   - `accessories`: `None` → `['Standard Diffusion Panel', 'SkyLink Receiver']`
   - `brand`: `Arri` → `ARRI`
+
+## 2026-07-10 Battery / Power / Controller verification batch 1
+
+- **Avolites Tiger Touch II** (`id: 54`)
+  - `brand`: `DMX Control` → `Avolites`
+  - `model`: `Avolite Tiger Touch 2` → `Tiger Touch II`
+  - `power`: `None` → `80.0`
+  - `weight`: `None` → `15.2`
+  - `dimensions`: `None` → `674 x 435 x 147 mm`
+- **Gaffer's Control GC-28** (`id: 55`)
+  - `brand`: `DMX Control` → `Gaffer's Control`
+  - `model`: `Gaffer Control` → `GC-28`
+  - `power`: `None` → `15.0`
+  - `battery`: `None` → `Li-ion 70Wh built-in battery`
+  - `weight`: `None` → `2.725`
+- **LumenRadio CRMX Nova TX2 RDM** (`id: 60`)
+  - `brand`: `DMX Control` → `LumenRadio`
+  - `model`: `TX2` → `CRMX Nova TX2 RDM`
+  - `power`: `None` → `12.0`
+  - `weight`: `None` → `0.9`
+  - `dimensions`: `None` → `220 x 44 x 160 mm`
+- **EcoFlow DELTA Pro** (`id: 63`)
+  - `brand`: `Battery` → `EcoFlow`
+  - `model`: `Battery EcoFlow Delta Pro` → `DELTA Pro`
+  - `power`: `None` → `3600.0`
+  - `weight`: `None` → `45.0`
+  - `wireless`: `None` → `Wi‑Fi / Bluetooth`
+
+- Remaining pending items in this group still need exact manufacturer/model confirmation:
+  - `id 56` Kingkong KK 1024
+  - `id 57` iPad 11 Pro (generation/variant not specified)
+  - `id 58` Moonlite (generation unclear)
+  - `id 59` Aurora (weight/power still needs exact official reference)
+  - `id 61-62` generic V-Mount entries need manufacturer/capacity-specific references
+
+## 2026-07-10 Battery / Power / Controller verification batch 2
+
+- **Kingkong KK 1024** (`id: 56`)
+  - `brand`: `DMX Control` → `Kingkong`
+  - `model`: `Kingkong KK 1024` → `KK 1024`
+  - `powerRaw`: `None` → `AC 90-240V / 50-60Hz`
+  - `weight`: `None` → `9.53`
+  - `dimensions`: `None` → `485 x 420 x 105 mm`
+  - status → `partially_verified` (manual-level source)
+- **LumenRadio MoonLite** (`id: 58`)
+  - `brand`: `DMX Control` → `LumenRadio`
+  - `model`: `Moonlite` → `MoonLite`
+  - `battery`: `None` → `Built-in rechargeable battery (10h CRMX RX / 20h Bluetooth Smart mode)`
+  - `wireless`: `LumenRadio CRMX` → `LumenRadio CRMX / W-DMX / Bluetooth 5.0 / RDM`
+  - `weight`: `None` → `0.14`
+  - `dimensions`: `None` → `100 x 50 x 26 mm`
+  - status → `partially_verified`
+- **LumenRadio Aurora** (`id: 59`)
+  - `brand`: `DMX Control` → `LumenRadio`
+  - `powerRaw`: `None` → `DC 10-20V / AC 100-240VAC`
+  - `wireless`: `LumenRadio CRMX` → `LumenRadio CRMX / W-DMX / Wi‑Fi / Bluetooth 5.0 / RDM / Art-Net / sACN`
+  - `dimensions`: `None` → `200 x 140 x 44 mm`
+  - status → `partially_verified`
+- **FXLION V-Mount entries** (`id: 61-62`)
+  - `brand`: `Battery` → `FXLION`
+  - status → `partially_verified`
+  - note: exact Wh / size / weight variant still unresolved within FXLION family pages
+
+- Still pending in this group:
+  - `id 57` Apple iPad Pro 11-inch generation/weight exact variant not yet confirmed
+
+- Clarified user-provided confirmations: `MoonLite` = original model (not MoonLite2), and `V-Mount 26V` remains 26V under FXLION family.
+
+## 2026-07-13 SkyPanel battery-mode clarification
+
+- **SkyPanel S30-C** (`id: 17`)
+  - `battery`: `None` → `Battery mode 23-36V DC (26V compatible) via battery adapter; 100% output in battery mode`
+- **SkyPanel S60-C** (`id: 18`)
+  - `battery`: `None` → `Battery mode 23-36V DC (26V compatible) via battery adapter; 50% output in battery mode`
+- **SkyPanel S120-C** (`id: 19`)
+  - `battery`: `None` → `Battery mode 23-36V DC (26V compatible) via battery adapter; 50% output in battery mode`
+- **SkyPanel S360-C** (`id: 20`)
+  - `battery`: `None` → `Battery mode not supported`
+
+- Refined SkyPanel battery wording to preserve normal lamphead input voltage (48V/54V DC) while separately describing battery-adapter mode and reduced output where applicable.
+
