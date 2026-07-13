@@ -176,6 +176,17 @@ img {
   padding: 0;
 }
 
+.btn-added-ok {
+  background: #198754 !important;
+  border-color: #198754 !important;
+  color: #fff !important;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease;
+}
+
+.btn-added-ok {
+  transform: scale(1.04);
+}
+
 .print-hidden {
 }
 
