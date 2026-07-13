@@ -39,9 +39,6 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-config.js"></script>
-<script src="js/supabase-client.js"></script>
 <script src="js/database.js"></script>
 <script src="js/search.js"></script>
 <script src="js/setbuilder-helper.js"></script>
@@ -51,10 +48,23 @@
 <script src="js/inline-fixture-editor.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
-  await Promise.all([DB.load(), AccessoryStore.load(), VerificationStore.load(), AdminAuth.ready]);
+  await Promise.all([DB.load(), AccessoryStore.load(), VerificationStore.load()]);
   const id = new URLSearchParams(location.search).get("id");
   const f = DB.getById(id);
   const el = document.getElementById("content");
+
+  function flashAddSuccess(button, doneLabel = '✓', delay = 900) {
+    if (!button) return;
+    const original = button.dataset.originalLabel || button.textContent;
+    button.dataset.originalLabel = original;
+    clearTimeout(button.__flashTimer);
+    button.classList.add('btn-added-ok');
+    button.textContent = doneLabel;
+    button.__flashTimer = setTimeout(() => {
+      button.classList.remove('btn-added-ok');
+      button.textContent = original;
+    }, delay);
+  }
 
   if (f && f.hidden && !isAdminUnlocked()) {
     el.innerHTML = `<div class="alert alert-warning">รายการนี้ถูกซ่อนอยู่</div>`;
@@ -128,6 +138,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       addFixtureToCurrentSet(f.id, qty);
       const status = document.getElementById('detailStatus');
       status.textContent = `เพิ่ม ${f.brand} ${f.model} จำนวน ${qty} เข้าชุดแล้ว`;
+      flashAddSuccess(addBtn);
       setTimeout(() => status.textContent = '', 2500);
     });
   }
@@ -140,6 +151,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       addFixtureToCurrentSet(f.id, setUnits * setCount);
       const status = document.getElementById('detailStatus');
       status.textContent = `เพิ่ม ${f.brand} ${f.model} จำนวน ${setCount} ชุด (${setUnits * setCount} ชิ้น) แล้ว`;
+      flashAddSuccess(addSetBtn);
       setTimeout(() => status.textContent = '', 2500);
     });
   }

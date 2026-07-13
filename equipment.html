@@ -193,6 +193,19 @@ function flashStatus(message, ok = true) {
   window.__equipStatusTimer = setTimeout(() => { el.textContent = ''; }, 2500);
 }
 
+function flashAddSuccess(button, doneLabel = '✓', delay = 900) {
+  if (!button) return;
+  const original = button.dataset.originalLabel || button.textContent;
+  button.dataset.originalLabel = original;
+  clearTimeout(button.__flashTimer);
+  button.classList.add('btn-added-ok');
+  button.textContent = doneLabel;
+  button.__flashTimer = setTimeout(() => {
+    button.classList.remove('btn-added-ok');
+    button.textContent = original;
+  }, delay);
+}
+
 function buildFixtureItems(fixtures) {
   return (fixtures || []).map((item) => ({
     ...item,
@@ -591,6 +604,7 @@ function render() {
       const card = btn.closest('.fixture-card');
       const qtyInput = card.querySelector('.add-qty-input');
       addToSet(item, qtyInput ? qtyInput.value : 1);
+      flashAddSuccess(btn);
     });
   });
 
@@ -603,6 +617,7 @@ function render() {
       const setCount = Math.max(Number(qtyInput?.value) || 1, 1);
       addToSet(item, (getUnitsPerSet(item) || 1) * setCount);
       flashStatus(`เพิ่ม ${item.brand} ${item.model} จำนวน ${setCount} ชุดแล้ว`);
+      flashAddSuccess(btn);
     });
   });
 
@@ -681,6 +696,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('detailAddBtn').addEventListener('click', () => {
     if (currentModalItem && currentModalItem.source === 'fixture') {
       addToSet(currentModalItem, document.getElementById('detailQtyInput').value);
+      flashAddSuccess(document.getElementById('detailAddBtn'));
     }
   });
 
@@ -689,6 +705,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const setCount = Math.max(Number(document.getElementById('detailQtyInput').value) || 1, 1);
       addToSet(currentModalItem, (getUnitsPerSet(currentModalItem) || 1) * setCount);
       flashStatus(`เพิ่ม ${currentModalItem.brand} ${currentModalItem.model} จำนวน ${setCount} ชุดแล้ว`);
+      flashAddSuccess(document.getElementById('detailAddSetBtn'));
     }
   });
 
@@ -700,5 +717,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   render();
 });
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a18ebf377e0ca738',t:'MTc4MzY3Nzg5NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
