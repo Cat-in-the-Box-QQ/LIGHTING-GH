@@ -71,6 +71,12 @@ img {
   font-weight: 500;
 }
 
+.badge-rgb {
+  background: linear-gradient(90deg, #ff4d6d 0%, #ffb703 25%, #22c55e 50%, #0ea5e9 75%, #8b5cf6 100%) !important;
+  color: #fff !important;
+  border: none !important;
+}
+
 .stat-card {
   border-radius: 12px;
   background: var(--card-bg);
