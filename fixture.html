@@ -83,6 +83,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const current220 = f.power ? (f.power / 220).toFixed(2) : "-";
   const stockLine = f.stockNote ? `${stockCount} Pieces · ${f.stockNote}` : `${stockCount} Pieces`;
   const canBuild = isBuildableItem(f);
+  const colorBadgeClass = isRgbFixture(f) ? 'badge-rgb' : 'bg-dark';
 
   el.innerHTML = `
     <a href="equipment.html" class="btn btn-sm btn-outline-secondary mb-3">&larr; กลับไปหน้ารายการ</a>
@@ -107,7 +108,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <div class="d-flex gap-2 flex-wrap mb-3">
           <span class="badge bg-dark">${f.category || '-'}</span>
           ${f.ip ? `<span class="badge bg-secondary">${f.ip}</span>` : ''}
-          ${f.color ? `<span class="badge bg-secondary">${f.color}</span>` : ''}
+          ${f.color ? `<span class="badge ${colorBadgeClass}">${f.color}</span>` : ''}
           ${f.hidden ? `<span class="badge bg-danger">Hidden</span>` : ''}
         </div>
 
@@ -231,6 +232,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderAdminTools();
 });
 </script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2cf95ddbb020fdc',t:'MTc4NzA0MjEyOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
