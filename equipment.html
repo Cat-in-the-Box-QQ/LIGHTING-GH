@@ -479,7 +479,7 @@ function showDetail(key) {
         </div>
         <div class="col-md-7">
           <div class="spec-row"><span>ID / Group</span><span>#${item.id} · ${itemTypeLabel(item)}</span></div>
-          <div class="spec-row"><span>ประเภท</span><span>${item.category || '-'}</span></div>
+          <div class="spec-row"><span>ประเภท</span><span>${item.category ? badgesHtmlFromCommaList(item.category, 'bg-dark') : '-'}</span></div>
           <div class="spec-row"><span>Lux</span><span>${item.lux || '-'}</span></div>
           <div class="spec-row"><span>Lumens</span><span>${item.lumens ?? '-'}</span></div>
           <div class="spec-row"><span>Beam Angle</span><span>${item.beam || '-'}</span></div>
@@ -554,12 +554,13 @@ function render() {
               ${item.hidden ? `<span class="badge bg-danger">Hidden</span>` : ''}
             </div>
           </div>
-          <div class="small text-muted mb-1">${item.brand || '-'} · ${item.category || '-'}</div>
-          <div class="small mb-2">${item.stock || 'ไม่ระบุ stock'}</div>
+          <div class="small text-muted mb-1">${item.brand || '-'}</div>
           <div class="d-flex flex-wrap gap-1 mb-2">
+            ${item.category ? badgesHtmlFromCommaList(item.category, 'bg-dark') : ''}
             ${crmxBadge}
             ${item.wireless ? `<span class="badge bg-secondary">Wireless</span>` : ''}
           </div>
+          <div class="small mb-2">${item.stock || 'ไม่ระบุ stock'}</div>
           <div class="small"><strong>ใช้กับ:</strong> ${compatible.length ? compatible.join(', ') : 'ยังไม่ระบุ'}</div>
         </div>`;
     } else {
@@ -575,7 +576,10 @@ function render() {
                 ${item.hidden ? `<span class="badge bg-danger">Hidden</span>` : ''}
               </div>
             </div>
-            <div class="text-muted small mb-2">#${item.id} · ${item.brand} · ${item.category}</div>
+            <div class="text-muted small mb-1">#${item.id} · ${item.brand}</div>
+            <div class="d-flex flex-wrap gap-1 mb-2">
+              ${badgesHtmlFromCommaList(item.category || '-', 'bg-dark')}
+            </div>
             <div class="small mb-2">
               <div><strong>${typeLabel}</strong> · Stock ${stockCount}</div>
               <div>${item.power != null ? `${item.power} W` : '-'} · ${item.weight != null ? `${item.weight} kg` : '-'}</div>
@@ -718,5 +722,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   render();
 });
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3e74d8c59f4ec15',t:'MTc4OTk3NTE4MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

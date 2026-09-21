@@ -101,6 +101,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <div class="spec-row"><span>ID</span><span>${f.id}</span></div>
           <div class="spec-row"><span>Group</span><span>${itemTypeLabel(f)}</span></div>
           <div class="spec-row"><span>Stock</span><span>${stockLine}</span></div>
+        <div class="d-flex flex-wrap gap-1 mt-2">${badgesHtmlFromCommaList(f.category || '-', 'bg-dark')}</div>
         </div>
       </div>
       <div class="col-md-7">
@@ -232,5 +233,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderAdminTools();
 });
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3e74e2209e9ec15',t:'MTc4OTk3NTIwNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
