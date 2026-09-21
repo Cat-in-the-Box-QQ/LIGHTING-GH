@@ -88,6 +88,14 @@ function fixtureEditorHtml(fixture = {}, formId = 'fixtureEditorForm', options =
           <div class="col-md-6"><label class="form-label small mb-0">Battery</label><input class="form-control" name="battery" value="${editorEscape(fixture.battery)}"></div>
           <div class="col-md-6"><label class="form-label small mb-0">White Light</label><input class="form-control" name="whiteLight" value="${editorEscape(fixture.whiteLight)}"></div>
           <div class="col-md-6"><label class="form-label small mb-0">Color</label><input class="form-control" name="color" value="${editorEscape(fixture.color)}"></div>
+          <div class="col-md-3">
+            <label class="form-label small mb-0">Color Tag</label>
+            <select class="form-select" name="colorTagStyle">
+              <option value="" ${!fixture.colorTagStyle ? 'selected' : ''}>อัตโนมัติ</option>
+              <option value="black" ${fixture.colorTagStyle === 'black' ? 'selected' : ''}>สีดำ</option>
+              <option value="rainbow" ${fixture.colorTagStyle === 'rainbow' ? 'selected' : ''}>สีรุ้ง</option>
+            </select>
+          </div>
           <div class="col-md-3"><label class="form-label small mb-0">IP</label><input class="form-control" name="ip" value="${editorEscape(fixture.ip)}"></div>
           <div class="col-md-3"><label class="form-label small mb-0">PDF Page</label><input type="number" class="form-control" name="pdfPage" value="${editorEscape(fixture.pdfPage ?? '')}"></div>
           <div class="col-md-4"><label class="form-label small mb-0">Stock Count</label><input type="number" class="form-control" name="stockCount" value="${editorEscape(fixture.stockCount ?? '')}"></div>
