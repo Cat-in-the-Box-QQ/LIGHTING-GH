@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('accessoryTitle').textContent = item.name;
     document.getElementById('accessoryBody').innerHTML = `
       <div class="spec-row"><span>Brand</span><span>${item.brand || '-'}</span></div>
-      <div class="spec-row"><span>Category</span><span>${item.category || '-'}</span></div>
+      <div class="spec-row"><span>Category</span><span>${item.category ? badgesHtmlFromCommaList(item.category, 'bg-dark') : '-'}</span></div>
       <div class="spec-row"><span>Status</span><span>${item.hidden ? 'Hidden' : 'Visible'}</span></div>
       <div class="spec-row"><span>Stock</span><span>${item.stock || '-'}</span></div>
       <div class="filter-panel mt-3">
@@ -219,7 +219,8 @@ document.addEventListener('DOMContentLoaded', async () => {
               ${item.hidden ? `<span class="badge bg-danger">Hidden</span>` : ''}
             </div>
           </div>
-          <div class="small text-muted mb-1">${item.brand || '-'} · ${item.category || '-'}</div>
+          <div class="small text-muted mb-1">${item.brand || '-'}</div>
+          <div class="d-flex flex-wrap gap-1 mb-2">${item.category ? badgesHtmlFromCommaList(item.category, 'bg-dark') : ''}</div>
           <div class="small mb-2">${item.stock || 'ไม่ระบุ stock'}</div>
           <div class="small"><strong>ใช้กับ:</strong> ${compatible.length ? compatible.join(', ') : 'ยังไม่ระบุ'}</div>
           ${adminUnlocked() ? `<div class="small text-danger mt-2">Admin: คลิกเพื่อแก้ไข / ซ่อน / ลบ</div>` : ''}

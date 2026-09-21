@@ -40,6 +40,19 @@ function itemTypeLabel(item) {
   return "Fixture";
 }
 
+function splitTagParts(value) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function badgesHtmlFromCommaList(value, className = 'bg-dark') {
+  return splitTagParts(value)
+    .map((tag) => `<span class="badge ${className}">${tag}</span>`)
+    .join(' ');
+}
+
 function isHiddenItem(item) {
   return !!item?.hidden;
 }
