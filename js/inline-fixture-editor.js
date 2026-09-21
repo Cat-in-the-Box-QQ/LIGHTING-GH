@@ -123,6 +123,7 @@ function normalizeFixturePatchFromForm(form) {
     battery: form.elements.battery.value.trim() || null,
     whiteLight: form.elements.whiteLight.value.trim() || null,
     color: form.elements.color.value.trim() || null,
+    colorTagStyle: form.elements.colorTagStyle.value.trim() || null,
     ip: form.elements.ip.value.trim() || null,
     pdfPage: form.elements.pdfPage.value === '' ? null : Number(form.elements.pdfPage.value),
     stockCount: form.elements.stockCount.value === '' ? null : Number(form.elements.stockCount.value),

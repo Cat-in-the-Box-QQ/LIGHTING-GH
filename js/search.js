@@ -87,6 +87,16 @@ function isBiColorFixture(item) {
   return /bi-?color/i.test(normalizeText(item?.color));
 }
 
+function colorTagStyleOf(item) {
+  const explicit = normalizeText(item?.colorTagStyle);
+  if (explicit === 'rainbow' || explicit === 'black') return explicit;
+  return isRgbFixture(item) ? 'rainbow' : 'black';
+}
+
+function colorTagClass(item) {
+  return colorTagStyleOf(item) === 'rainbow' ? 'badge-rgb' : 'bg-dark';
+}
+
 function filterFixtures(fixtures, filters) {
   return fixtures.filter((f) => {
     if (!filters?.includeHidden && isHiddenItem(f)) return false;
