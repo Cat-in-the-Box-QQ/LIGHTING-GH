@@ -39,9 +39,6 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-config.js"></script>
-<script src="js/supabase-client.js"></script>
 <script src="js/database.js"></script>
 <script src="js/search.js"></script>
 <script src="js/setbuilder-helper.js"></script>
@@ -82,7 +79,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const stockCount = getStockCount(f);
   const current220 = f.power ? (f.power / 220).toFixed(2) : "-";
   const stockLine = f.stockNote ? `${stockCount} Pieces · ${f.stockNote}` : `${stockCount} Pieces`;
-  const canBuild = isBuildableItem(f);
+  const canBuild = isSetAddableItem(f);
   const colorBadgeClass = colorTagClass(f);
 
   el.innerHTML = `
@@ -233,5 +230,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderAdminTools();
 });
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3e74e2209e9ec15',t:'MTc4OTk3NTIwNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>

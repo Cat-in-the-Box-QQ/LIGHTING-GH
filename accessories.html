@@ -70,6 +70,9 @@
         <div id="accessoryBody"></div>
       </div>
       <div class="modal-footer">
+        <input type="number" min="1" value="1" id="accessoryDetailQtyInput" class="form-control form-control-sm qty-inline">
+        <button type="button" id="accessoryDetailAddBtn" class="btn btn-dark btn-sm">+</button>
+        <button type="button" id="accessoryDetailAddSetBtn" class="btn btn-outline-dark btn-sm">+ ชุด</button>
         <span id="accessoryAdminArea"></span>
         <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">ปิด</button>
       </div>
@@ -90,9 +93,6 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-config.js"></script>
-<script src="js/supabase-client.js"></script>
 <script src="js/database.js"></script>
 <script src="js/search.js"></script>
 <script src="js/accessory-store.js"></script>

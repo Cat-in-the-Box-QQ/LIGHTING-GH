@@ -162,9 +162,6 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-config.js"></script>
-<script src="js/supabase-client.js"></script>
 <script src="js/database.js"></script>
 <script src="js/search.js"></script>
 <script src="js/setbuilder-helper.js"></script>
@@ -211,6 +208,8 @@ function buildFixtureItems(fixtures) {
     ...item,
     source: 'fixture',
     _key: `fixture-${item.id}`,
+    // key สำหรับเก็บลงชุด (localStorage)
+    _setKey: String(item.id),
     compatibleWith: item.compatibleWith || [],
     compatibleText: item.compatibleText || (Array.isArray(item.accessories) ? item.accessories.join(' ') : ''),
   }));
@@ -252,6 +251,8 @@ function buildAccessoryItems(accessories) {
       hidden: !!item.hidden,
       source: 'accessory',
       _key: `accessory-${item.id}`,
+      // accessory ใช้ key ขึ้นต้น a เพื่อไม่ให้ชน id ของ fixture
+      _setKey: `a${item.id}`,
     };
   });
 }
@@ -261,13 +262,13 @@ function getItemByKey(key) {
 }
 
 function addToSet(item, qty = 1) {
-  if (!item || !isBuildableItem(item)) {
-    flashStatus('รายการนี้ไม่ใช่ fixture สำหรับ Set Builder', false);
+  if (!item || !isSetAddableItem(item)) {
+    flashStatus('รายการนี้ไม่สามารถเพิ่มเข้าชุดได้', false);
     return;
   }
   const safeQty = Math.max(Number(qty) || 1, 1);
-  addFixtureToCurrentSet(item.id, safeQty);
-  flashStatus(`เพิ่ม ${item.brand} ${item.model} จำนวน ${safeQty} เข้าชุดแล้ว`);
+  addFixtureToCurrentSet(item._setKey || String(item.id), safeQty);
+  flashStatus(`เพิ่ม ${item.brand || item.name || ''} ${item.model || ''} จำนวน ${safeQty} เข้าชุดแล้ว`);
 }
 
 function getFilters() {
@@ -442,9 +443,9 @@ function showDetail(key) {
     linkBtn.style.display = 'none';
   }
 
-  document.getElementById('detailAddBtn').style.display = (item.source === 'fixture' && isBuildableItem(item)) ? 'inline-flex' : 'none';
-  document.getElementById('detailAddSetBtn').style.display = (item.source === 'fixture' && hasSetOption(item)) ? 'inline-flex' : 'none';
-  document.getElementById('detailQtyInput').style.display = (item.source === 'fixture' && isBuildableItem(item)) ? 'block' : 'none';
+  document.getElementById('detailAddBtn').style.display = isSetAddableItem(item) ? 'inline-flex' : 'none';
+  document.getElementById('detailAddSetBtn').style.display = (isSetAddableItem(item) && hasSetOption(item)) ? 'inline-flex' : 'none';
+  document.getElementById('detailQtyInput').style.display = isSetAddableItem(item) ? 'block' : 'none';
   document.getElementById('detailQtyInput').value = 1;
 
   if (item.source === 'accessory') {
@@ -591,9 +592,9 @@ function render() {
               ${item.stockNote ? `<span class="badge bg-light text-dark border">${item.stockNote}</span>` : ''}
             </div>
             <div class="card-add-row">
-              ${isBuildableItem(item) ? `<input type="number" min="1" value="1" class="form-control form-control-sm add-qty-input" data-key="${item._key}">` : ''}
-              ${isBuildableItem(item) ? `<button class="btn btn-dark btn-sm add-to-set-btn" data-key="${item._key}">+</button>` : ''}
-              ${isBuildableItem(item) && hasSetOption(item) ? `<button class="btn btn-outline-dark btn-sm add-set-btn" data-key="${item._key}">+ ชุด</button>` : ''}
+              ${isSetAddableItem(item) ? `<input type="number" min="1" value="1" class="form-control form-control-sm add-qty-input" data-key="${item._key}">` : ''}
+              ${isSetAddableItem(item) ? `<button class="btn btn-dark btn-sm add-to-set-btn" data-key="${item._key}">+</button>` : ''}
+              ${isSetAddableItem(item) && hasSetOption(item) ? `<button class="btn btn-outline-dark btn-sm add-set-btn" data-key="${item._key}">+ ชุด</button>` : ''}
             </div>
           </div>
         </div>`;
@@ -699,14 +700,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   document.getElementById('detailAddBtn').addEventListener('click', () => {
-    if (currentModalItem && currentModalItem.source === 'fixture') {
+    if (currentModalItem && isSetAddableItem(currentModalItem)) {
       addToSet(currentModalItem, document.getElementById('detailQtyInput').value);
       flashAddSuccess(document.getElementById('detailAddBtn'));
     }
   });
 
   document.getElementById('detailAddSetBtn').addEventListener('click', () => {
-    if (currentModalItem && currentModalItem.source === 'fixture') {
+    if (currentModalItem && isSetAddableItem(currentModalItem)) {
       const setCount = Math.max(Number(document.getElementById('detailQtyInput').value) || 1, 1);
       addToSet(currentModalItem, (getUnitsPerSet(currentModalItem) || 1) * setCount);
       flashStatus(`เพิ่ม ${currentModalItem.brand} ${currentModalItem.model} จำนวน ${setCount} ชุดแล้ว`);
@@ -722,5 +723,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   render();
 });
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3e7732adbe6146f',t:'MTc4OTk3NjcyMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>

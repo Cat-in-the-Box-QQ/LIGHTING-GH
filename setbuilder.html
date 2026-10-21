@@ -110,10 +110,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-config.js"></script>
-<script src="js/supabase-client.js"></script>
 <script src="js/database.js"></script>
+<script src="js/accessory-store.js"></script>
 <script src="js/search.js"></script>
 <script src="js/power.js"></script>
 <script src="js/weight.js"></script>
@@ -123,6 +121,8 @@ let fixtures = [];
 let visibleFixtures = [];
 let setItems = [];
 let addModal = null;
+// key: fixture -> "1", accessory -> "a1"
+const itemById = new Map();
 
 function flashBuilderStatus(message, ok = true) {
   const el = document.getElementById('builderStatus');
@@ -136,74 +136,77 @@ function flashBuilderStatus(message, ok = true) {
 
 function loadSavedSet() {
   setItems = readCurrentSet()
-    .map((s) => ({ fixture: DB.getById(s.id), qty: s.qty }))
-    .filter((s) => s.fixture && isBuildableItem(s.fixture));
+    .map((s) => ({ id: String(s.id), qty: s.qty }))
+    .filter((s) => itemById.has(String(s.id)));
 }
 
 function persistSet() {
-  writeCurrentSet(setItems.map((s) => ({ id: s.fixture.id, qty: s.qty })));
+  writeCurrentSet(setItems.map((s) => ({ id: String(s.id), qty: s.qty })));
 }
 
-function addFixture(fixtureId, qty = 1, closeModal = true) {
-  const f = DB.getById(fixtureId);
-  if (!f || !isBuildableItem(f)) {
-    flashBuilderStatus('เพิ่มรายการนี้เข้าชุดไม่ได้', false);
+function addFixture(key, qty = 1, closeModal = true) {
+  const rec = itemById.get(String(key));
+  if (!rec) {
+    flashBuilderStatus('ไม่พบรายการ', false);
     return;
   }
   const safeQty = Math.max(Number(qty) || 1, 1);
-  const existing = setItems.find((it) => it.fixture.id === f.id);
+  const existing = setItems.find((it) => String(it.id) === String(key));
   if (existing) existing.qty += safeQty;
-  else setItems.push({ fixture: f, qty: safeQty });
+  else setItems.push({ id: String(key), qty: safeQty });
   persistSet();
   renderSet();
-  flashBuilderStatus(`เพิ่ม ${f.brand} ${f.model} จำนวน ${safeQty} เข้าชุดแล้ว`);
+  flashBuilderStatus(`เพิ่ม ${rec.brand || ''} ${rec.model || ''} จำนวน ${safeQty} เข้าชุดแล้ว`);
   if (closeModal && addModal) addModal.hide();
 }
 
 function removeItem(idx) {
   const removed = setItems[idx];
-  setItems.splice(idx, 1);
-  persistSet();
+  if (!removed) return;
+  removeFixtureFromCurrentSet(String(removed.id));
+  loadSavedSet();
   renderSet();
-  if (removed) flashBuilderStatus(`ลบ ${removed.fixture.brand} ${removed.fixture.model} ออกจากชุดแล้ว`);
+  const rec = itemById.get(String(removed.id));
+  if (rec) flashBuilderStatus(`ลบ ${rec.brand || ''} ${rec.model || ''} ออกจากชุดแล้ว`);
 }
 
 function renderPreview() {
-  const fixture = DB.getById(document.getElementById('addSelect').value);
+  const key = String(document.getElementById('addSelect').value);
+  const rec = itemById.get(key);
   const el = document.getElementById('selectedPreview');
-  if (!fixture) {
+  if (!rec) {
     el.innerHTML = '<div class="text-muted">ไม่พบรายการ</div>';
     document.getElementById('addSetBtn').style.display = 'none';
     return;
   }
-  const stockCount = getStockCount(fixture);
+  const stockCount = getStockCount(rec);
   el.innerHTML = `
     <div class="row g-3 align-items-center">
       <div class="col-md-4">
-        <img src="${fixture.image || ''}" alt="${fixture.model}" onerror="this.style.display='none'">
+        <img src="${rec.image || ''}" alt="${rec.model}" onerror="this.style.display='none'">
       </div>
       <div class="col-md-8">
         <div class="d-flex justify-content-between align-items-start gap-2 mb-2 flex-wrap">
           <div>
-            <h6 class="mb-1">${fixture.brand} ${fixture.model}</h6>
-            <div class="small text-muted">${fixture.category || '-'} · ${itemTypeLabel(fixture)}</div>
+            <h6 class="mb-1">${rec.brand || ''} ${rec.model || ''}</h6>
+            <div class="small text-muted">${rec.category || '-'} · ${itemTypeLabel(rec)}</div>
           </div>
         </div>
-        <div class="spec-row"><span>Power</span><span>${fixture.power != null ? `${fixture.power} W` : '-'}</span></div>
-        <div class="spec-row"><span>Weight</span><span>${fixture.weight != null ? `${fixture.weight} kg` : '-'}</span></div>
-        <div class="spec-row"><span>Stock</span><span>${stockCount}${fixture.stockNote ? ` · ${fixture.stockNote}` : ''}</span></div>
-        <div class="spec-row"><span>Color</span><span>${fixture.color || '-'}</span></div>
-        <div class="spec-row"><span>Wireless</span><span>${fixture.wireless || '-'}</span></div>
+        <div class="spec-row"><span>Power</span><span>${rec.power != null ? `${rec.power} W` : '-'}</span></div>
+        <div class="spec-row"><span>Weight</span><span>${rec.weight != null ? `${rec.weight} kg` : '-'}</span></div>
+        <div class="spec-row"><span>Stock</span><span>${stockCount}${rec.stockNote ? ` · ${rec.stockNote}` : ''}</span></div>
+        <div class="spec-row"><span>Color</span><span>${rec.color || '-'}</span></div>
+        <div class="spec-row"><span>Wireless</span><span>${rec.wireless || '-'}</span></div>
       </div>
     </div>`;
-  document.getElementById('addSetBtn').style.display = hasSetOption(fixture) ? 'inline-flex' : 'none';
+  document.getElementById('addSetBtn').style.display = hasSetOption(rec) ? 'inline-flex' : 'none';
 }
 
 function renderSelect() {
   const q = (document.getElementById('builderSearch').value || '').trim().toLowerCase();
   visibleFixtures = fixtures.filter((f) => {
     if (!q) return true;
-    return `${f.brand} ${f.model} ${f.category || ''}`.toLowerCase().includes(q);
+    return `${f.brand || ''} ${f.model || ''} ${f.category || ''}`.toLowerCase().includes(q);
   });
 
   const sel = document.getElementById('addSelect');
@@ -211,14 +214,14 @@ function renderSelect() {
   sel.innerHTML = '';
   visibleFixtures.forEach((f) => {
     const o = document.createElement('option');
-    o.value = f.id;
-    o.textContent = `${f.brand} - ${f.model} (${f.category || '-'})`;
+    o.value = f._key;
+    o.textContent = `${f.brand || ''} - ${f.model || ''} (${f.category || '-'})`;
     sel.appendChild(o);
   });
 
   if (visibleFixtures.length) {
-    const stillExists = visibleFixtures.some((f) => String(f.id) === String(current));
-    sel.value = stillExists ? current : String(visibleFixtures[0].id);
+    const stillExists = visibleFixtures.some((f) => String(f._key) === String(current));
+    sel.value = stillExists ? current : String(visibleFixtures[0]._key);
   }
   renderPreview();
 }
@@ -232,31 +235,34 @@ function renderSet() {
   const voltage = Number(document.getElementById('voltageSelect').value);
 
   setItems.forEach((it, idx) => {
-    const p = (it.fixture.power || 0) * it.qty;
-    const w = (it.fixture.weight || 0) * it.qty;
-    const currentPerUnit = currentAt(voltage, Number(it.fixture.power || 0));
+    const rec = itemById.get(String(it.id));
+    if (!rec) return;
+
+    const p = (rec.power || 0) * it.qty;
+    const w = (rec.weight || 0) * it.qty;
+    const currentPerUnit = currentAt(voltage, Number(rec.power || 0));
     const currentTotal = currentAt(voltage, p);
-    const stockCount = getStockCount(it.fixture);
+    const stockCount = getStockCount(rec);
     const item = document.createElement('div');
     item.className = 'cart-item';
     item.innerHTML = `
       <div class="cart-item-image print-hidden">
-        <img src="${it.fixture.image || ''}" alt="${it.fixture.model}" onerror="this.style.display='none'">
+        <img src="${rec.image || ''}" alt="${rec.model}" onerror="this.style.display='none'">
       </div>
       <div class="cart-item-main">
         <div class="d-flex justify-content-between gap-2 flex-wrap mb-2">
           <div>
-            <h6 class="mb-1">${it.fixture.brand} ${it.fixture.model}</h6>
-            <div class="small text-muted">${it.fixture.category || '-'} · stock ${stockCount}${it.fixture.stockNote ? ` (${it.fixture.stockNote})` : ''}</div>
+            <h6 class="mb-1">${rec.brand || ''} ${rec.model || ''}</h6>
+            <div class="small text-muted">${rec.category || '-'} · stock ${stockCount}${rec.stockNote ? ` (${rec.stockNote})` : ''}</div>
           </div>
           <div class="d-flex gap-2 flex-wrap print-hidden">
-            <a href="fixture.html?id=${it.fixture.id}" class="btn btn-outline-dark btn-sm">ดูรายละเอียด</a>
+            ${rec._kind === 'fixture' ? `<a href="fixture.html?id=${rec.id}" class="btn btn-outline-dark btn-sm">ดูรายละเอียด</a>` : ''}
             <button class="btn btn-outline-danger btn-sm removeBtn" data-idx="${idx}">ลบ</button>
           </div>
         </div>
         <div class="cart-item-meta print-hidden">
-          <div class="cart-metric"><span>Power / 1 ชิ้น</span><strong>${it.fixture.power ?? '-'} W</strong></div>
-          <div class="cart-metric"><span>Weight / 1 ชิ้น</span><strong>${it.fixture.weight ?? '-'} kg</strong></div>
+          <div class="cart-metric"><span>Power / 1 ชิ้น</span><strong>${rec.power ?? '-'} W</strong></div>
+          <div class="cart-metric"><span>Weight / 1 ชิ้น</span><strong>${rec.weight ?? '-'} kg</strong></div>
           <div class="cart-metric"><span>Total Power</span><strong>${p.toFixed(0)} W</strong></div>
           <div class="cart-metric"><span>Total Weight</span><strong>${w.toFixed(2)} kg</strong></div>
         </div>
@@ -291,8 +297,9 @@ function renderSet() {
   });
 
   const totalQty = setItems.reduce((sum, item) => sum + item.qty, 0);
-  const p = totalPower(setItems);
-  const w = totalWeight(setItems);
+  const mappedForTotals = setItems.map((s) => ({ fixture: itemById.get(String(s.id)), qty: s.qty }));
+  const p = totalPower(mappedForTotals);
+  const w = totalWeight(mappedForTotals);
   const totalCurrent = currentAt(voltage, p);
   document.getElementById('sumCount').textContent = setItems.length;
   document.getElementById('sumQty').textContent = totalQty;
@@ -336,17 +343,19 @@ function renderSet() {
             </thead>
             <tbody>
               ${setItems.map((it, idx) => {
-                const totalPowerItem = (it.fixture.power || 0) * it.qty;
+                const rec = itemById.get(String(it.id));
+                if (!rec) return '';
+                const totalPowerItem = (rec.power || 0) * it.qty;
                 const totalCurrentItem = currentAt(voltage, totalPowerItem);
                 return `
                   <tr>
                     <td>${idx + 1}</td>
                     <td>
-                      <strong>${it.fixture.brand} ${it.fixture.model}</strong><br>
-                      <span class="small text-muted">${it.fixture.category || '-'} · stock ${getStockCount(it.fixture)}</span>
+                      <strong>${rec.brand || ''} ${rec.model || ''}</strong><br>
+                      <span class="small text-muted">${rec.category || '-'} · stock ${getStockCount(rec)}</span>
                     </td>
                     <td>${it.qty}</td>
-                    <td>${it.fixture.power ?? '-'} W</td>
+                    <td>${rec.power ?? '-'} W</td>
                     <td>${totalPowerItem.toFixed(0)} W</td>
                     <td>${totalCurrentItem.toFixed(2)} A</td>
                   </tr>`;
@@ -360,7 +369,32 @@ function renderSet() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  fixtures = (await DB.load()).filter(isBuildableItem);
+  const [dbFixtures, accessories] = await Promise.all([DB.load(), AccessoryStore.load()]);
+
+  dbFixtures.forEach((f) => {
+    const key = String(f.id);
+    itemById.set(key, { ...f, _key: key, _kind: 'fixture' });
+  });
+
+  accessories.forEach((a) => {
+    const akey = `a${a.id}`;
+    itemById.set(akey, {
+      id: a.id,
+      brand: a.brand || '',
+      model: a.name || '',
+      category: a.category || 'Accessory',
+      type: 'accessory',
+      power: null,
+      weight: null,
+      stock: a.stock || null,
+      image: a.image || '',
+      _key: akey,
+      _kind: 'accessory'
+    });
+  });
+
+  fixtures = [...itemById.values()].filter(isSetAddableItem);
+
   loadSavedSet();
   addModal = new bootstrap.Modal(document.getElementById('addFixtureModal'));
 
@@ -372,13 +406,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('builderSearch').addEventListener('input', renderSelect);
   document.getElementById('addSelect').addEventListener('change', renderPreview);
+
   document.getElementById('addBtn').addEventListener('click', () => addFixture(document.getElementById('addSelect').value, document.getElementById('addQtyInput').value, true));
+
   document.getElementById('addSetBtn').addEventListener('click', () => {
-    const fixture = DB.getById(document.getElementById('addSelect').value);
+    const key = String(document.getElementById('addSelect').value);
+    const rec = itemById.get(key);
+    if (!rec) return;
     const setCount = Math.max(Number(document.getElementById('addQtyInput').value) || 1, 1);
-    addFixture(fixture.id, (getUnitsPerSet(fixture) || 1) * setCount, true);
-    flashBuilderStatus(`เพิ่ม ${fixture.brand} ${fixture.model} จำนวน ${setCount} ชุดแล้ว`);
+    addFixture(key, (getUnitsPerSet(rec) || 1) * setCount, true);
+    flashBuilderStatus(`เพิ่ม ${rec.brand || ''} ${rec.model || ''} จำนวน ${setCount} ชุดแล้ว`);
   });
+
   document.getElementById('voltageSelect').addEventListener('change', renderSet);
 
   document.getElementById('clearSetBtn').addEventListener('click', () => {
@@ -401,6 +440,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSelect();
   renderSet();
 });
+
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a739d5e8e63150',t:'MTc4MzkzNDU3NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
