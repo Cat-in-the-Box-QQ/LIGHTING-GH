@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  await Promise.all([DB.load(), AccessoryStore.load()]);
+  await Promise.all([DB.load(), AccessoryStore.load(), AdminAuth.ready]);
 
   let accessories = AccessoryStore.getAll();
   let page = 1;
