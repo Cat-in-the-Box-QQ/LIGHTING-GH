@@ -1,12 +1,135 @@
----
-title: LIGHTING
-emoji: 🏆
-colorFrom: yellow
-colorTo: yellow
-sdk: static
-app_file: index.html
-pinned: false
-license: apache-2.0
+# 💡 LIGHTING-GH
+
+เว็บคลังอุปกรณ์ไฟ (Lighting inventory) สำหรับทีมถ่ายทำ — ค้นหา กรอง ดูสเปก จัดชุดอุปกรณ์
+และติดตามสต็อก เป็น static site ล้วน ไม่มี build step
+
+Deploy บน **Vercel** (production deploy จาก branch `main` อัตโนมัติ)
+
 ---
 
-LIGHTING
+## หน้านี้ทำอะไรได้บ้าง
+
+| หน้า | หน้าที่ |
+|---|---|
+| `index.html` | Dashboard — สรุปจำนวนอุปกรณ์ แบรนด์ สต็อก และสัดส่วน RGB |
+| `equipment.html` | รายการอุปกรณ์ทั้งหมด + ค้นหา/กรอง/เรียง + popup รายละเอียด |
+| `fixture.html` | หน้ารายละเอียดอุปกรณ์หนึ่งรายการ พร้อมแหล่งอ้างอิงการตรวจสอบข้อมูล |
+| `accessories.html` | คลังอุปกรณ์เสริม |
+| `inventory.html` | มุมมองสต็อกแบบกางดู (available / reserved / in use / remaining) |
+| `setbuilder.html` | จัดชุดอุปกรณ์ คำนวณกำลังไฟ น้ำหนัก และกระแสไฟฟ้า |
+| `admin.html` | โหมดผู้ดูแล — เพิ่ม/แก้ไข/ซ่อน/ลบ + แผงสถานะการเชื่อมต่อ Supabase |
+
+---
+
+## ข้อมูลมาจากไหน
+
+ระบบมี 2 โหมด เลือกอัตโนมัติตอนโหลดหน้า:
+
+1. **Supabase** (โหมดหลัก) — อ่าน/เขียนตาราง `fixtures` และ `accessories`
+   เป็นข้อมูลกลางที่ใช้ร่วมกันทุกเครื่อง
+2. **Local** (fallback) — อ่าน `data/*.json` แล้วเก็บส่วนแก้ไขใน `localStorage`
+
+ถ้า Supabase ใช้ไม่ได้ (ตารางยังไม่ได้สร้าง / เน็ตหลุด / ตารางว่าง / CDN ถูกบล็อก)
+เว็บจะถอยกลับมาใช้โหมด local อัตโนมัติเพื่อไม่ให้หน้าขาวเปล่า และจะแสดงป้ายสีเหลือง
+บอกสถานะเสมอในหน้า `admin.html`
+
+ดูรายละเอียดการตั้งค่าที่ [`supabase/README.md`](./supabase/README.md)
+
+---
+
+## โครงสร้างโปรเจกต์
+
+```
+├── *.html                  หน้าเว็บทั้งหมด
+├── css/style.css
+├── js/
+│   ├── supabase-config.js  ← จุดตั้งค่า Supabase ที่เดียว (URL, key, ชื่อตาราง, allowlist)
+│   ├── supabase-client.js  สร้าง client (ห้าม throw — ถ้า throw หน้าจะพังทั้งหน้า)
+│   ├── database.js         data layer ของ fixtures (Supabase + local fallback)
+│   ├── accessory-store.js  data layer ของ accessories (Supabase + local fallback)
+│   ├── admin-auth.js       login ผ่าน Supabase Auth
+│   ├── admin.js            หน้า admin
+│   ├── search.js           helper ค้นหา/กรอง/เรียง/คำนวณประเภทอุปกรณ์
+│   ├── inventory.js        หน้า inventory
+│   ├── accessories.js      หน้า accessories
+│   ├── app.js              dashboard
+│   ├── inline-fixture-editor.js     ฟอร์มแก้ไข fixture (ใช้ซ้ำหลายหน้า)
+│   ├── inline-accessory-editor.js   ฟอร์มแก้ไข accessory (ใช้ซ้ำหลายหน้า)
+│   ├── verification-store.js        อ่าน metadata การตรวจสอบข้อมูล
+│   ├── setbuilder-helper.js         เก็บ "ชุดปัจจุบัน" ใน localStorage
+│   └── power.js / weight.js         คำนวณกำลังไฟและน้ำหนัก
+├── data/                   ข้อมูลตั้งต้น (JSON) ใช้เป็น fallback และแหล่ง import
+├── images/                 รูปภาพอุปกรณ์
+├── supabase/
+│   ├── schema.sql          สคริปต์สร้างตาราง + RLS policy (รันซ้ำได้ปลอดภัย)
+│   └── README.md           คู่มือตั้งค่า Supabase
+└── test/                   ชุดตรวจอัตโนมัติ
+```
+
+> `data/database.js` เป็นเวอร์ชันเก่าที่เก็บไว้เป็น reference — ไม่มีหน้าไหนโหลดแล้ว
+> เพราะตรรกะ Supabase ถูกรวมเข้า `js/database.js` ไปแล้ว
+
+---
+
+## รันในเครื่อง
+
+ไม่ต้อง install อะไร:
+
+```bash
+python3 -m http.server 8080 --bind 0.0.0.0
+```
+
+แล้วเปิด <http://localhost:8080/admin.html>
+
+> ต้องเสิร์ฟผ่าน HTTP server ไม่ใช่เปิดไฟล์ตรง ๆ (`file://`) เพราะโค้ดใช้ `fetch()`
+> อ่าน `data/*.json` ซึ่งจะโดน CORS บล็อกถ้าเปิดเป็นไฟล์
+
+---
+
+## ชุดตรวจอัตโนมัติ
+
+```bash
+node test/run-all.mjs
+```
+
+ตรวจ 2 เรื่อง:
+
+1. **DOM id wiring** (`test/check-dom-ids.mjs`) — id ที่ JavaScript เรียกผ่าน
+   `getElementById()` มีอยู่จริงในหน้านั้นหรือไม่
+   ตัวนี้เกิดจากบั๊กจริงที่เคยทำให้หน้า admin พัง: `admin.html` ถูกเปลี่ยนเป็นช่อง
+   Email + Password แล้ว แต่ `admin.js` ยังเรียกหา `adminPinInput` ที่ไม่มีอยู่
+   จึงได้ `null` และโยน `TypeError` ตอนกด submit โดยไม่มีข้อความ error ให้เห็น
+2. **Data layer + AdminAuth** (`test/harness.mjs`) — จำลอง Supabase ใน Node
+   (ไม่ต้องมีเบราว์เซอร์ ไม่ต้องต่อเน็ต) ครอบคลุม 22 เคส: โหมด Supabase,
+   การแปลง snake_case ↔ camelCase, การถอยกลับมาใช้ local เมื่อตารางหาย/เน็ตหลุด/ตารางว่าง,
+   และการ login
+
+---
+
+## เข้าโหมด Admin
+
+1. เปิด `admin.html`
+2. ดูแผง **การเชื่อมต่อ Supabase** ด้านบนสุดก่อนเสมอ
+3. login ด้วยบัญชีที่สร้างไว้ใน Supabase → Authentication → Users
+4. เมื่อปลดล็อกแล้ว ปุ่ม **แก้ไข / ซ่อน / ลบ** จะปรากฏใน popup รายละเอียด
+   ของหน้า Equipment และ Accessories
+
+ระบบเดิมใช้ PIN `1234` ฝังในโค้ด ซึ่งใครก็เปิด DevTools อ่านได้ — ถอดออกแล้ว
+ตอนนี้ต้อง login ผ่าน Supabase Auth เท่านั้น
+
+ถ้าต้องการจำกัดว่าอีเมลไหนเข้าได้บ้าง แก้ที่ `js/supabase-config.js`:
+
+```js
+window.SUPABASE_ADMIN_EMAILS = ['boss@company.com'];  // [] = ยอมทุกบัญชีที่ login ผ่าน
+```
+
+---
+
+## บันทึกการเปลี่ยนแปลง
+
+ดูที่ [`CHANGELOG.md`](./CHANGELOG.md) และ [`VERIFICATION.md`](./VERIFICATION.md)
+(รายการอุปกรณ์ที่ถูกตรวจทานกับสเปกผู้ผลิต พร้อมแหล่งอ้างอิง)
+
+## License
+
+Apache-2.0
