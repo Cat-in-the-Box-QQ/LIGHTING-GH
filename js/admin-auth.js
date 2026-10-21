@@ -1,71 +1,46 @@
+// admin-auth.js - admin session shared across pages
+// session เก็บใน localStorage จึงอยู่ได้ทุกหน้าจนกว่าจะ logout
+// รองรับ 2 แบบ:
+//   1) PIN เดิม 1234
+//   2) ถ้ามี window.sb จะลอง signIn ด้วย email + password ผ่าน Supabase
+
 const AdminAuth = (() => {
-  let unlocked = false;
-  let currentUser = null;
+  const ADMIN_PIN = "1234";
+  const STORAGE_KEY = "lighting_db_admin_mode_v2";
 
-  async function refresh() {
-    try {
-      const { data: userData, error: userError } = await window.sb.auth.getUser();
-      if (userError || !userData?.user) {
-        unlocked = false;
-        currentUser = null;
-        return false;
-      }
-
-      currentUser = userData.user;
-
-      const { data, error } = await window.sb
-        .from('admin_users')
-        .select('user_id')
-        .eq('user_id', currentUser.id)
-        .maybeSingle();
-
-      if (error || !data) {
-        unlocked = false;
-        return false;
-      }
-
-      unlocked = true;
-      return true;
-    } catch (err) {
-      console.error('AdminAuth.refresh error:', err);
-      unlocked = false;
-      currentUser = null;
-      return false;
-    }
-  }
-
-  const ready = refresh();
-
-  async function unlock(email, password) {
-    const { error } = await window.sb.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) return false;
-    return refresh();
-  }
-
-  async function lock() {
-    await window.sb.auth.signOut();
-    unlocked = false;
-    currentUser = null;
-  }
+  // สำหรับหน้าต่าง ๆ ที่จะ await ก่อน render
+  const ready = Promise.resolve(true);
 
   function isUnlocked() {
-    return unlocked;
+    return localStorage.getItem(STORAGE_KEY) === "ok";
   }
 
-  function getUser() {
-    return currentUser;
+  function unlock(pin) {
+    if (String(pin) === ADMIN_PIN) {
+      localStorage.setItem(STORAGE_KEY, "ok");
+      return true;
+    }
+    return false;
   }
 
-  return {
-    ready,
-    refresh,
-    unlock,
-    lock,
-    isUnlocked,
-    getUser,
-  };
+  // ใช้เมื่อหน้า admin เปลี่ยนเป็น email + password (Supabase)
+  async function unlockWithEmail(email, password) {
+    if (!window.sb) return false;
+    try {
+      const { error } = await window.sb.auth.signInWithPassword({ email, password });
+      if (!error) {
+        localStorage.setItem(STORAGE_KEY, "ok");
+        return true;
+      }
+    } catch (e) {
+      console.error("Supabase admin login error:", e);
+    }
+    return false;
+  }
+
+  function lock() {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+
+  return { ready, isUnlocked, unlock, unlockWithEmail, lock };
 })();
