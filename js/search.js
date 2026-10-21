@@ -103,6 +103,136 @@ function hasBattery(item) {
   return !!normalizeText(item?.battery);
 }
 
+// ==================== แบตเตอรี่ / ความจุ Wh ====================
+//
+// เดิมรายการที่เป็นแบตเตอรี่เก็บค่าไว้ในฟิลด์ `power` ซึ่งเป็น "วัตต์ที่กิน"
+// ทำให้ Set Builder บวกมันเข้าไปเป็นโหลด ทั้งที่แบตเตอรี่เป็น "แหล่งจ่ายไฟ"
+// จึงแยกความจุเป็น Wh และห้ามเอาไปรวมกับกำลังไฟที่อุปกรณ์กิน
+
+// รายการที่เป็นแหล่งจ่ายไฟ (ไม่ใช่ตัวกินไฟ)
+function isPowerSource(item) {
+  const type = normalizeText(item?.type);
+  if (type === 'power') return true;
+  const category = normalizeText(item?.category);
+  if (category === 'battery' || category.includes('power station')) return true;
+  const brand = normalizeText(item?.brand);
+  if (brand === 'battery') return true;
+  return false;
+}
+
+// อุปกรณ์ที่มีแบตในตัว (เป็นทั้งตัวกินไฟและแหล่งจ่ายไฟในเวลาเดียวกัน)
+function hasBuiltInBattery(item) {
+  if (isPowerSource(item)) return false;
+  return /built-?in|battery/i.test(normalizeText(item?.battery));
+}
+
+// ดึง "ชั่วโมงruntime" จาก powerRaw เช่น '15 W (20 H.)' -> 20
+function runtimeHoursFromRaw(item) {
+  const raw = String(item?.powerRaw || '');
+  const m = raw.match(/(\d+(?:\.\d+)?)\s*(?:H\.?|hrs?\.?|hours?)/i);
+  return m ? Number(m[1]) : null;
+}
+
+// ความจุแบตเตอรี่เป็น Wh
+// ลำดับความสำคัญ: ค่าที่ระบุไว้ตรง ๆ -> kWh -> คำนวณจาก W x ชั่วโมง -> null
+function getBatteryWh(item) {
+  if (!item) return null;
+
+  const explicit = Number(item.batteryWh);
+  if (Number.isFinite(explicit) && explicit > 0) return explicit;
+
+  const sources = [String(item.battery || ''), String(item.powerRaw || ''), String(item.stockNote || '')];
+
+  // ระบุเป็น kWh เช่น '3.6kWh LFP power station'
+  for (const text of sources) {
+    const kwh = text.match(/(\d+(?:[.,]\d+)?)\s*kWh/i);
+    if (kwh) {
+      const value = Number(kwh[1].replace(',', '.'));
+      if (Number.isFinite(value) && value > 0) return Math.round(value * 1000);
+    }
+  }
+
+  // ระบุเป็น Wh ตรง ๆ เช่น '3600Wh capacity' หรือ '99Wh'
+  for (const text of sources) {
+    const wh = text.match(/(\d+(?:[.,]\d+)?)\s*Wh\b/i);
+    if (wh) {
+      const value = Number(wh[1].replace(',', '.'));
+      if (Number.isFinite(value) && value > 0) return Math.round(value);
+    }
+  }
+
+  // คำนวณจาก "วัตต์ที่กิน x ชั่วโมงที่ใช้งานได้" เช่น '15 W (20 H.)' -> 300 Wh
+  const hours = runtimeHoursFromRaw(item);
+  const watts = Number(item.power);
+  if (hours && Number.isFinite(watts) && watts > 0) return Math.round(watts * hours);
+
+  return null;
+}
+
+// กำลังไฟที่ "กิน" จริง — แหล่งจ่ายไฟไม่นับเป็นโหลด
+function getPowerDraw(item) {
+  if (isPowerSource(item)) return 0;
+  const w = Number(item?.power);
+  return Number.isFinite(w) ? w : 0;
+}
+
+// ประมาณชั่วโมงที่ใช้งานได้ ถ้าเอาแหล่งจ่ายไฟไปเลี้ยงโหลดที่กิน watts
+function estimateRuntimeHours(totalWh, watts) {
+  const w = Number(watts);
+  const wh = Number(totalWh);
+  if (!Number.isFinite(w) || w <= 0 || !Number.isFinite(wh) || wh <= 0) return null;
+  return wh / w;
+}
+
+function formatWh(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return '-';
+  return n >= 1000 ? `${(n / 1000).toLocaleString('en-US', { maximumFractionDigits: 2 })} kWh` : `${Math.round(n)} Wh`;
+}
+
+function formatHours(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return '-';
+  if (n < 1) return `${Math.round(n * 60)} นาที`;
+  const h = Math.floor(n);
+  const m = Math.round((n - h) * 60);
+  return m ? `${h} ชม. ${m} นาที` : `${h} ชม.`;
+}
+
+// ข้อความสำหรับแถว "กำลังไฟ" ในหน้า detail
+// แหล่งจ่ายไฟ (แบตเตอรี่ / power station) แสดงเป็นความจุ Wh แทนวัตต์ที่กิน
+function powerSpecText(item) {
+  if (!item) return '-';
+  const wh = getBatteryWh(item);
+
+  if (isPowerSource(item)) {
+    const raw = String(item.powerRaw || '').trim();
+    return wh ? `${formatWh(wh)}${raw ? ` · ${raw}` : ''}` : (raw || 'ไม่ระบุความจุ (Wh)');
+  }
+
+  const base = String(item.powerRaw || '').trim()
+    || (item.power != null ? `${item.power} W` : '-');
+  // อุปกรณ์ที่มีแบตในตัว บอกความจุต่อท้ายเพื่อให้ประเมิน runtime ได้
+  return wh && hasBuiltInBattery(item) ? `${base} · แบต ${formatWh(wh)}` : base;
+}
+
+// ข้อความสั้นสำหรับการ์ดในหน้ารายการ
+function powerCardText(item) {
+  if (!item) return '-';
+  if (isPowerSource(item)) {
+    const wh = getBatteryWh(item);
+    return wh ? formatWh(wh) : 'ไม่ระบุ Wh';
+  }
+  return item.power != null ? `${item.power} W` : '-';
+}
+
+// กระแสที่ 220V — แหล่งจ่ายไฟไม่ใช่โหลด จึงไม่คำนวณให้
+function currentAt220(item) {
+  if (!item || isPowerSource(item)) return '-';
+  const watts = getPowerDraw(item);
+  return watts > 0 ? (watts / 220).toFixed(2) : '-';
+}
+
 function isRgbFixture(item) {
   const color = normalizeText(item?.color);
   return /(rgb|rgbw|rgbww|rgba|rgbaw|rgbma|rgblaw|rgbacl|rgbwa\+uv|rgb\+mint\+amber|full-rgb)/i.test(color);
@@ -156,7 +286,9 @@ function filterFixtures(fixtures, filters) {
     if (filters.battery === "yes" && !hasBattery(f)) return false;
     if (filters.inStock === "yes" && getStockCount(f) <= 0) return false;
     if (filters.maxWeight && f.weight != null && f.weight > Number(filters.maxWeight)) return false;
-    if (filters.maxPower && f.power != null && f.power > Number(filters.maxPower)) return false;
+    // ใช้กำลังไฟที่ "กิน" จริง — แหล่งจ่ายไฟไม่ใช่โหลด จึงไม่ควรถูกกรองออกด้วยเกณฑ์นี้
+    // (เดิม EcoFlow DELTA Pro ที่ power=3600 โดนกรองทิ้งเมื่อค้น "ไม่เกิน 500W")
+    if (filters.maxPower && getPowerDraw(f) > Number(filters.maxPower)) return false;
     return true;
   });
 }

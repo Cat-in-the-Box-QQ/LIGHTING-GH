@@ -14,8 +14,15 @@
 
 | ตาราง | คอลัมน์หลัก |
 |---|---|
-| `fixtures` | `id`, `brand`, `model`, `category`, `type`, `power`, `power_raw`, `weight`, `stock_count`, `accessories` (text[]), `hidden`, `reserved`, `in_use`, `remaining`, ... |
+| `fixtures` | `id`, `brand`, `model`, `category`, `type`, `power`, `power_raw`, `battery_wh`, `weight`, `stock_count`, `accessories` (text[]), `hidden`, `reserved`, `in_use`, `remaining`, ... |
 | `accessories` | `id`, `name`, `brand`, `category`, `stock`, `image`, `pdf_page`, `compatible_with` (bigint[]), `hidden` |
+
+> **`power` vs `battery_wh`** — `power` คือวัตต์ที่อุปกรณ์ *กิน* (ใช้คำนวณโหลดและกระแสไฟ)
+> ส่วน `battery_wh` คือความจุแบตเตอรี่เป็น Wh (ใช้คำนวณว่าเลี้ยงโหลดได้นานแค่ไหน)
+> รายการที่เป็นแบตเตอรี่หรือ power station จะ **ไม่ถูกนับเป็นโหลด** ใน Set Builder
+> ถ้า `battery_wh` ว่าง เว็บจะพยายามเดาจาก `power_raw` ให้เอง เช่น
+> `15 W (20 H.)` → 300 Wh หรือ `3.6kWh LFP` → 3600 Wh — แต่ถ้าเดาไม่ได้จะเว้นว่างไว้
+> **ไม่มั่วสเปก** ให้กรอกผ่านหน้า Admin เอง
 
 พร้อม policy:
 - **อ่าน** ได้ทุกคน (รวมผู้เยี่ยมชมที่ยังไม่ login)

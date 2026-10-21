@@ -80,7 +80,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   const stockCount = getStockCount(f);
-  const current220 = f.power ? (f.power / 220).toFixed(2) : "-";
+  const current220 = currentAt220(f);
+  const isSource = isPowerSource(f);
   const stockLine = f.stockNote ? `${stockCount} Pieces · ${f.stockNote}` : `${stockCount} Pieces`;
   const canBuild = isSetAddableItem(f);
   const colorBadgeClass = colorTagClass(f);
@@ -113,9 +114,11 @@ document.addEventListener("DOMContentLoaded", async () => {
           ${f.hidden ? `<span class="badge bg-danger">Hidden</span>` : ''}
         </div>
 
-        ${specRowHtml('Power', f.powerRaw || (f.power != null ? `${f.power} W` : '-'), isAdminUnlocked() ? f.id : null, 'powerRaw')}
+        ${specRowHtml(isSource ? 'Battery Capacity' : 'Power', powerSpecText(f), isAdminUnlocked() ? f.id : null, 'powerRaw')}
         ${specRowHtml('Weight', f.weightRaw || (f.weight != null ? `${f.weight} kg` : '-'), isAdminUnlocked() ? f.id : null, 'weightRaw')}
-        <div class="spec-row"><span>Current @ 220V</span><span>${current220} A</span></div>
+        ${isSource
+          ? '<div class="spec-row"><span>Current @ 220V</span><span class="small text-muted">-</span></div>'
+          : `<div class="spec-row"><span>Current @ 220V</span><span>${current220} A</span></div>`}
         <div class="spec-row"><span>Lux</span><span>${f.lux || '-'}</span></div>
         <div class="spec-row"><span>Lumens</span><span>${f.lumens ?? '-'}</span></div>
         <div class="spec-row"><span>Beam Angle</span><span>${f.beam || '-'}</span></div>

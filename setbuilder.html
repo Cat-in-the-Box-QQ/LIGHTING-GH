@@ -55,8 +55,13 @@
         <h5>สรุปชุดอุปกรณ์</h5>
         <div class="spec-row"><span>จำนวนรายการ</span><span id="sumCount">0</span></div>
         <div class="spec-row"><span>จำนวนชิ้นรวม</span><span id="sumQty">0</span></div>
-        <div class="spec-row"><span>กำลังไฟรวม</span><span id="sumPower">0 W</span></div>
+        <div class="spec-row"><span>กำลังไฟที่กินรวม</span><span id="sumPower">0 W</span></div>
         <div class="spec-row"><span>น้ำหนักรวม</span><span id="sumWeight">0 kg</span></div>
+        <hr>
+        <div class="spec-row"><span>แหล่งจ่ายไฟในชุด</span><span id="sumPowerSources">0 ชิ้น</span></div>
+        <div class="spec-row"><span>ความจุแบตเตอรี่รวม</span><span id="sumBatteryWh">-</span></div>
+        <div class="spec-row"><span>เลี้ยงโหลดได้นานประมาณ</span><span id="sumRuntime">-</span></div>
+        <div class="small text-muted mb-2" id="sumBatteryNote"></div>
         <hr>
         <label class="form-label small mb-0">แรงดันไฟฟ้า (V) สำหรับคำนวณกระแส</label>
         <select id="voltageSelect" class="form-select form-select-sm mb-2">
@@ -195,7 +200,11 @@ function renderPreview() {
             <div class="small text-muted">${rec.category || '-'} · ${itemTypeLabel(rec)}</div>
           </div>
         </div>
-        <div class="spec-row"><span>Power</span><span>${rec.power != null ? `${rec.power} W` : '-'}</span></div>
+        ${isPowerSource(rec)
+          ? `<div class="spec-row"><span>ความจุแบตเตอรี่</span><span>${getBatteryWh(rec) ? formatWh(getBatteryWh(rec)) : 'ไม่ระบุ'}</span></div>`
+          : `<div class="spec-row"><span>Power</span><span>${rec.power != null ? `${rec.power} W` : '-'}</span></div>`}
+        ${!isPowerSource(rec) && getBatteryWh(rec)
+          ? `<div class="spec-row"><span>แบตในตัว</span><span>${formatWh(getBatteryWh(rec))}</span></div>` : ''}
         <div class="spec-row"><span>Weight</span><span>${rec.weight != null ? `${rec.weight} kg` : '-'}</span></div>
         <div class="spec-row"><span>Stock</span><span>${stockCount}${rec.stockNote ? ` · ${rec.stockNote}` : ''}</span></div>
         <div class="spec-row"><span>Color</span><span>${rec.color || '-'}</span></div>
@@ -241,10 +250,14 @@ function renderSet() {
     const rec = itemById.get(String(it.id));
     if (!rec) return;
 
-    const p = (rec.power || 0) * it.qty;
+    const isSource = isPowerSource(rec);
+    const draw = getPowerDraw(rec);                 // วัตต์ที่กิน (แหล่งจ่ายไฟ = 0)
+    const p = draw * it.qty;
     const w = (rec.weight || 0) * it.qty;
-    const currentPerUnit = currentAt(voltage, Number(rec.power || 0));
+    const currentPerUnit = currentAt(voltage, draw);
     const currentTotal = currentAt(voltage, p);
+    const unitWh = getBatteryWh(rec);
+    const totalWh = unitWh ? unitWh * it.qty : 0;
     const stockCount = getStockCount(rec);
     const item = document.createElement('div');
     item.className = 'cart-item';
@@ -264,10 +277,19 @@ function renderSet() {
           </div>
         </div>
         <div class="cart-item-meta print-hidden">
-          <div class="cart-metric"><span>Power / 1 ชิ้น</span><strong>${rec.power ?? '-'} W</strong></div>
+          ${isSource ? `
+          <div class="cart-metric"><span>ความจุ / 1 ชิ้น</span><strong>${unitWh ? formatWh(unitWh) : 'ไม่ระบุ'}</strong></div>
+          <div class="cart-metric"><span>ความจุรวม</span><strong>${totalWh ? formatWh(totalWh) : 'ไม่ระบุ'}</strong></div>
+          <div class="cart-metric"><span>Weight / 1 ชิ้น</span><strong>${rec.weight ?? '-'} kg</strong></div>
+          <div class="cart-metric"><span>Total Weight</span><strong>${w.toFixed(2)} kg</strong></div>
+          <div class="cart-metric" style="grid-column:1/-1"><span class="text-muted small">แหล่งจ่ายไฟ — ไม่นับเป็นโหลดในกำลังไฟรวม${unitWh ? '' : ' · ยังไม่ระบุความจุ (Wh) แก้ได้ที่หน้า Admin'}</span></div>
+          ` : `
+          <div class="cart-metric"><span>Power / 1 ชิ้น</span><strong>${draw || '-'} W</strong></div>
           <div class="cart-metric"><span>Weight / 1 ชิ้น</span><strong>${rec.weight ?? '-'} kg</strong></div>
           <div class="cart-metric"><span>Total Power</span><strong>${p.toFixed(0)} W</strong></div>
           <div class="cart-metric"><span>Total Weight</span><strong>${w.toFixed(2)} kg</strong></div>
+          ${unitWh ? `<div class="cart-metric"><span>แบตในตัว</span><strong>${formatWh(unitWh)}</strong></div>` : ''}
+          `}
         </div>
       </div>
       <div class="cart-item-side">
@@ -301,14 +323,34 @@ function renderSet() {
 
   const totalQty = setItems.reduce((sum, item) => sum + item.qty, 0);
   const mappedForTotals = setItems.map((s) => ({ fixture: itemById.get(String(s.id)), qty: s.qty }));
-  const p = totalPower(mappedForTotals);
+  const p = totalPower(mappedForTotals);          // กำลังไฟที่ "กิน" (ไม่รวมแหล่งจ่ายไฟ)
   const w = totalWeight(mappedForTotals);
   const totalCurrent = currentAt(voltage, p);
+  const batteryWh = totalBatteryWh(mappedForTotals);
+  const sourceCount = countPowerSources(mappedForTotals);
+  const runtime = estimateRuntimeHours(batteryWh, p);
+
   document.getElementById('sumCount').textContent = setItems.length;
   document.getElementById('sumQty').textContent = totalQty;
   document.getElementById('sumPower').textContent = `${p.toFixed(0)} W`;
   document.getElementById('sumWeight').textContent = `${w.toFixed(2)} kg`;
   document.getElementById('sumCurrent').textContent = `${totalCurrent.toFixed(2)} A`;
+  document.getElementById('sumPowerSources').textContent = `${sourceCount} ชิ้น`;
+  document.getElementById('sumBatteryWh').textContent = batteryWh > 0 ? formatWh(batteryWh) : '-';
+  document.getElementById('sumRuntime').textContent = runtime ? formatHours(runtime) : '-';
+
+  const batteryNote = document.getElementById('sumBatteryNote');
+  if (batteryNote) {
+    if (!sourceCount) {
+      batteryNote.textContent = 'ยังไม่มีแบตเตอรี่ / power station ในชุด';
+    } else if (!batteryWh) {
+      batteryNote.textContent = 'มีแหล่งจ่ายไฟในชุด แต่ยังไม่ได้ระบุความจุ (Wh) — แก้ได้ที่หน้า Admin';
+    } else if (!p) {
+      batteryNote.textContent = 'มีแหล่งจ่ายไฟ แต่ยังไม่มีอุปกรณ์ที่กินไฟในชุด';
+    } else {
+      batteryNote.textContent = `คำนวณจากความจุ ${formatWh(batteryWh)} ÷ โหลด ${p.toFixed(0)} W (ยังไม่หักการสูญเสียของ inverter)`;
+    }
+  }
 
   const printSummary = document.getElementById('printSummaryBox');
   if (printSummary) {
@@ -317,10 +359,13 @@ function renderSet() {
       <div class="cart-print-summary-grid">
         <div><strong>จำนวนรายการ</strong><br>${setItems.length}</div>
         <div><strong>จำนวนชิ้นรวม</strong><br>${totalQty}</div>
-        <div><strong>กำลังไฟรวม</strong><br>${p.toFixed(0)} W</div>
+        <div><strong>กำลังไฟที่กินรวม</strong><br>${p.toFixed(0)} W</div>
         <div><strong>น้ำหนักรวม</strong><br>${w.toFixed(2)} kg</div>
         <div><strong>แรงดันที่ใช้คำนวณ</strong><br>${voltage} V</div>
         <div><strong>กระแสรวม</strong><br>${totalCurrent.toFixed(2)} A</div>
+        <div><strong>แหล่งจ่ายไฟในชุด</strong><br>${sourceCount} ชิ้น</div>
+        <div><strong>ความจุแบตเตอรี่รวม</strong><br>${batteryWh > 0 ? formatWh(batteryWh) : '-'}</div>
+        <div><strong>เลี้ยงโหลดได้นานประมาณ</strong><br>${runtime ? formatHours(runtime) : '-'}</div>
       </div>
     `;
   }
@@ -339,8 +384,8 @@ function renderSet() {
                 <th style="width:38px;">#</th>
                 <th>รายการ</th>
                 <th>จำนวน</th>
-                <th>กำลังไฟ / 1 ชิ้น</th>
-                <th>กำลังไฟรวม</th>
+                <th>กำลังไฟ / ความจุ ต่อชิ้น</th>
+                <th>กำลังไฟ / ความจุรวม</th>
                 <th>กระแสรวม @ ${voltage}V</th>
               </tr>
             </thead>
@@ -348,19 +393,28 @@ function renderSet() {
               ${setItems.map((it, idx) => {
                 const rec = itemById.get(String(it.id));
                 if (!rec) return '';
-                const totalPowerItem = (rec.power || 0) * it.qty;
+                // แหล่งจ่ายไฟ (แบตเตอรี่ / power station) แสดงเป็น Wh ไม่ใช่ W
+                // และไม่ถูกนับเป็นโหลดในกำลังไฟรวม
+                const srcItem = isPowerSource(rec);
+                const drawItem = getPowerDraw(rec);
+                const totalPowerItem = drawItem * it.qty;
                 const totalCurrentItem = currentAt(voltage, totalPowerItem);
+                const unitWhItem = getBatteryWh(rec);
                 return `
                   <tr>
                     <td>${idx + 1}</td>
                     <td>
                       <strong>${rec.brand || ''} ${rec.model || ''}</strong><br>
-                      <span class="small text-muted">${rec.category || '-'} · stock ${getStockCount(rec)}</span>
+                      <span class="small text-muted">${rec.category || '-'} · stock ${getStockCount(rec)}${srcItem ? ' · แหล่งจ่ายไฟ' : ''}</span>
                     </td>
                     <td>${it.qty}</td>
-                    <td>${rec.power ?? '-'} W</td>
-                    <td>${totalPowerItem.toFixed(0)} W</td>
-                    <td>${totalCurrentItem.toFixed(2)} A</td>
+                    <td>${srcItem
+                      ? (unitWhItem ? formatWh(unitWhItem) : 'ไม่ระบุ Wh')
+                      : `${drawItem || '-'} W${unitWhItem ? ` <span class="small text-muted">(แบต ${formatWh(unitWhItem)})</span>` : ''}`}</td>
+                    <td>${srcItem
+                      ? (unitWhItem ? formatWh(unitWhItem * it.qty) : '-')
+                      : `${totalPowerItem.toFixed(0)} W`}</td>
+                    <td>${srcItem ? '-' : `${totalCurrentItem.toFixed(2)} A`}</td>
                   </tr>`;
               }).join('')}
             </tbody>

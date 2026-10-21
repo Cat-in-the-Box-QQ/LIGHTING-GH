@@ -125,9 +125,10 @@ function makeMockSupabase(mode, seed) {
       limit: (n) => { state.limit = n; return chain; },
       single: () => { state.single = true; return chain; },
       maybeSingle: () => { state.single = true; return chain; },
+      // จงใจมีแค่ .then() — supabase-js PostgrestBuilder เป็น PromiseLike ไม่ใช่ Promise
+      // จึง "ไม่มี" .catch() / .finally() ถ้าใส่ไว้ใน mock จะเก่งกว่าของจริง
+      // และปิดบังบั๊กที่เคยทำให้หน้า admin ถอยไปโหมด local (mock fidelity matters)
       then: (onF, onR) => { pending = pending || exec(); return pending.then(onF, onR); },
-      catch: (onR) => { pending = pending || exec(); return pending.then(undefined, onR); },
-      finally: (onF) => { pending = pending || exec(); return pending.finally(onF); },
     };
     return chain;
   }
@@ -205,6 +206,8 @@ function makeContext({ supabaseMode = 'ok', seed = null, supabaseLibPresent = tr
   const files = [
     'js/supabase-config.js',
     'js/supabase-client.js',
+    'js/search.js',
+    'js/power.js',
     'js/database.js',
     'js/accessory-store.js',
     'js/admin-auth.js',
@@ -218,7 +221,14 @@ function makeContext({ supabaseMode = 'ok', seed = null, supabaseLibPresent = tr
   // scope ไม่ใช่ property ของ global object จึงต้อง export ออกมาเอง
   // (ในเบราว์เซอร์จริง script ทุกตัวแชร์ scope นี้อยู่แล้ว จึงไม่ต้องทำขั้นนี้)
   vm.runInContext(
-    'window.DB = DB; window.AccessoryStore = AccessoryStore; window.AdminAuth = AdminAuth;',
+    'window.DB = DB; window.AccessoryStore = AccessoryStore; window.AdminAuth = AdminAuth;'
+    + ' window.getBatteryWh = getBatteryWh; window.isPowerSource = isPowerSource;'
+    + ' window.getPowerDraw = getPowerDraw; window.hasBuiltInBattery = hasBuiltInBattery;'
+    + ' window.totalPower = totalPower; window.totalBatteryWh = totalBatteryWh;'
+    + ' window.countPowerSources = countPowerSources; window.estimateRuntimeHours = estimateRuntimeHours;'
+    + ' window.formatWh = formatWh; window.formatHours = formatHours;'
+    + ' window.powerSpecText = powerSpecText; window.powerCardText = powerCardText;'
+    + ' window.currentAt220 = currentAt220; window.filterFixtures = filterFixtures;',
     ctx,
     { filename: 'test-export.js' }
   );
@@ -489,6 +499,230 @@ await test('ไม่มี supabase-js -> signIn คืน error แทนก�
   const res = await sandbox.AdminAuth.signIn('admin@test.com', 'secret123');
   assert.strictEqual(res.ok, false);
   assert.ok(res.error.length > 0);
+});
+
+console.log('\n=== กันบั๊ก .catch() บน Supabase builder เกิดซ้ำ ===');
+
+await test('mock builder ซื่อตรงกับ supabase-js: มี .then() แต่ไม่มี .catch()/.finally()', async () => {
+  const { sandbox } = makeContext({ supabaseMode: 'ok', seed: { fixtures: [], accessories: [] } });
+  const b = sandbox.sb.from('fixtures').select('*');
+  assert.strictEqual(typeof b.then, 'function', 'builder ต้องเป็น PromiseLike (มี .then)');
+  assert.strictEqual(b.catch, undefined, 'mock ต้องไม่มี .catch() เหมือน supabase-js จริง');
+  assert.strictEqual(b.finally, undefined, 'mock ต้องไม่มี .finally() เหมือน supabase-js จริง');
+});
+
+await test('โค้ดใน js/ ไม่ต่อ .catch()/.finally() ท้าย query builder ของ Supabase', async () => {
+  // นี่คือ static scan: บั๊กเดิมคือ
+  //   window.sb.from(...).select(...).catch(() => null)
+  // ซึ่งโยน TypeError ก่อนยิง query จริง ทำให้ถอยไปโหมด local โดยไม่รู้สาเหตุ
+  //
+  // ไล่ chain ย้อนกลับจากจุดที่เรียก .catch/.finally แล้วดูว่า receiver จริงคือใคร
+  // (ใช้ regex ง่าย ๆ จะ false positive กับ fetch(...).catch(...) ซึ่งถูกเพราะ fetch คืน Promise จริง)
+  function receiverChain(code, dotIdx) {
+    let i = dotIdx - 1;
+    let depth = 0;
+    while (i >= 0) {
+      const c = code[i];
+      if (c === ')' || c === ']' || c === '}') { depth++; i--; continue; }
+      if (c === '(' || c === '[' || c === '{') {
+        if (depth === 0) break;      // เจอวงเล็บเปิดของ call ที่ครอบอยู่ = chain เริ่มหลังมัน
+        depth--; i--; continue;
+      }
+      if (depth === 0 && !/[A-Za-z0-9_$.\s]/.test(c)) break;  // terminator เช่น ; , = +
+      i--;
+    }
+    return code.slice(i + 1, dotIdx);
+  }
+
+  const jsDir = path.join(ROOT, 'js');
+  const offenders = [];
+  for (const f of fs.readdirSync(jsDir).filter((x) => x.endsWith('.js'))) {
+    const code = fs.readFileSync(path.join(jsDir, f), 'utf8');
+    const re = /\.(catch|finally)\s*\(/g;
+    let m;
+    while ((m = re.exec(code))) {
+      const chain = receiverChain(code, m.index);
+      if (!/window\.sb\b/.test(chain)) continue;   // ไม่ใช่ builder ของ Supabase -> ข้าม
+      const line = code.slice(0, m.index).split('\n').length;
+      offenders.push(`${f}:${line} -> ${chain.trim().slice(-70)}.${m[1]}()`);
+    }
+  }
+  assert.deepStrictEqual(offenders, [], `พบการต่อ .catch()/.finally() บน Supabase builder:\n  ${offenders.join('\n  ')}`);
+});
+
+await test('ตาราง accessories พัง ต้องไม่ล้มการโหลด fixtures', async () => {
+  // เดิมใช้ .catch() กลบ error ของ accessories — ตอนนี้เป็น safeQuery แล้ว
+  // ต้องยังอ่าน fixtures ได้ปกติแม้ accessories จะ error
+  const { sandbox, mockSb } = makeContext({ supabaseMode: 'ok', seed: { fixtures: localFixtures.slice(0, 4).map(sbRowFromFixture), accessories: [] } });
+  const realFrom = mockSb.from.bind(mockSb);
+  mockSb.from = (t) => (t === 'accessories'
+    ? { select: () => Promise.resolve({ data: null, error: { message: 'permission denied for table accessories' } }) }
+    : realFrom(t));
+  const rows = await sandbox.DB.load();
+  assert.strictEqual(sandbox.DB.status().mode, 'supabase', 'fixtures ต้องยังเชื่อม Supabase ได้');
+  assert.strictEqual(rows.length, 4);
+});
+
+console.log('\n=== แบตเตอรี่: ความจุ Wh แทนวัตต์ที่กิน ===');
+
+await test('แยกแหล่งจ่ายไฟออกจากตัวกินไฟได้ถูกต้อง', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  assert.strictEqual(sandbox.isPowerSource({ type: 'power', category: 'Battery', brand: 'FXLION' }), true);
+  assert.strictEqual(sandbox.isPowerSource({ type: 'power', category: 'Power Station', brand: 'EcoFlow' }), true);
+  assert.strictEqual(sandbox.isPowerSource({ brand: 'Battery', category: 'x' }), true);
+  // ไฟที่มีแบตในตัว ยังเป็นตัว "กินไฟ" ไม่ใช่แหล่งจ่าย
+  assert.strictEqual(sandbox.isPowerSource({ type: 'fixture', category: 'Battery Par', brand: 'Astera' }), false);
+  assert.strictEqual(sandbox.isPowerSource({ type: 'fixture', category: 'Panel', brand: 'Arri' }), false);
+});
+
+await test('getPowerDraw: แหล่งจ่ายไฟ = 0 วัตต์', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  assert.strictEqual(sandbox.getPowerDraw({ type: 'power', power: 3600 }), 0, 'แบตเตอรี่ต้องไม่ถูกนับเป็นโหลด');
+  assert.strictEqual(sandbox.getPowerDraw({ type: 'fixture', power: 200 }), 200);
+  assert.strictEqual(sandbox.getPowerDraw({ type: 'fixture', power: null }), 0);
+});
+
+await test('getBatteryWh อ่านค่าที่ระบุไว้ตรง ๆ', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  assert.strictEqual(sandbox.getBatteryWh({ batteryWh: 99 }), 99);
+  assert.strictEqual(sandbox.getBatteryWh({ batteryWh: 150.5 }), 150.5);
+});
+
+await test('getBatteryWh แปลง kWh -> Wh', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  // EcoFlow DELTA Pro ของจริง: battery = '3.6kWh LFP power station'
+  assert.strictEqual(sandbox.getBatteryWh({ type: 'power', battery: '3.6kWh LFP power station' }), 3600);
+  assert.strictEqual(sandbox.getBatteryWh({ battery: '1.5 kWh' }), 1500);
+});
+
+await test('getBatteryWh อ่าน Wh จาก powerRaw', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  assert.strictEqual(
+    sandbox.getBatteryWh({ type: 'power', powerRaw: '3600W AC output / 7200W surge / 3600Wh capacity' }),
+    3600,
+    'ต้องจับ 3600Wh capacity ไม่ใช่ 3600W output'
+  );
+  assert.strictEqual(sandbox.getBatteryWh({ powerRaw: '99Wh V-Mount' }), 99);
+});
+
+await test('getBatteryWh คำนวณจาก "วัตต์ x ชั่วโมง" ใน powerRaw', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  // Astera Ax3: powerRaw '15 W (20 H.)' -> 15 x 20 = 300 Wh
+  assert.strictEqual(sandbox.getBatteryWh({ power: 15, powerRaw: '15 W (20 H.)', battery: 'Built-in battery' }), 300);
+  assert.strictEqual(sandbox.getBatteryWh({ power: 45, powerRaw: '45 W ( 20 H.)' }), 900);
+  assert.strictEqual(sandbox.getBatteryWh({ power: 14, powerRaw: '14 W (3 H.)' }), 42);
+  assert.strictEqual(sandbox.getBatteryWh({ power: 70, powerRaw: '70 W (20 hrs)' }), 1400);
+});
+
+await test('getBatteryWh คืน null เมื่อเดาไม่ได้ (ห้ามมั่วสเปก)', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  // FXLION V-Mount ยังไม่รู้ความจุจริง -> ต้องเว้นว่าง ไม่เดา
+  assert.strictEqual(sandbox.getBatteryWh({ type: 'power', brand: 'FXLION', model: 'V-Mount 14.8V', power: null, battery: '14.8V V-Mount battery' }), null);
+  assert.strictEqual(sandbox.getBatteryWh({ type: 'fixture', power: 200, category: 'Panel' }), null);
+});
+
+await test('totalPower ไม่รวมแหล่งจ่ายไฟเป็นโหลด', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const items = [
+    { fixture: { type: 'fixture', power: 200 }, qty: 2 },        // 400 W
+    { fixture: { type: 'fixture', power: 100 }, qty: 1 },        // 100 W
+    { fixture: { type: 'power', category: 'Power Station', power: 3600, battery: '3.6kWh' }, qty: 1 }, // ไม่ใช่โหลด
+  ];
+  assert.strictEqual(sandbox.totalPower(items), 500, 'เดิมจะบวกเป็น 4100 W ซึ่งผิด');
+});
+
+await test('totalBatteryWh รวมความจุทุกก้อนในชุด', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const items = [
+    { fixture: { type: 'fixture', power: 200 }, qty: 2 },
+    { fixture: { type: 'power', category: 'Power Station', battery: '3.6kWh LFP' }, qty: 1 },
+    { fixture: { type: 'power', category: 'Battery', batteryWh: 99 }, qty: 4 },
+  ];
+  assert.strictEqual(sandbox.totalBatteryWh(items), 3600 + 396);
+  assert.strictEqual(sandbox.countPowerSources(items), 5);
+});
+
+await test('estimateRuntimeHours คำนวณ runtime จากความจุ / โหลด', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  assert.strictEqual(sandbox.estimateRuntimeHours(3600, 600), 6);
+  assert.strictEqual(sandbox.estimateRuntimeHours(0, 600), null, 'ไม่มีความจุ -> บอกไม่ได้');
+  assert.strictEqual(sandbox.estimateRuntimeHours(3600, 0), null, 'ไม่มีโหลด -> บอกไม่ได้');
+  assert.strictEqual(sandbox.estimateRuntimeHours(null, null), null);
+});
+
+await test('formatWh / formatHours แสดงผลอ่านง่าย', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  assert.strictEqual(sandbox.formatWh(99), '99 Wh');
+  assert.strictEqual(sandbox.formatWh(3600), '3.6 kWh');
+  assert.strictEqual(sandbox.formatWh(null), '-');
+  assert.strictEqual(sandbox.formatHours(6), '6 ชม.');
+  assert.strictEqual(sandbox.formatHours(1.5), '1 ชม. 30 นาที');
+  assert.strictEqual(sandbox.formatHours(0.5), '30 นาที');
+  assert.strictEqual(sandbox.formatHours(null), '-');
+});
+
+await test('powerSpecText: แบตเตอรี่โชว์ Wh, ไฟปกติโชว์ W', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const delta = { type: 'power', category: 'Power Station', power: 3600, powerRaw: '3600W AC output / 7200W surge / 3600Wh capacity', battery: '3.6kWh LFP power station' };
+  const text = sandbox.powerSpecText(delta);
+  assert.ok(text.includes('3.6 kWh'), `ต้องโชว์ความจุ ไม่ใช่ 3600 W ได้: ${text}`);
+  assert.ok(!/^3600 W/.test(text), 'ต้องไม่ขึ้นต้นด้วยวัตต์ที่กิน');
+
+  const vmount = { type: 'power', category: 'Battery', brand: 'FXLION', model: 'V-Mount 14.8V', power: null, battery: '14.8V V-Mount battery' };
+  assert.strictEqual(sandbox.powerSpecText(vmount), 'ไม่ระบุความจุ (Wh)');
+
+  const arri = { type: 'fixture', category: 'Panel', power: 200, powerRaw: '48 VDC <200 W Maximum>' };
+  assert.strictEqual(sandbox.powerSpecText(arri), '48 VDC <200 W Maximum>');
+});
+
+await test('powerSpecText: ไฟที่มีแบตในตัว บอกความจุต่อท้าย', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const ax3 = { type: 'fixture', category: 'Battery Par', power: 15, powerRaw: '15 W (20 H.)', battery: 'Built-in battery' };
+  const text = sandbox.powerSpecText(ax3);
+  assert.ok(text.includes('15 W (20 H.)'), `ต้องคงกำลังไฟที่กินไว้ ได้: ${text}`);
+  assert.ok(text.includes('แบต 300 Wh'), `ต้องบอกความจุที่คำนวณได้ ได้: ${text}`);
+});
+
+await test('currentAt220: แหล่งจ่ายไฟไม่คำนวณกระแส', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  assert.strictEqual(sandbox.currentAt220({ type: 'power', power: 3600 }), '-');
+  assert.strictEqual(sandbox.currentAt220({ type: 'fixture', power: 220 }), '1.00');
+  assert.strictEqual(sandbox.currentAt220({ type: 'fixture', power: null }), '-');
+});
+
+await test('ข้อมูลจริงใน data/fixtures.json: EcoFlow + Astera + FXLION', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const byId = new Map(localFixtures.map((f) => [f.id, f]));
+
+  const delta = byId.get(63);
+  assert.ok(delta, 'ต้องมี EcoFlow DELTA Pro id=63');
+  assert.strictEqual(sandbox.isPowerSource(delta), true);
+  assert.strictEqual(sandbox.getPowerDraw(delta), 0, 'DELTA Pro ต้องไม่ถูกนับเป็นโหลด 3600W');
+  assert.strictEqual(sandbox.getBatteryWh(delta), 3600, 'ความจุต้องเป็น 3600 Wh');
+
+  const ax3 = byId.get(24);
+  assert.ok(ax3, 'ต้องมี Astera Ax3 id=24');
+  assert.strictEqual(sandbox.isPowerSource(ax3), false, 'Ax3 เป็นไฟ ไม่ใช่แหล่งจ่าย');
+  assert.strictEqual(sandbox.getPowerDraw(ax3), 15, 'Ax3 กิน 15 W ต้องคงไว้');
+  assert.strictEqual(sandbox.getBatteryWh(ax3), 300, '15 W x 20 H. = 300 Wh');
+
+  const vmount = byId.get(61);
+  assert.ok(vmount, 'ต้องมี FXLION V-Mount id=61');
+  assert.strictEqual(sandbox.isPowerSource(vmount), true);
+  assert.strictEqual(sandbox.getBatteryWh(vmount), null, 'ยังไม่รู้ความจุจริง ต้องไม่เดา');
+});
+
+await test('ตัวกรอง maxPower ไม่กรองแหล่งจ่ายไฟทิ้ง', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const items = [
+    { id: 1, type: 'fixture', category: 'Panel', power: 200 },
+    { id: 2, type: 'fixture', category: 'Panel', power: 1200 },
+    { id: 63, type: 'power', category: 'Power Station', power: 3600, battery: '3.6kWh LFP power station' },
+  ];
+  const out = sandbox.filterFixtures(items, { maxPower: '500' });
+  const ids = out.map((x) => x.id).sort((a, b) => a - b);
+  assert.deepStrictEqual(ids, [1, 63],
+    'เดิมจะได้แค่ [1] เพราะ DELTA Pro power=3600 โดนกรองทิ้ง ทั้งที่เป็นแหล่งจ่ายไฟไม่ใช่โหลด');
 });
 
 console.log(`\nสรุป: ผ่าน ${passed} / ไม่ผ่าน ${failed}\n`);

@@ -1,5 +1,102 @@
 # CHANGELOG
 
+## 2026-10-21 (รอบสอง) แก้ Supabase เชื่อมไม่ติด + แบตเตอรี่ใช้ความจุ Wh
+
+### 1. แก้บั๊กที่ทำให้ Supabase เชื่อมไม่ติด (เว็บค้างที่โหมด local)
+
+แผงสถานะในหน้า admin รายงานว่า `ตาราง fixtures เข้าไม่ได้` พร้อมข้อความ
+`window.sb.from(...).select(...).catch is not a function`
+
+**ต้นเหตุ:** query builder ของ supabase-js v2 เป็นแค่ **PromiseLike** — มี `.then()`
+อย่างเดียว **ไม่มี `.catch()` / `.finally()`** แต่โค้ดไปเขียน
+
+```js
+window.sb.from(accessoryTableName())
+  .select('id,name,compatible_with,compatibleWith')
+  .catch(() => null)          // <- ไม่มี method นี้ โยน TypeError ทันที
+```
+
+exception ถูกโยนก่อนที่ยิง query ไปยังตาราง `fixtures` จริง ๆ ป้าย "เข้าไม่ได้"
+จึงเป็นการวินิจฉัยผิด — ตารางไม่ได้หาย และ RLS ไม่ได้บล็อก
+
+บรรทัดเดียวกันยังมีปัญหาซ้อน: `select()` ระบุคอลัมน์ `compatibleWith` (camelCase)
+ซึ่งไม่มีอยู่ในฐานข้อมูล PostgREST จะปฏิเสธอยู่ดี
+
+**แก้:** เพิ่ม helper `safeQuery()` ครอบด้วย try/catch แทนการต่อ `.catch()` ท้าย builder
+และเปลี่ยนเป็น `select('*')` ทั้งคู่ เลิกเดาชื่อคอลัมน์ (โค้ดอ่านได้ทั้ง snake_case และ
+camelCase อยู่แล้ว) ตาราง `accessories` เป็นแค่ข้อมูลเสริม ถ้าพังจะข้ามโดยไม่ล้มการโหลด fixtures
+
+**ทำไม test เดิมจับไม่ได้:** mock ใน `test/harness.mjs` ใส่ `.catch()` และ `.finally()`
+ให้ builder ทำให้ mock *เก่งกว่าของจริง* และปิดบังความไม่เข้ากันไว้ ถอดออกแล้วเพื่อให้
+ซื่อตรงกับ supabase-js และเพิ่ม test 3 ตัวกันเกิดซ้ำ: ตรวจว่า mock ไม่มี `.catch()`,
+สแกน source ว่าไม่มี `.catch()`/`.finally()` ต่อท้าย `window.sb` chain (ไล่ chain ย้อนกลับ
+จริงเพื่อไม่ให้ false positive กับ `fetch().catch()` ซึ่งถูกต้องเพราะ fetch คืน Promise จริง),
+และตรวจว่า accessories พังต้องไม่ล้ม fixtures
+
+### 2. แผงสถานะ Supabase แยกเป็นรายตาราง
+
+เดิมป้ายสถานะสะท้อนแค่ตาราง `fixtures` ทำให้กรณีสองตารางต่อติดไม่พร้อมกันอ่านไม่ออก
+(เช่น `accessories` เชื่อมผ่านแต่ `fixtures` พัง) ตอนนี้แยกป้าย per-table:
+`ผ่านเน็ต · Supabase` / `ตารางว่าง` / `เข้าไม่ได้` / `โหมด local (fallback)`
+พร้อมสรุปภาพรวมว่า "ครบทุกตาราง" "ได้บางตาราง" หรือ "ไม่ได้เชื่อมเลย"
+
+### 3. แบตเตอรี่: ใช้ความจุ Wh แทนวัตต์ที่กิน
+
+**ปัญหา:** รายการที่เป็นแบตเตอรี่/power station เก็บค่าไว้ในฟิลด์ `power` ซึ่งเป็นวัตต์ที่กิน
+Set Builder จึงบวกมันเข้าไปเป็นโหลด เช่น EcoFlow DELTA Pro (`power=3600.0`)
+ถูกนับเป็นอุปกรณ์กินไฟ 3600 W ทั้งที่เป็นตัวจ่ายไฟ — `powerRaw` ของมันเขียนไว้ชัดว่า
+`3600W AC output / 7200W surge / 3600Wh capacity`
+
+**เพิ่มฟิลด์ `batteryWh` (คอลัมน์ `battery_wh`)** แยกจากความจุ และเพิ่ม helper ใน `js/search.js`:
+
+| helper | หน้าที่ |
+|---|---|
+| `isPowerSource(item)` | แยกแหล่งจ่ายไฟ (type=power, category=Battery/Power Station) ออกจากตัวกินไฟ |
+| `getPowerDraw(item)` | วัตต์ที่กินจริง — แหล่งจ่ายไฟคืน 0 |
+| `getBatteryWh(item)` | ความจุ Wh ตามลำดับ: ค่าที่ระบุไว้ → kWh → Wh ใน `powerRaw` → คำนวณจาก W × ชั่วโมง |
+| `hasBuiltInBattery(item)` | ไฟที่มีแบตในตัว (เป็นทั้งตัวกินและแหล่งจ่าย) |
+| `estimateRuntimeHours(wh, w)` | ประมาณ runtime |
+| `formatWh` / `formatHours` | แสดงผลอ่านง่าย (3600 → `3.6 kWh`, 1.5 → `1 ชม. 30 นาที`) |
+| `powerSpecText` / `powerCardText` / `currentAt220` | ข้อความแสดงผล ใช้ซ้ำทุกหน้า |
+
+`getBatteryWh` เดาได้จากข้อมูลที่มีอยู่จริง เช่น
+- `3.6kWh LFP power station` → 3600 Wh
+- `3600Wh capacity` → 3600 Wh (จับ Wh ไม่จับ W output)
+- `15 W (20 H.)` + power 15 → 300 Wh (Astera Ax3)
+- `45 W ( 20 H.)` → 900 Wh (Ax5)
+
+**แต่ถ้าเดาไม่ได้จะคืน `null` ไม่มั่วสเปก** — FXLION V-Mount (id 61, 62) ยังไม่รู้ความจุจริง
+จึงเว้นว่างให้กรอกผ่านหน้า Admin (สอดคล้องกับที่ CHANGELOG รอบก่อนบันทึกไว้ว่า
+"exact Wh / size / weight variant still unresolved")
+
+**Set Builder** (`js/power.js` + `setbuilder.html`):
+- `totalPower()` ไม่นับแหล่งจ่ายไฟเป็นโหลด → ชุดที่เคยโชว์ 4100 W ตอนนี้เป็น 500 W
+- เพิ่ม `totalBatteryWh()` และ `countPowerSources()`
+- กล่องสรุปเพิ่ม 3 แถว: แหล่งจ่ายไฟในชุด / ความจุแบตเตอรี่รวม / เลี้ยงโหลดได้นานประมาณ
+  พร้อมหมายเหตุบอกสูตรที่ใช้และเตือนว่ายังไม่หักการสูญเสียของ inverter
+- การ์ดรายชิ้นของแหล่งจ่ายไฟโชว์ความจุ Wh แทนวัตต์ และไม่คิดกระแสไฟ (เพราะไม่ใช่โหลด)
+- อุปกรณ์ที่มีแบตในตัวโชว์ความจุต่อท้าย เช่น `15 W (20 H.) · แบต 300 Wh`
+- ตารางในหน้าพิมพ์ PDF อัปเดตตาม
+
+**หน้า detail** (`equipment.html`, `fixture.html`): แบตเตอรี่เปลี่ยนหัวข้อจาก
+"กำลังไฟ"/"Power" เป็น "ความจุแบตเตอรี่"/"Battery Capacity" และไม่คำนวณ Current @ 220V ให้
+
+**ตัวกรอง `maxPower`** ใช้ `getPowerDraw()` — เดิมค้น "ไม่เกิน 500W" จะกรอง DELTA Pro ทิ้ง
+เพราะ power=3600 ทั้งที่มันไม่ใช่โหลด
+
+**ฟอร์มแก้ไข** เพิ่มช่อง "Battery Capacity (Wh)" พร้อมโชว์ค่าที่ระบบเดาให้เทียบ
+
+**ฐานข้อมูล:** `supabase/schema.sql` เพิ่มคอลัมน์ `battery_wh numeric`
+(สคริปต์ใช้ `add column if not exists` จึงรันซ้ำทับของเดิมได้)
+
+### 4. อื่น ๆ
+
+- แก้ข้อความ warn ที่อ้างชื่อตารางผิด (`describeError` อ้างตาราง fixtures เสมอ
+  ทำให้อ่านผิดตอนตาราง accessories พัง)
+- test เพิ่มเป็น 41 เคส (เดิม 22)
+
+---
+
 ## 2026-10-21 แก้หน้า Admin ที่เข้าไม่ได้ + เชื่อม Supabase ให้ทำงานจริง
 
 ### อาการ

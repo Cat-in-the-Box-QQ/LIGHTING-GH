@@ -39,6 +39,8 @@ const DB = (function () {
     ['colorTagStyle', 'color_tag_style'],
     ['ip', 'ip'],
     ['battery', 'battery'],
+    // ความจุแบตเตอรี่เป็น Wh (ไม่ใช่ W ที่กิน) — ใช้คำนวณ runtime ใน Set Builder
+    ['batteryWh', 'battery_wh'],
     ['stock', 'stock'],
     ['stockCount', 'stock_count'],
     ['stockNote', 'stock_note'],
@@ -57,7 +59,7 @@ const DB = (function () {
 
   const FIXTURE_NUMERIC = [
     'power', 'weight', 'lumens', 'stockCount', 'unitsPerSet',
-    'setCountInStock', 'pdfPage', 'reserved', 'inUse', 'remaining',
+    'setCountInStock', 'pdfPage', 'reserved', 'inUse', 'remaining', 'batteryWh',
   ];
 
   // ============================ state ============================
@@ -372,27 +374,36 @@ const DB = (function () {
     return msg;
   }
 
+  // สำคัญ: query builder ของ supabase-js เป็นแค่ PromiseLike (มี .then() อย่างเดียว)
+  // "ไม่มี" .catch() / .finally() — การเรียก .catch() บน builder จะโยน
+  //   TypeError: ...catch is not a function
+  // ก่อนที่ยิง query จริงด้วยซ้ำ ซึ่งเคยทำให้หน้า admin ถอยไปโหมด local โดยเข้าใจผิดว่า
+  // "ตาราง fixtures เข้าไม่ได้" ทั้งที่ตารางปกติดี
+  // จึงต้องครอบด้วย try/catch แบบนี้เสมอ ห้ามต่อ .catch() ท้าย builder
+  async function safeQuery(run) {
+    try {
+      return await run();
+    } catch (e) {
+      return { data: null, error: { message: (e && e.message) || String(e) } };
+    }
+  }
+
   async function loadFromSupabase() {
     if (!window.sb) {
       supabaseReachable = false;
       throw new Error((window.SB_DIAG && window.SB_DIAG.error) || 'Supabase client ไม่พร้อมใช้งาน');
     }
 
+    // ใช้ select('*') ทั้งคู่ — เลิกเดาชื่อคอลัมน์ เพราะ PostgREST จะปฏิเสธทันที
+    // ถ้ามีคอลัมน์ที่ไม่รู้จักปนมา (เช่น compatibleWith ที่เป็น camelCase)
+    // โค้ดอ่านค่าได้ทั้ง snake_case และ camelCase อยู่แล้วใน mapRow/rebuildCompat
     const [fx, ac] = await Promise.all([
-      window.sb.from(tableName()).select('*').order('id', { ascending: true }),
-      window.sb.from(accessoryTableName()).select('id,name,compatible_with,compatibleWith').catch(() => null),
+      safeQuery(() => window.sb.from(tableName()).select('*').order('id', { ascending: true })),
+      safeQuery(() => window.sb.from(accessoryTableName()).select('*')),
     ]);
 
+    // ตาราง accessories เป็นแค่ข้อมูลเสริม — ถ้าพังก็ข้ามได้ ไม่ล้มทั้งหน้า
     if (fx.error) {
-      // ถ้า select คอลัมน์ accessory พัง (ชื่อคอลัมน์ไม่ตรง) ให้ลองใหม่แบบกว้าง ๆ
-      let accRows = null;
-      if (ac && ac.error && /column|42703|42P01/i.test(String(ac.error.message || ''))) {
-        const retry = await window.sb.from(accessoryTableName()).select('*');
-        accRows = retry.error ? null : retry.data;
-      } else {
-        accRows = ac && !ac.error ? ac.data : null;
-      }
-
       supabaseReachable = !/Failed to fetch|NetworkError|fetch failed/i.test(String(fx.error.message || ''));
       tableExists = !/relation .* does not exist|42P01/i.test(String(fx.error.message || ''));
       throw new Error(describeError(fx.error) || fx.error.message);
@@ -401,13 +412,11 @@ const DB = (function () {
     supabaseReachable = true;
     tableExists = true;
 
-    let accRows = null;
-    if (ac && !ac.error) accRows = ac.data;
-    else if (ac && ac.error) {
-      const retry = await window.sb.from(accessoryTableName()).select('*');
-      accRows = retry.error ? null : retry.data;
+    rebuildCompat(ac.error ? null : ac.data);
+    if (ac.error) {
+      // ไม่ใช้ describeError ตรงนี้ เพราะมันอ้างชื่อตาราง fixtures ทำให้อ่านผิด
+      console.warn(`อ่านตาราง ${accessoryTableName()} ไม่สำเร็จ (ข้าม):`, ac.error.message || ac.error);
     }
-    rebuildCompat(accRows);
 
     const rows = fx.data || [];
     if (rows.length) {
@@ -581,6 +590,7 @@ const DB = (function () {
       colorTagStyle: null,
       ip: null,
       battery: null,
+      batteryWh: null,
       stock: '0 Pieces',
       stockCount: 0,
       stockNote: null,
