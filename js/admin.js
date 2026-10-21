@@ -1,25 +1,137 @@
+// admin.js - หน้า Admin
+// แก้จากเวอร์ชันเดิมที่พัง: ฟอร์มใน admin.html เป็น Email + Password แต่โค้ดไปหา
+// element id 'adminPinInput' ที่ไม่มีอยู่ ทำให้ pinInput = null และโยน TypeError
+// ทันทีที่กด submit -> เข้าหน้า admin ไม่ได้
+//
+// เวอร์ชันนี้: login ผ่าน Supabase Auth (email + password) เท่านั้น และแสดงสถานะ
+// การเชื่อมต่อ Supabase ให้เห็นชัด ๆ ว่าตอนนี้ข้อมูลวิ่งจากที่ไหน
+
 document.addEventListener('DOMContentLoaded', async () => {
   const lockScreen = document.getElementById('adminLockScreen');
   const app = document.getElementById('adminApp');
   const loginForm = document.getElementById('adminLoginForm');
-  const pinInput = document.getElementById('adminPinInput');
+  const emailInput = document.getElementById('adminEmailInput');
+  const passwordInput = document.getElementById('adminPasswordInput');
+  const loginBtn = document.getElementById('adminLoginBtn');
   const loginStatus = document.getElementById('adminLoginStatus');
   const status = document.getElementById('adminStatus');
+
   const verifyModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('verifyStatusModal'));
   const hiddenModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('hiddenItemsModal'));
   const itemModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('adminItemModal'));
 
   function showStatus(message, ok = true) {
+    if (!status) return;
     status.className = (ok ? 'text-success' : 'text-danger') + ' small';
     status.textContent = message;
     clearTimeout(window.__adminStatusTimer);
-    window.__adminStatusTimer = setTimeout(() => { status.textContent = ''; }, 3500);
+    window.__adminStatusTimer = setTimeout(() => { status.textContent = ''; }, 5000);
+  }
+
+  function showLoginError(message, ok = false) {
+    if (!loginStatus) return;
+    loginStatus.className = 'small mt-2 ' + (ok ? 'text-success' : 'text-danger');
+    loginStatus.textContent = message || '';
+  }
+
+  function setLoginBusy(busy) {
+    if (loginBtn) {
+      loginBtn.disabled = busy;
+      loginBtn.textContent = busy ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ Admin';
+    }
+    if (emailInput) emailInput.disabled = busy;
+    if (passwordInput) passwordInput.disabled = busy;
   }
 
   async function refreshData() {
     await Promise.all([DB.load(), AccessoryStore.load(), VerificationStore.load()]);
   }
 
+  // ---------------- แผงสถานะ Supabase ----------------
+  function renderConnectionPanel() {
+    const box = document.getElementById('supabaseStatusBox');
+    if (!box) return;
+
+    const db = DB.status();
+    const acc = AccessoryStore.status();
+    const diag = window.SB_DIAG || {};
+
+    const badge = db.isSupabase
+      ? '<span class="badge bg-success">เชื่อมต่อ Supabase แล้ว</span>'
+      : '<span class="badge bg-warning text-dark">โหมด local (fallback)</span>';
+
+    const rows = [
+      ['โหมดข้อมูลปัจจุบัน', db.isSupabase ? 'supabase' : 'local'],
+      ['Project URL', diag.url || '-'],
+      ['โหลด supabase-js จาก CDN', diag.libLoaded ? 'ผ่าน' : 'ไม่ผ่าน'],
+      ['สร้าง client', diag.clientReady ? 'ผ่าน' : 'ไม่ผ่าน'],
+      [`ตาราง ${db.table}`, db.tableExists ? 'พบ' : (db.reachable ? 'ว่างเปล่า' : 'เข้าไม่ได้')],
+      [`ตาราง ${acc.table}`, acc.tableExists ? 'พบ' : (acc.reachable ? 'ว่างเปล่า' : 'เข้าไม่ได้')],
+      ['จำนวน Fixtures', String(db.fixtureCount)],
+      ['จำนวน Accessories', String(acc.count)],
+    ];
+
+    const errorText = db.error || acc.error || diag.error || null;
+
+    box.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+        <div class="small"><strong>การเชื่อมต่อ Supabase</strong> ${badge}</div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button id="recheckSupabaseBtn" class="btn btn-outline-dark btn-sm" type="button">ตรวจซ้ำ</button>
+          ${db.isSupabase ? '' : '<button id="importToSupabaseBtn" class="btn btn-dark btn-sm" type="button">Import ข้อมูล local ขึ้น Supabase</button>'}
+        </div>
+      </div>
+      <div class="small text-muted mb-2">
+        ${db.isSupabase
+          ? 'การแก้ไขทั้งหมดถูกบันทึกลงฐานข้อมูลกลาง ใช้ร่วมกันได้ทุกเครื่อง'
+          : 'ตอนนี้การแก้ไขถูกเก็บใน localStorage ของเครื่องนี้เท่านั้น (ไม่ซิงก์กับเครื่องอื่น)'}
+      </div>
+      <table class="table table-sm small mb-2">
+        <tbody>
+          ${rows.map(([k, v]) => `<tr><th style="width:45%">${k}</th><td>${v}</td></tr>`).join('')}
+        </tbody>
+      </table>
+      ${errorText
+        ? `<div class="alert alert-warning small mb-2 py-2"><strong>หมายเหตุ:</strong> ${errorText}</div>`
+        : ''}
+      ${db.writeError
+        ? `<div class="alert alert-danger small mb-0 py-2"><strong>บันทึกไม่สำเร็จล่าสุด:</strong> ${db.writeError}</div>`
+        : ''}
+    `;
+
+    document.getElementById('recheckSupabaseBtn')?.addEventListener('click', async () => {
+      await refreshData();
+      renderConnectionPanel();
+      await renderDataSummary();
+      await renderHiddenList();
+      showStatus('ตรวจการเชื่อมต่อซ้ำแล้ว');
+    });
+
+    document.getElementById('importToSupabaseBtn')?.addEventListener('click', async () => {
+      if (!window.sb) {
+        showStatus('Supabase client ไม่พร้อมใช้งาน — import ไม่ได้', false);
+        return;
+      }
+      if (!window.confirm('จะเขียนข้อมูลจาก data/*.json ขึ้นตาราง Supabase (ทับรายการ id เดิม) ต่อหรือไม่?')) return;
+      const btn = document.getElementById('importToSupabaseBtn');
+      if (btn) { btn.disabled = true; btn.textContent = 'กำลัง import...'; }
+      try {
+        const fxCount = await DB.importLocalToSupabase();
+        const accCount = await AccessoryStore.importLocalToSupabase();
+        await refreshData();
+        renderConnectionPanel();
+        await renderDataSummary();
+        await renderHiddenList();
+        showStatus(`Import แล้ว: fixtures ${fxCount} รายการ, accessories ${accCount} รายการ`);
+      } catch (err) {
+        console.error(err);
+        showStatus('Import ไม่สำเร็จ: ' + ((err && err.message) || err), false);
+        renderConnectionPanel();
+      }
+    });
+  }
+
+  // ---------------- รายการ verification ----------------
   function renderVerificationList(filterStatus = 'all') {
     const listEl = document.getElementById('verifyList');
     const labelEl = document.getElementById('verifyFilterLabel');
@@ -33,11 +145,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       all: 'แสดงทั้งหมด',
       verified: 'รายการที่ Verified แล้ว',
       partially_verified: 'รายการที่ Partial',
-      pending: 'รายการที่ Pending'
+      pending: 'รายการที่ Pending',
     };
     const label = labels[filterStatus] || 'แสดงทั้งหมด';
-    labelEl.textContent = label;
-    modalTitle.textContent = label;
+    if (labelEl) labelEl.textContent = label;
+    if (modalTitle) modalTitle.textContent = label;
 
     if (!filtered.length) {
       listEl.innerHTML = '<div class="text-muted">ไม่พบรายการในสถานะนี้</div>';
@@ -63,26 +175,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function renderDataSummary() {
-    await Promise.all([DB.load(), AccessoryStore.load()]);
-    const fixtures = DB.getAll();
-    const accessories = AccessoryStore.getAll();
-    const hiddenFixtures = fixtures.filter((item) => item.hidden).length;
-    const hiddenAccessories = accessories.filter((item) => item.hidden).length;
-    document.getElementById('adminDataSummary').textContent = `Fixtures ${fixtures.length} รายการ · Accessories ${accessories.length} รายการ · Hidden ${hiddenFixtures + hiddenAccessories} รายการ`;
+    const dbFixtures = DB.getAll();
+    const acc = AccessoryStore.getAll();
+    const hidden = dbFixtures.filter((i) => i.hidden).length + acc.filter((i) => i.hidden).length;
+    const el = document.getElementById('adminDataSummary');
+    if (el) {
+      el.textContent = `Fixtures ${dbFixtures.length} รายการ · Accessories ${acc.length} รายการ · Hidden ${hidden} รายการ`;
+    }
   }
 
   async function renderHiddenList() {
     const listEl = document.getElementById('hiddenItemsList');
-    await Promise.all([DB.load(), AccessoryStore.load()]);
+    if (!listEl) return;
 
     const fixtureHidden = DB.getAll().filter((item) => item.hidden);
     const accessoryHidden = AccessoryStore.getAll().filter((item) => item.hidden);
     const allHidden = [
-      ...fixtureHidden.map((item) => ({ kind: 'fixture', id: item.id, type: 'Fixture', label: `${item.brand} ${item.model}`, link: `fixture.html?id=${item.id}` })),
-      ...accessoryHidden.map((item) => ({ kind: 'accessory', id: item.id, type: 'Accessory', label: `${item.name}${item.brand ? ` (${item.brand})` : ''}`, link: 'accessories.html' }))
+      ...fixtureHidden.map((item) => ({
+        kind: 'fixture', id: item.id, type: 'Fixture',
+        label: `${item.brand} ${item.model}`, link: `fixture.html?id=${item.id}`,
+      })),
+      ...accessoryHidden.map((item) => ({
+        kind: 'accessory', id: item.id, type: 'Accessory',
+        label: `${item.name}${item.brand ? ` (${item.brand})` : ''}`, link: 'accessories.html',
+      })),
     ];
 
-    document.getElementById('hiddenCount').textContent = allHidden.length;
+    const countEl = document.getElementById('hiddenCount');
+    if (countEl) countEl.textContent = allHidden.length;
 
     if (!allHidden.length) {
       listEl.innerHTML = '<div class="text-muted">ไม่มีรายการที่ซ่อนอยู่</div>';
@@ -90,7 +210,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     listEl.innerHTML = allHidden.map((item) => `
-      <div class="spec-row" style="align-items:flex-start; gap:1rem;">
+      <div class="spec-row" style="align-items:flex-start; gap:1rem">
         <div>
           <strong>${item.label}</strong>
           <div class="small text-muted">${item.type}</div>
@@ -106,28 +226,36 @@ document.addEventListener('DOMContentLoaded', async () => {
       btn.addEventListener('click', async () => {
         const id = Number(btn.dataset.id);
         const kind = btn.dataset.kind;
-        if (kind === 'fixture') {
-          DB.update(id, { hidden: false });
-        } else {
-          AccessoryStore.update(id, { hidden: false });
+        btn.disabled = true;
+        try {
+          if (kind === 'fixture') await DB.update(id, { hidden: false });
+          else await AccessoryStore.update(id, { hidden: false });
+          showStatus('ยกเลิกซ่อนรายการแล้ว');
+          await refreshData();
+          await renderHiddenList();
+          await renderDataSummary();
+        } catch (err) {
+          console.error(err);
+          btn.disabled = false;
+          showStatus('ทำไม่สำเร็จ: ' + ((err && err.message) || err), false);
         }
-        showStatus('ยกเลิกซ่อนรายการแล้ว');
-        await renderHiddenList();
-        await renderDataSummary();
       });
     });
   }
 
+  // ---------------- เพิ่ม fixture / accessory ----------------
   function openAddFixtureModal() {
     document.getElementById('adminItemModalTitle').textContent = 'เพิ่ม Fixture ใหม่';
     document.getElementById('adminItemModalBody').innerHTML = fixtureEditorHtml({}, 'adminFixtureCreateForm', {
       isCreate: true,
       title: 'เพิ่ม Fixture ใหม่',
-      submitLabel: 'เพิ่ม Fixture'
+      submitLabel: 'เพิ่ม Fixture',
     });
 
     bindFixtureEditor('adminFixtureCreateForm', null, async ({ item }) => {
       itemModal.hide();
+      await refreshData();
+      renderConnectionPanel();
       await renderDataSummary();
       await renderHiddenList();
       showStatus(`เพิ่ม Fixture ${item?.brand || ''} ${item?.model || ''}`.trim() + ' แล้ว');
@@ -144,11 +272,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('adminItemModalBody').innerHTML = accessoryEditorHtml({}, 'adminAccessoryCreateForm', {
       isCreate: true,
       title: 'เพิ่ม Accessory ใหม่',
-      submitLabel: 'เพิ่ม Accessory'
+      submitLabel: 'เพิ่ม Accessory',
     });
 
     bindAccessoryEditor('adminAccessoryCreateForm', null, async ({ item }) => {
       itemModal.hide();
+      await refreshData();
+      renderConnectionPanel();
       await renderDataSummary();
       await renderHiddenList();
       showStatus(`เพิ่ม Accessory ${item?.name || ''} แล้ว`);
@@ -160,19 +290,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     itemModal.show();
   }
 
+  // ---------------- เข้าโหมด admin ----------------
+  let appBound = false;
+
   async function showApp() {
-    lockScreen.style.display = 'none';
-    app.style.display = 'block';
+    if (lockScreen) lockScreen.style.display = 'none';
+    if (app) app.style.display = 'block';
+
+    const who = document.getElementById('adminUserEmail');
+    if (who) who.textContent = AdminAuth.getEmail() || '';
+
     await refreshData();
 
     const summary = VerificationStore.getSummary();
     if (summary) {
-      document.getElementById('verifyTotal').textContent = summary.totalFixtures ?? '-';
-      document.getElementById('verifyVerified').textContent = summary.statuses?.verified ?? '-';
-      document.getElementById('verifyPartial').textContent = summary.statuses?.partially_verified ?? '-';
-      document.getElementById('verifyPending').textContent = summary.statuses?.pending ?? '-';
-      document.getElementById('verifyMetaText').textContent = `อัปเดตล่าสุด ${summary.generatedAt} · ตรวจโดย ${summary.verifiedBy} · แหล่งอ้างอิง ${summary.sourceCount} แหล่ง`;
+      const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value ?? '-'; };
+      set('verifyTotal', summary.totalFixtures);
+      set('verifyVerified', summary.statuses?.verified);
+      set('verifyPartial', summary.statuses?.partially_verified);
+      set('verifyPending', summary.statuses?.pending);
+      const meta = document.getElementById('verifyMetaText');
+      if (meta) {
+        meta.textContent = `อัปเดตล่าสุด ${summary.generatedAt} · ตรวจโดย ${summary.verifiedBy} · แหล่งอ้างอิง ${summary.sourceCount} แหล่ง`;
+      }
     }
+
+    renderConnectionPanel();
+    await renderHiddenList();
+    await renderDataSummary();
+
+    if (appBound) return;
+    appBound = true;
 
     document.querySelectorAll('.verify-filter-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -181,72 +329,100 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    await renderHiddenList();
-    await renderDataSummary();
-
     document.getElementById('hiddenItemsBtn')?.addEventListener('click', async () => {
+      await refreshData();
       await renderHiddenList();
       hiddenModal.show();
     });
 
     document.getElementById('addFixtureBtn')?.addEventListener('click', openAddFixtureModal);
     document.getElementById('addAccessoryBtn')?.addEventListener('click', openAddAccessoryModal);
+
+    document.getElementById('adminLogoutBtn')?.addEventListener('click', async () => {
+      await AdminAuth.signOut();
+      location.reload();
+    });
+
+    document.getElementById('exportFixturesBtn')?.addEventListener('click', async () => {
+      await DB.load();
+      const blob = new Blob([DB.exportJson()], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'fixtures.edited.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showStatus('Export Fixtures JSON แล้ว');
+    });
+
+    document.getElementById('exportAccessoriesBtn')?.addEventListener('click', async () => {
+      await AccessoryStore.load();
+      const blob = new Blob([AccessoryStore.exportJson()], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'accessories.edited.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showStatus('Export Accessories JSON แล้ว');
+    });
+
+    document.getElementById('resetAllDataBtn')?.addEventListener('click', async () => {
+      if (DB.isSupabase()) {
+        showStatus('ปุ่มนี้ใช้ได้เฉพาะโหมด local — ตอนนี้ข้อมูลอยู่บน Supabase จึงไม่มีอะไรให้รีเซ็ต', false);
+        return;
+      }
+      if (!window.confirm('รีเซ็ตข้อมูล local ทั้งหมดกลับไปเป็นค่าตั้งต้น?')) return;
+      DB.resetToOriginal();
+      AccessoryStore.resetToOriginal();
+      showStatus('รีเซ็ตข้อมูล local แล้ว');
+      setTimeout(() => location.reload(), 800);
+    });
   }
 
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (AdminAuth.unlock(pinInput.value.trim())) {
-      loginStatus.textContent = '';
-      await showApp();
-    } else {
-      loginStatus.textContent = 'รหัส Admin ไม่ถูกต้อง';
-    }
-  });
+  // ---------------- ฟอร์ม login ----------------
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      showLoginError('');
+      setLoginBusy(true);
+      try {
+        const result = await AdminAuth.signIn(emailInput?.value, passwordInput?.value);
+        if (result.ok) {
+          showLoginError('เข้าสู่ระบบสำเร็จ กำลังโหลดข้อมูล...', true);
+          await showApp();
+        } else {
+          showLoginError(result.error || 'เข้าสู่ระบบไม่สำเร็จ');
+        }
+      } catch (err) {
+        console.error(err);
+        showLoginError('เกิดข้อผิดพลาด: ' + ((err && err.message) || err));
+      } finally {
+        setLoginBusy(false);
+      }
+    });
+  }
 
+  // ---------------- ตอนเปิดหน้า ----------------
   await AdminAuth.ready;
 
   if (AdminAuth.isUnlocked()) {
     await showApp();
+  } else {
+    // โหลดข้อมูลไว้ก่อนเพื่อให้แผงสถานะ/ปุ่ม import ทำงานได้แม้ยังไม่ได้ login
+    try {
+      await refreshData();
+    } catch (err) {
+      console.warn('โหลดข้อมูลตอนเปิดหน้า admin ไม่สำเร็จ:', err);
+    }
+    const lastErr = AdminAuth.getLastError();
+    if (lastErr) showLoginError(lastErr);
+    if (!window.sb) {
+      showLoginError('โหลด supabase-js ไม่สำเร็จ จึง login ด้วย Supabase ไม่ได้ — ตรวจเน็ตแล้วรีเฟรชหน้าใหม่');
+    }
   }
-
-  document.getElementById('adminLogoutBtn')?.addEventListener('click', () => {
-    AdminAuth.lock();
-    location.reload();
-  });
-
-  document.getElementById('exportFixturesBtn')?.addEventListener('click', async () => {
-    await DB.load();
-    const blob = new Blob([DB.exportJson()], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'fixtures.edited.json';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    showStatus('Export Fixtures JSON แล้ว');
-  });
-
-  document.getElementById('exportAccessoriesBtn')?.addEventListener('click', async () => {
-    await AccessoryStore.load();
-    const blob = new Blob([AccessoryStore.exportJson()], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'accessories.edited.json';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    showStatus('Export Accessories JSON แล้ว');
-  });
-
-  document.getElementById('resetAllDataBtn')?.addEventListener('click', () => {
-    if (!confirm('รีเซ็ตข้อมูล local ทั้งหมดกลับไปเป็นค่าตั้งต้น?')) return;
-    DB.resetToOriginal();
-    AccessoryStore.resetToOriginal();
-    showStatus('รีเซ็ตข้อมูล local แล้ว');
-    setTimeout(() => location.reload(), 800);
-  });
 });

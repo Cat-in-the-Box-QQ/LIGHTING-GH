@@ -1,5 +1,64 @@
 # CHANGELOG
 
+## 2026-10-21 แก้หน้า Admin ที่เข้าไม่ได้ + เชื่อม Supabase ให้ทำงานจริง
+
+### อาการ
+
+กดปุ่ม "เข้าสู่ระบบ Admin" ในหน้า `admin.html` แล้วไม่มีอะไรเกิดขึ้น เข้าโหมด Admin
+ไม่ได้เลย จึงแก้ไข / ซ่อน / ลบ / เพิ่มข้อมูลไม่ได้
+
+### ต้นเหตุ (มี 3 ชั้น)
+
+1. **id ใน HTML กับ JS ไม่ตรงกัน (ตัวที่ทำให้พังจริง)**
+   `admin.html` ถูกเปลี่ยนเป็นช่อง Email + Password (`adminEmailInput`, `adminPasswordInput`)
+   แต่ `js/admin.js` ยังเรียก `getElementById('adminPinInput')` ซึ่งไม่มีอยู่
+   → `pinInput` เป็น `null` → `pinInput.value` โยน `TypeError` ทันทีที่ submit
+   → ฟอร์มพังเงียบ ๆ ไม่มีข้อความ error ให้ผู้ใช้เห็น
+2. **โค้ด Supabase Auth ไม่เคยถูกเรียก**
+   `AdminAuth.unlockWithEmail()` มีอยู่แต่ไม่มีไฟล์ไหนเรียกใช้ จึงไม่มีทาง login ผ่าน Supabase ได้
+3. **ข้อมูลไม่ได้วิ่งไป Supabase จริง**
+   `data/database.js` (เวอร์ชัน Supabase) ไม่ถูกโหลดจากหน้าไหนเลย — ทุกหน้าโหลด
+   `js/database.js` ซึ่งเป็นเวอร์ชัน localStorage + `data/*.json` และ `equipment.html` /
+   `fixture.html` / `accessories.html` / `setbuilder.html` ไม่มีแม้แต่ `<script>` โหลด
+   supabase client ทำให้ข้อความ "ข้อมูลที่บันทึกจะเขียนลงฐานข้อมูลกลาง Supabase"
+   ไม่เป็นความจริง (ข้อมูลเก็บในเครื่องนั้นเครื่องเดียว)
+
+### สิ่งที่แก้
+
+- `js/admin.js` — ผูกฟอร์ม login เข้ากับช่อง Email/Password ที่มีอยู่จริง, แสดงเหตุผล
+  ที่ login ไม่สำเร็จให้ผู้ใช้เห็น, เพิ่มแผง "การเชื่อมต่อ Supabase" พร้อมปุ่มตรวจซ้ำ
+  และปุ่ม Import ข้อมูล local ขึ้น Supabase
+- `js/admin-auth.js` — login ผ่าน Supabase Auth เท่านั้น (ถอด PIN `1234` ที่ฝังในโค้ดออก
+  เพราะใครก็เปิด DevTools อ่านได้), กู้ session เดิมอัตโนมัติตอนเปิดหน้า,
+  แปล error ดิบเป็นข้อความไทยที่แก้ตามได้, รองรับ allowlist อีเมล admin
+- `js/database.js` — รวมเป็น data layer เดียว ใช้ Supabase เป็นหลัก และถอยกลับมาใช้
+  `data/*.json` + localStorage อัตโนมัติเมื่อ Supabase ใช้ไม่ได้ (ตารางหาย / เน็ตหลุด /
+  ตารางว่าง / CDN ถูกบล็อก) เว็บจึงไม่ขาวเปล่า และ `DB.status()` บอกเสมอว่ารันโหมดไหน
+- `js/accessory-store.js` — ทำแบบเดียวกันกับตาราง `accessories`
+- `js/supabase-client.js` — ห้าม throw เด็ดขาด (ของเดิม throw ถ้าโหลด lib ไม่สำเร็จ
+  ซึ่งทำให้ `<script>` ตัวถัดไปไม่ทำงานทั้งหน้า) และรายงานสถานะไว้ใน `window.SB_DIAG`
+- `js/supabase-config.js` — รวมค่าที่ตั้งได้ไว้ที่เดียว (URL, key, ชื่อตาราง, allowlist,
+  สวิตช์ปิด/เปิด fallback)
+- เพิ่ม `<script>` โหลด supabase-config / supabase-client ให้ `equipment.html`,
+  `fixture.html`, `accessories.html`, `setbuilder.html` (เดิมมีแค่ index / inventory / admin)
+- แก้ทุกจุดที่เขียนข้อมูลโดยไม่ `await` — `inline-fixture-editor.js`,
+  `inline-accessory-editor.js`, `equipment.html`, `fixture.html`, `js/accessories.js`,
+  `js/admin.js` (จำเป็นเพราะโหมด Supabase เป็น async ทั้งหมด ถ้าไม่ await จะบันทึกไม่สำเร็จ)
+- error จากการบันทึกถูกโชว์ให้ผู้ใช้เห็นแทนที่จะเงียบหาย พร้อมแยกสาเหตุ
+  (เน็ตหลุด / RLS บล็อก / ตารางหรือคอลัมน์ไม่ครบ)
+- `supabase/schema.sql` (ใหม่) — สคริปต์สร้างตาราง `fixtures` + `accessories` และ RLS policy
+  รันซ้ำได้ปลอดภัย
+- `supabase/README.md` (ใหม่) — คู่มือตั้งค่า 3 ขั้น + ตารางอ่านค่าแผงสถานะ
+- `test/` (ใหม่) — `check-dom-ids.mjs` ตรวจ id ระหว่าง HTML ↔ JS อัตโนมัติ
+  (กันบั๊กต้นเหตุเกิดซ้ำ), `harness.mjs` จำลอง Supabase ใน Node ทดสอบ 22 เคส,
+  `run-all.mjs` รันทั้งหมด
+
+### ย้ายไฟล์
+
+- ตรรกะ Supabase เดิมใน `data/database.js` ถูกรวมเข้า `js/database.js` แล้ว
+  (`data/database.js` ยังเก็บไว้เป็น reference แต่ไม่มีหน้าไหนโหลด —
+  ตัวตรวจจะเตือนเรื่องนี้เป็น orphan)
+
 - Generated verified database files on 2026-07-09
 - Total fixtures: 63
 - Verified: 24

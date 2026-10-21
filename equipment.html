@@ -162,6 +162,9 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/supabase-client.js"></script>
 <script src="js/database.js"></script>
 <script src="js/search.js"></script>
 <script src="js/setbuilder-helper.js"></script>
@@ -370,7 +373,12 @@ async function toggleItemHidden(item) {
     const current = AccessoryStore.getById(item.id);
     if (!current) return;
     const nextHidden = !current.hidden;
-    AccessoryStore.update(item.id, { hidden: nextHidden });
+    try {
+      await AccessoryStore.update(item.id, { hidden: nextHidden });
+    } catch (err) {
+      flashStatus(describeSaveError(err), false);
+      return;
+    }
     await reloadCatalogData();
     render();
     getDetailModalInstance().hide();
@@ -381,7 +389,12 @@ async function toggleItemHidden(item) {
   const current = DB.getById(item.id);
   if (!current) return;
   const nextHidden = !current.hidden;
-  DB.update(item.id, { hidden: nextHidden });
+  try {
+    await DB.update(item.id, { hidden: nextHidden });
+  } catch (err) {
+    flashStatus(describeSaveError(err), false);
+    return;
+  }
   await reloadCatalogData();
   render();
   getDetailModalInstance().hide();
@@ -392,10 +405,15 @@ async function deleteItem(item) {
   const label = itemDisplayName(item);
   if (!window.confirm(`ลบรายการ “${label}” ใช่หรือไม่?`)) return;
 
-  if (item.source === 'accessory') {
-    deleteAccessoryAndRelations(item.id);
-  } else {
-    deleteFixtureAndRelations(item.id);
+  try {
+    if (item.source === 'accessory') {
+      await deleteAccessoryAndRelations(item.id);
+    } else {
+      await deleteFixtureAndRelations(item.id);
+    }
+  } catch (err) {
+    flashStatus(describeSaveError(err), false);
+    return;
   }
 
   await reloadCatalogData();

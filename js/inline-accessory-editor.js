@@ -56,7 +56,7 @@ async function deleteAccessoryAndRelations(accessoryId) {
   const current = AccessoryStore.getById(accessoryId);
   if (!current) return false;
   await syncAccessoryNameAcrossFixtures(current.name || null, null, []);
-  return AccessoryStore.remove(accessoryId);
+  return await AccessoryStore.remove(accessoryId);
 }
 
 function bindAccessoryEditor(formId, accessoryId, onSaved, options = {}) {
@@ -98,7 +98,10 @@ function bindAccessoryEditor(formId, accessoryId, onSaved, options = {}) {
       if (typeof onSaved === 'function') onSaved({ action: 'saved', item: savedItem });
     } catch (err) {
       console.error(err);
-      status.textContent = 'บันทึกไม่สำเร็จ';
+      status.className = 'small text-danger';
+      status.textContent = (typeof describeSaveError === 'function')
+        ? describeSaveError(err)
+        : 'บันทึกไม่สำเร็จ';
     }
   });
 

@@ -39,6 +39,9 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/supabase-client.js"></script>
 <script src="js/database.js"></script>
 <script src="js/search.js"></script>
 <script src="js/setbuilder-helper.js"></script>
@@ -197,8 +200,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       const latest = DB.getById(id);
       if (!latest) return;
       const nextHidden = !latest.hidden;
-      DB.update(Number(id), { hidden: nextHidden });
-      await DB.load();
+      try {
+        await DB.update(Number(id), { hidden: nextHidden });
+        await DB.load();
+      } catch (err) {
+        showDetailStatus(describeSaveError(err), false);
+        return;
+      }
       showDetailStatus(nextHidden ? 'ซ่อนรายการแล้ว' : 'ยกเลิกซ่อนแล้ว');
       setTimeout(() => location.reload(), 150);
     }
@@ -207,8 +215,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       const latest = DB.getById(id);
       if (!latest) return;
       if (!window.confirm(`ลบรายการ “${latest.brand} ${latest.model}” ใช่หรือไม่?`)) return;
-      deleteFixtureAndRelations(Number(id));
-      await Promise.all([DB.load(), AccessoryStore.load()]);
+      try {
+        await deleteFixtureAndRelations(Number(id));
+        await Promise.all([DB.load(), AccessoryStore.load()]);
+      } catch (err) {
+        showDetailStatus(describeSaveError(err), false);
+        return;
+      }
       showDetailStatus('ลบรายการแล้ว');
       setTimeout(() => {
         window.location.href = 'equipment.html';

@@ -2,13 +2,29 @@ function isAdminUnlocked() {
   return typeof AdminAuth !== 'undefined' && AdminAuth.isUnlocked();
 }
 
+// เวอร์ชันเดิมใช้ window.prompt ให้กรอก PIN แต่ระบบ login เปลี่ยนเป็น
+// Supabase email + password แล้ว จึงพาไปหน้า admin แทน
 async function promptAdminUnlock() {
   if (isAdminUnlocked()) return true;
-  const pin = window.prompt('กรอกรหัส Admin');
-  if (!pin) return false;
-  if (AdminAuth.unlock(pin.trim())) return true;
-  alert('รหัส Admin ไม่ถูกต้อง');
+  if (window.confirm('ต้องเข้าสู่ระบบ Admin ก่อนแก้ไขข้อมูล\nตกลงเพื่อไปหน้า Admin?')) {
+    window.location.href = 'admin.html';
+  }
   return false;
+}
+
+// แสดง error จากการบันทึกลง Supabase ให้ผู้ใช้เห็นแทนที่จะเงียบหาย
+function describeSaveError(err) {
+  const msg = (err && err.message) || String(err || '');
+  if (/Failed to fetch|NetworkError|fetch failed/i.test(msg)) {
+    return 'บันทึกไม่สำเร็จ: เชื่อมต่อ Supabase ไม่ได้ (ตรวจเน็ตแล้วลองใหม่)';
+  }
+  if (/row-level security|42501|permission denied/i.test(msg)) {
+    return 'บันทึกไม่สำเร็จ: RLS ใน Supabase ไม่อนุญาตให้เขียนข้อมูล (ต้องเพิ่ม policy)';
+  }
+  if (/does not exist|42P01|42703/i.test(msg)) {
+    return 'บันทึกไม่สำเร็จ: ตารางหรือคอลัมน์ใน Supabase ไม่ครบ (ดู supabase/schema.sql)';
+  }
+  return 'บันทึกไม่สำเร็จ: ' + msg;
 }
 
 function editorEscape(value) {
@@ -161,22 +177,25 @@ function normalizeFixturePatchFromForm(form) {
   return { patch, reserved, inUse };
 }
 
-function removeFixtureFromAccessoryCompatibility(fixtureId) {
+async function removeFixtureFromAccessoryCompatibility(fixtureId) {
   if (typeof AccessoryStore === 'undefined') return;
-  AccessoryStore.getAll().forEach((accessory) => {
+  const affected = AccessoryStore.getAll().filter((accessory) => {
     const compatibleWith = Array.isArray(accessory.compatibleWith) ? accessory.compatibleWith.map(Number) : [];
-    if (!compatibleWith.includes(Number(fixtureId))) return;
-    AccessoryStore.update(accessory.id, {
+    return compatibleWith.includes(Number(fixtureId));
+  });
+  for (const accessory of affected) {
+    const compatibleWith = Array.isArray(accessory.compatibleWith) ? accessory.compatibleWith.map(Number) : [];
+    await AccessoryStore.update(accessory.id, {
       compatibleWith: compatibleWith.filter((id) => Number(id) !== Number(fixtureId)),
     });
-  });
+  }
 }
 
-function deleteFixtureAndRelations(fixtureId) {
+async function deleteFixtureAndRelations(fixtureId) {
   const current = DB.getById(fixtureId);
   if (!current) return false;
-  removeFixtureFromAccessoryCompatibility(fixtureId);
-  return DB.remove(fixtureId);
+  await removeFixtureFromAccessoryCompatibility(fixtureId);
+  return await DB.remove(fixtureId);
 }
 
 function bindFixtureEditor(formId, fixtureId, onSaved, options = {}) {
@@ -199,23 +218,38 @@ function bindFixtureEditor(formId, fixtureId, onSaved, options = {}) {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const { patch, reserved, inUse } = normalizeFixturePatchFromForm(form);
 
-    let savedItem;
-    if (isCreate) {
-      savedItem = DB.create(patch);
-      DB.updateInventory(savedItem.id, { reserved, inUse });
-      savedItem = DB.getById(savedItem.id);
-      status.textContent = 'เพิ่มรายการแล้ว';
-      if (typeof onSaved === 'function') onSaved({ action: 'created', item: savedItem });
-      return;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    if (status) { status.className = 'small text-muted'; status.textContent = 'กำลังบันทึก...'; }
+
+    try {
+      const { patch, reserved, inUse } = normalizeFixturePatchFromForm(form);
+
+      let savedItem;
+      if (isCreate) {
+        savedItem = await DB.create(patch);
+        await DB.updateInventory(savedItem.id, { reserved, inUse });
+        savedItem = DB.getById(savedItem.id) || savedItem;
+        if (status) { status.className = 'small text-success'; status.textContent = 'เพิ่มรายการแล้ว'; }
+        if (typeof onSaved === 'function') await onSaved({ action: 'created', item: savedItem });
+        return;
+      }
+
+      await DB.update(fixtureId, patch);
+      await DB.updateInventory(fixtureId, { reserved, inUse });
+      savedItem = DB.getById(fixtureId);
+      if (status) { status.className = 'small text-success'; status.textContent = 'บันทึกแล้ว'; }
+      if (typeof onSaved === 'function') await onSaved({ action: 'saved', item: savedItem });
+    } catch (err) {
+      console.error('บันทึก fixture ไม่สำเร็จ:', err);
+      if (status) {
+        status.className = 'small text-danger';
+        status.textContent = describeSaveError(err);
+      }
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
     }
-
-    DB.update(fixtureId, patch);
-    DB.updateInventory(fixtureId, { reserved, inUse });
-    savedItem = DB.getById(fixtureId);
-    status.textContent = 'บันทึกแล้ว';
-    if (typeof onSaved === 'function') onSaved({ action: 'saved', item: savedItem });
   });
 
   cancelBtn?.addEventListener('click', () => {
