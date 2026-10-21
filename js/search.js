@@ -53,6 +53,12 @@ function badgesHtmlFromCommaList(value, className = 'bg-dark') {
     .join(' ');
 }
 
+function hasCommaTag(value, target) {
+  const targetText = normalizeText(target);
+  if (!targetText) return true;
+  return splitTagParts(value).some((tag) => normalizeText(tag) === targetText);
+}
+
 function isHiddenItem(item) {
   return !!item?.hidden;
 }
@@ -76,6 +82,12 @@ function hasSetOption(item) {
 
 function isBuildableItem(item) {
   return inferItemType(item) === "fixture";
+}
+
+// ทุกรายการสามารถเพิ่มเข้าชุดได้ ไม่ใช่แค่ Fixture
+function isSetAddableItem(item) {
+  const type = inferItemType(item);
+  return type === "fixture" || type === "controller" || type === "power" || type === "accessory";
 }
 
 function hasWireless(item) {

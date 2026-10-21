@@ -135,6 +135,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     flashStatus(`ลบ ${current.name} แล้ว`);
   }
 
+  async function addAccessoryToSet(id, qty = 1) {
+    const acc = AccessoryStore.getById(id);
+    if (!acc) return;
+    // เก็บ accessory ในชุดด้วย key ขึ้นต้น a เพื่อไม่ให้ชน id ของ fixture
+    addFixtureToCurrentSet(`a${id}`, qty);
+    flashStatus(`เพิ่ม ${acc.name} จำนวน ${qty} เข้าชุดแล้ว`);
+  }
+
   function renderAdminArea(accessoryId) {
     const area = document.getElementById('accessoryAdminArea');
     if (!area) return;
@@ -172,6 +180,30 @@ document.addEventListener('DOMContentLoaded', async () => {
           : `<div class="text-muted small">ยังไม่ระบุ fixture ที่ใช้ร่วมกัน</div>`}
       </div>`;
     renderAdminArea(id);
+
+    // ผูกปุ่ม + และ + ชุด ใน footer ของ popup accessory
+    const accQty = document.getElementById('accessoryDetailQtyInput');
+    const accAddBtn = document.getElementById('accessoryDetailAddBtn');
+    const accAddSetBtn = document.getElementById('accessoryDetailAddSetBtn');
+    const acc = AccessoryStore.getById(id);
+
+    if (accQty) accQty.value = 1;
+
+    if (accAddBtn) {
+      accAddBtn.onclick = () => addAccessoryToSet(id, Math.max(Number(accQty && accQty.value) || 1, 1));
+    }
+
+    if (accAddSetBtn) {
+      const showSet = hasSetOption(acc);
+      accAddSetBtn.style.display = showSet ? 'inline-flex' : 'none';
+      accAddSetBtn.onclick = () => {
+        const setUnits = getUnitsPerSet(acc) || 1;
+        const setCount = Math.max(Number(accQty && accQty.value) || 1, 1);
+        addAccessoryToSet(id, setUnits * setCount);
+        flashStatus(`เพิ่ม ${acc.name} จำนวน ${setCount} ชุดแล้ว`);
+      };
+    }
+
     modal.show();
   }
 
@@ -182,7 +214,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const compatibleText = fixtureNames(item.compatibleWith || []).join(' ');
       const hay = `${item.name} ${item.brand || ''} ${item.category || ''} ${compatibleText}`.toLowerCase();
       if (q && !hay.includes(q)) return false;
-      if (category && item.category !== category) return false;
+      if (category && !hasCommaTag(item.category, category)) return false;
       return true;
     });
 

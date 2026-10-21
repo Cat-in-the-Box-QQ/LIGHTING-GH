@@ -14,17 +14,21 @@ function writeCurrentSet(items) {
   localStorage.setItem(CURRENT_SET_KEY, JSON.stringify(items));
 }
 
+// id เก็บเป็น string เสมอ
+// fixture   -> "1", "2", ...
+// accessory -> "a1", "a2", ...
 function addFixtureToCurrentSet(id, qty = 1) {
   const items = readCurrentSet();
-  const existing = items.find((item) => Number(item.id) === Number(id));
+  const key = String(id);
+  const existing = items.find((item) => String(item.id) === key);
   if (existing) existing.qty += qty;
-  else items.push({ id: Number(id), qty: qty });
+  else items.push({ id: key, qty: qty });
   writeCurrentSet(items);
   return items;
 }
 
 function removeFixtureFromCurrentSet(id) {
-  const items = readCurrentSet().filter((item) => Number(item.id) !== Number(id));
+  const items = readCurrentSet().filter((item) => String(item.id) !== String(id));
   writeCurrentSet(items);
   return items;
 }
