@@ -23,6 +23,10 @@
 </nav>
 
 <div class="container pb-5" style="max-width:980px">
+  <div class="filter-panel mb-3">
+    <div id="supabaseStatusBox" class="small text-muted">กำลังตรวจสถานะการเชื่อมต่อ Supabase...</div>
+  </div>
+
   <div id="adminLockScreen" class="filter-panel" style="max-width:480px; margin:0 auto;">
     <h4 class="mb-3">Admin Access</h4>
     <p class="text-muted small">
@@ -48,7 +52,7 @@
         autocomplete="current-password"
       >
 
-      <button class="btn btn-dark w-100" type="submit">เข้าสู่ระบบ Admin</button>
+      <button id="adminLoginBtn" class="btn btn-dark w-100" type="submit">เข้าสู่ระบบ Admin</button>
       <div id="adminLoginStatus" class="small text-danger mt-2"></div>
     </form>
   </div>
@@ -59,7 +63,7 @@
         <div>
           <h4 class="mb-1">Admin Mode เปิดใช้งานแล้ว</h4>
           <div class="small text-muted">
-            ตอนนี้ปุ่ม “แก้ไข / ซ่อน / ลบ” จะปรากฏในหน้า Detail ของอุปกรณ์และ Accessories
+            บัญชี: <strong id="adminUserEmail">-</strong> · ตอนนี้ปุ่ม “แก้ไข / ซ่อน / ลบ” จะปรากฏในหน้า Detail ของอุปกรณ์และ Accessories
           </div>
         </div>
         <button id="adminLogoutBtn" class="btn btn-outline-danger btn-sm" type="button">ออกจากระบบ Admin</button>
@@ -113,7 +117,8 @@
         <li>เปิดหน้า <strong>Equipment</strong> หรือ <strong>Accessories</strong> แล้วกดดูรายละเอียดของรายการที่ต้องการ</li>
         <li>เมื่ออยู่ใน Admin Mode จะเห็นปุ่ม <strong>แก้ไข / ซ่อน / ลบ</strong> ใน popup รายละเอียด</li>
         <li>ปุ่ม <strong>+ เพิ่ม Fixture</strong> และ <strong>+ เพิ่ม Accessory</strong> อยู่ในส่วนจัดการข้อมูลของหน้านี้</li>
-        <li>ข้อมูลที่บันทึกจะเขียนลงฐานข้อมูลกลาง Supabase</li>
+        <li>ดูกล่อง <strong>การเชื่อมต่อ Supabase</strong> ด้านบนสุดของหน้านี้ก่อนเสมอ — ถ้าขึ้นป้ายสีเขียว “เชื่อมต่อ Supabase แล้ว” ข้อมูลที่บันทึกจะเขียนลงฐานข้อมูลกลางที่ใช้ร่วมกันทุกเครื่อง</li>
+        <li>ถ้าขึ้นป้ายสีเหลือง “โหมด local (fallback)” แปลว่า Supabase ใช้ไม่ได้ชั่วคราว ข้อมูลจะถูกลงไว้ในเครื่องนี้ก่อน กด <strong>ตรวจซ้ำ</strong> เพื่อลองเชื่อมต่อใหม่</li>
         <li>กดที่กล่อง Verified / Partial / Pending เพื่อดูรายการในสถานะนั้นแบบ Popup</li>
       </ol>
     </div>
@@ -131,12 +136,12 @@
       <div class="d-flex gap-2 flex-wrap mb-3">
         <button id="exportFixturesBtn" class="btn btn-dark btn-sm" type="button">Export Fixtures JSON</button>
         <button id="exportAccessoriesBtn" class="btn btn-outline-dark btn-sm" type="button">Export Accessories JSON</button>
-        <button id="resetAllDataBtn" class="btn btn-outline-danger btn-sm" type="button">ปิดโหมด reset local เดิม</button>
+        <button id="resetAllDataBtn" class="btn btn-outline-danger btn-sm" type="button">รีเซ็ตข้อมูล local (ใช้ได้เฉพาะโหมด local)</button>
       </div>
 
       <div id="adminStatus" class="small text-success"></div>
       <div class="small text-muted">
-        ตอนนี้ข้อมูลหลักรันจาก Supabase แล้ว การ export ใช้สำหรับสำรองข้อมูลหรือดึง snapshot ออกมา
+        ข้อมูลหลักรันจาก Supabase เมื่อแผงสถานะด้านบนขึ้นป้ายสีเขียว — การ export ใช้สำหรับสำรองข้อมูลหรือดึง snapshot ออกมา
       </div>
     </div>
   </div>

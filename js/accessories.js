@@ -116,7 +116,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const current = AccessoryStore.getById(accessoryId);
     if (!current) return;
     const nextHidden = !current.hidden;
-    AccessoryStore.update(accessoryId, { hidden: nextHidden });
+    try {
+      await AccessoryStore.update(accessoryId, { hidden: nextHidden });
+    } catch (err) {
+      flashStatus(describeSaveError(err), false);
+      return;
+    }
     await reloadData();
     render();
     modal.hide();
@@ -127,7 +132,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const current = AccessoryStore.getById(accessoryId);
     if (!current) return;
     if (!window.confirm(`ลบ Accessory “${current.name}” ใช่หรือไม่?`)) return;
-    deleteAccessoryAndRelations(accessoryId);
+    try {
+      await deleteAccessoryAndRelations(accessoryId);
+    } catch (err) {
+      flashStatus(describeSaveError(err), false);
+      return;
+    }
     await reloadData();
     render();
     editorModal.hide();
