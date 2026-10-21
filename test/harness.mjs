@@ -725,5 +725,38 @@ await test('ตัวกรอง maxPower ไม่กรองแหล่ง�
     'เดิมจะได้แค่ [1] เพราะ DELTA Pro power=3600 โดนกรองทิ้ง ทั้งที่เป็นแหล่งจ่ายไฟไม่ใช่โหลด');
 });
 
+await test('getBatteryWh ต้องไม่อ่าน Hz (ความถี่ไฟบ้าน) เป็นชั่วโมง', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  // บั๊กจริงที่เคยเจอ: regex จับ '60Hz' เป็น '60 ชั่วโมง' แล้วคูณกับวัตต์
+  // ทำให้ Avolites Tiger Touch II (DMX console กินไฟ AC) ถูกเดาเป็น 4800 Wh
+  assert.strictEqual(sandbox.getBatteryWh({ power: 80, powerRaw: '80 W / 110-240V AC 50-60Hz' }), null);
+  assert.strictEqual(sandbox.getBatteryWh({ power: 12, powerRaw: '12 W / 100-240VAC 47-70Hz / 0.12A' }), null);
+  assert.strictEqual(sandbox.getBatteryWh({ power: 15, powerRaw: '15 W / 100-240V AC 50-60Hz' }), null);
+});
+
+await test('getBatteryWh ยังอ่านชั่วโมงได้จริงเมื่อเป็น runtime ไม่ใช่ Hz', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  assert.strictEqual(sandbox.getBatteryWh({ power: 70, powerRaw: '70 W (20 hrs)' }), 1400);
+  assert.strictEqual(sandbox.getBatteryWh({ power: 17, powerRaw: '17 W (20 hours)' }), 340);
+  assert.strictEqual(sandbox.getBatteryWh({ power: 15, powerRaw: '15 W (20 H.)' }), 300);
+});
+
+await test('อุปกรณ์กินไฟ AC ต้องไม่ถูกเดาว่ามีความจุแบตเตอรี่', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  // ข้อมูลจริงใน data/fixtures.json
+  const byId = new Map(localFixtures.map((f) => [f.id, f]));
+  const avolites = byId.get(54);
+  assert.ok(avolites, 'ต้องมี Avolites Tiger Touch II id=54');
+  assert.strictEqual(sandbox.getBatteryWh(avolites), null,
+    'DMX console กินไฟ AC ไม่มีแบต ต้องไม่เดาความจุ');
+  const lumenradio = byId.get(60);
+  assert.ok(lumenradio, 'ต้องมี LumenRadio CRMX Nova TX2 id=60');
+  assert.strictEqual(sandbox.getBatteryWh(lumenradio), null);
+  // แต่ Gaffer's Control มีแบตจริง 70Wh ในฟิลด์ battery
+  const gaffers = byId.get(55);
+  assert.ok(gaffers, "ต้องมี Gaffer's Control id=55");
+  assert.strictEqual(sandbox.getBatteryWh(gaffers), 70, 'ต้องอ่าน 70Wh จากฟิลด์ battery ได้');
+});
+
 console.log(`\nสรุป: ผ่าน ${passed} / ไม่ผ่าน ${failed}\n`);
 process.exit(failed ? 1 : 0);

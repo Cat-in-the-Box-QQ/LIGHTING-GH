@@ -126,10 +126,14 @@ function hasBuiltInBattery(item) {
   return /built-?in|battery/i.test(normalizeText(item?.battery));
 }
 
-// ดึง "ชั่วโมงruntime" จาก powerRaw เช่น '15 W (20 H.)' -> 20
+// ดึง "ชั่วโมง runtime" จาก powerRaw เช่น '15 W (20 H.)' -> 20
+//
+// ต้องมี \b ปิดท้ายเสมอ ไม่งั้น '60Hz' (ความถี่ไฟบ้าน) จะถูกอ่านเป็น '60 ชั่วโมง'
+// ซึ่งเคยทำให้ Avolites Tiger Touch II ถูกเดาความจุเป็น 4800 Wh (80 W x "60 ชม.")
+// ทั้งที่เป็นแค่ DMX console กินไฟ AC — \b ไม่เกิดระหว่าง H กับ z จึง match ไม่ผ่าน
 function runtimeHoursFromRaw(item) {
   const raw = String(item?.powerRaw || '');
-  const m = raw.match(/(\d+(?:\.\d+)?)\s*(?:H\.?|hrs?\.?|hours?)/i);
+  const m = raw.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i);
   return m ? Number(m[1]) : null;
 }
 
