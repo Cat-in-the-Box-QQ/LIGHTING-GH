@@ -7,6 +7,7 @@ import path from 'node:path';
 const here = import.meta.dirname;
 const suites = [
   ['DOM id wiring (HTML ↔ JS)', 'check-dom-ids.mjs'],
+  ['Image references', 'check-images.mjs'],
   ['Data layer + AdminAuth', 'harness.mjs'],
 ];
 

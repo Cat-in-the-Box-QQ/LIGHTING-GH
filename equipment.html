@@ -474,7 +474,7 @@ function showDetail(key) {
     document.getElementById('detailBody').innerHTML = `
       <div class="row g-3">
         <div class="col-md-5">
-          <img src="${item.image || ''}" class="img-fluid rounded" alt="${item.model}" onerror="this.style.display='none'">
+          <img src="${item.image || ''}" class="img-fluid rounded" alt="${item.model}" onerror="this.onerror=null;this.src='images/placeholder.svg'">
         </div>
         <div class="col-md-7">
           <div class="spec-row"><span>ID / Group</span><span>#${item.id} · ${itemTypeLabel(item)}</span></div>
@@ -494,7 +494,7 @@ function showDetail(key) {
     document.getElementById('detailBody').innerHTML = `
       <div class="row g-3">
         <div class="col-md-5">
-          <img src="${item.image || ''}" class="img-fluid rounded" alt="${item.model}" onerror="this.style.display='none'">
+          <img src="${item.image || ''}" class="img-fluid rounded" alt="${item.model}" onerror="this.onerror=null;this.src='images/placeholder.svg'">
         </div>
         <div class="col-md-7">
           <div class="spec-row"><span>ID / Group</span><span>#${item.id} · ${itemTypeLabel(item)}</span></div>
@@ -587,7 +587,7 @@ function render() {
       const crmxBadge = hasCrmx(item) ? `<span class="badge bg-warning text-dark">CRMX</span>` : '';
       col.innerHTML = `
         <div class="fixture-card" role="button" data-key="${item._key}">
-          <img src="${item.image || ''}" alt="${item.model}" onerror="this.style.display='none'">
+          <img src="${item.image || ''}" alt="${item.model}" onerror="this.onerror=null;this.src='images/placeholder.svg'">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
               <strong>${item.model}</strong>

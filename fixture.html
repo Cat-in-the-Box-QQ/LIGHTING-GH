@@ -92,7 +92,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     <div class="row g-3">
       <div class="col-md-5">
         <div class="filter-panel h-100">
-          <img src="${f.image || ''}" class="img-fluid rounded shadow-sm mb-3" alt="${f.model}" onerror="this.style.display='none'">
+          <img src="${f.image || ''}" class="img-fluid rounded shadow-sm mb-3" alt="${f.model}" onerror="this.onerror=null;this.src='images/placeholder.svg'">
           <div class="d-flex gap-2 flex-wrap mb-3 align-items-center">
             ${canBuild ? `<input type="number" min="1" value="1" id="detailQtyInput" class="form-control form-control-sm qty-inline">` : ''}
             ${canBuild ? `<button id="addToSetBtn" class="btn btn-dark btn-sm">+</button>` : ''}
