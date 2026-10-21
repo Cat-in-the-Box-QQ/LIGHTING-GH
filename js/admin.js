@@ -48,6 +48,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // ---------------- แผงสถานะ Supabase ----------------
+  // แยกสถานะ "รายตาราง" เพราะ fixtures กับ accessories ต่อติดไม่พร้อมกันได้
+  // (เช่น ตารางหนึ่งมีข้อมูล อีกตารางว่าง -> ตัวหนึ่งขึ้น supabase อีกตัว local)
+  function tableStateLabel(st) {
+    if (st.isSupabase) return '<span class="badge bg-success">ผ่านเน็ต · Supabase</span>';
+    if (!st.tableExists && !st.reachable) return '<span class="badge bg-danger">เข้าไม่ได้</span>';
+    if (st.tableExists && st.reachable) return '<span class="badge bg-warning text-dark">ตารางว่าง</span>';
+    return '<span class="badge bg-warning text-dark">โหมด local (fallback)</span>';
+  }
+
   function renderConnectionPanel() {
     const box = document.getElementById('supabaseStatusBox');
     if (!box) return;
@@ -56,46 +65,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     const acc = AccessoryStore.status();
     const diag = window.SB_DIAG || {};
 
-    const badge = db.isSupabase
-      ? '<span class="badge bg-success">เชื่อมต่อ Supabase แล้ว</span>'
-      : '<span class="badge bg-warning text-dark">โหมด local (fallback)</span>';
+    const allOnline = db.isSupabase && acc.isSupabase;
+    const anyOnline = db.isSupabase || acc.isSupabase;
+
+    const headline = allOnline
+      ? '<span class="badge bg-success">เชื่อมต่อ Supabase ครบทุกตาราง</span>'
+      : (anyOnline
+        ? '<span class="badge bg-warning text-dark">เชื่อมต่อได้บางตาราง</span>'
+        : '<span class="badge bg-danger">ไม่ได้เชื่อม Supabase · ใช้ข้อมูลในเครื่อง</span>');
+
+    const explain = allOnline
+      ? 'ข้อมูลวิ่งผ่านเน็ตจากฐานข้อมูลกลาง — แก้ไขแล้วซิงก์ทันทีทุกเครื่อง'
+      : (anyOnline
+        ? 'บางตารางยังใช้ข้อมูลในเครื่องอยู่ ดูรายละเอียดด้านล่าง'
+        : 'ตอนนี้การแก้ไขถูกเก็บใน localStorage ของเครื่องนี้เท่านั้น (ไม่ซิงก์กับเครื่องอื่น)');
 
     const rows = [
-      ['โหมดข้อมูลปัจจุบัน', db.isSupabase ? 'supabase' : 'local'],
       ['Project URL', diag.url || '-'],
-      ['โหลด supabase-js จาก CDN', diag.libLoaded ? 'ผ่าน' : 'ไม่ผ่าน'],
-      ['สร้าง client', diag.clientReady ? 'ผ่าน' : 'ไม่ผ่าน'],
-      [`ตาราง ${db.table}`, db.tableExists ? 'พบ' : (db.reachable ? 'ว่างเปล่า' : 'เข้าไม่ได้')],
-      [`ตาราง ${acc.table}`, acc.tableExists ? 'พบ' : (acc.reachable ? 'ว่างเปล่า' : 'เข้าไม่ได้')],
-      ['จำนวน Fixtures', String(db.fixtureCount)],
-      ['จำนวน Accessories', String(acc.count)],
+      ['โหลด supabase-js จาก CDN', diag.libLoaded ? 'ผ่าน' : '<span class="text-danger">ไม่ผ่าน</span>'],
+      ['สร้าง client', diag.clientReady ? 'ผ่าน' : '<span class="text-danger">ไม่ผ่าน</span>'],
+      [`ตาราง <code>${db.table}</code>`, `${tableStateLabel(db)} <span class="text-muted">· ${db.fixtureCount} รายการ</span>`],
+      [`ตาราง <code>${acc.table}</code>`, `${tableStateLabel(acc)} <span class="text-muted">· ${acc.count} รายการ</span>`],
     ];
 
     const errorText = db.error || acc.error || diag.error || null;
 
     box.innerHTML = `
       <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
-        <div class="small"><strong>การเชื่อมต่อ Supabase</strong> ${badge}</div>
+        <div class="small"><strong>การเชื่อมต่อ Supabase</strong> ${headline}</div>
         <div class="d-flex gap-2 flex-wrap">
           <button id="recheckSupabaseBtn" class="btn btn-outline-dark btn-sm" type="button">ตรวจซ้ำ</button>
-          ${db.isSupabase ? '' : '<button id="importToSupabaseBtn" class="btn btn-dark btn-sm" type="button">Import ข้อมูล local ขึ้น Supabase</button>'}
+          ${allOnline ? '' : '<button id="importToSupabaseBtn" class="btn btn-dark btn-sm" type="button">Import ข้อมูล local ขึ้น Supabase</button>'}
         </div>
       </div>
-      <div class="small text-muted mb-2">
-        ${db.isSupabase
-          ? 'การแก้ไขทั้งหมดถูกบันทึกลงฐานข้อมูลกลาง ใช้ร่วมกันได้ทุกเครื่อง'
-          : 'ตอนนี้การแก้ไขถูกเก็บใน localStorage ของเครื่องนี้เท่านั้น (ไม่ซิงก์กับเครื่องอื่น)'}
-      </div>
+      <div class="small text-muted mb-2">${explain}</div>
       <table class="table table-sm small mb-2">
         <tbody>
-          ${rows.map(([k, v]) => `<tr><th style="width:45%">${k}</th><td>${v}</td></tr>`).join('')}
+          ${rows.map(([k, v]) => `<tr><th style="width:38%">${k}</th><td>${v}</td></tr>`).join('')}
         </tbody>
       </table>
       ${errorText
         ? `<div class="alert alert-warning small mb-2 py-2"><strong>หมายเหตุ:</strong> ${errorText}</div>`
         : ''}
-      ${db.writeError
-        ? `<div class="alert alert-danger small mb-0 py-2"><strong>บันทึกไม่สำเร็จล่าสุด:</strong> ${db.writeError}</div>`
+      ${db.writeError || acc.writeError
+        ? `<div class="alert alert-danger small mb-0 py-2"><strong>บันทึกไม่สำเร็จล่าสุด:</strong> ${db.writeError || acc.writeError}</div>`
         : ''}
     `;
 

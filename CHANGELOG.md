@@ -1,5 +1,209 @@
 # CHANGELOG
 
+## 2026-10-21 (รอบสาม) แก้รูปไม่แสดงบนมือถือ + ไฟล์ migration + บั๊ก Hz
+
+### 1. แก้บั๊กร้ายแรง: `Hz` ถูกอ่านเป็น "ชั่วโมง"
+
+ระหว่างเตรียมค่า `battery_wh` ขึ้น Supabase พบว่า `getBatteryWh()` เดาความจุผิดให้
+อุปกรณ์ที่กินไฟบ้าน (AC) เพราะ regex จับความถี่ไฟบ้านเป็นชั่วโมงใช้งาน
+
+```js
+// เดิม — '60Hz' ถูกจับเป็น '60 H.' (ชั่วโมง)
+/(\d+(?:\.\d+)?)\s*(?:H\.?|hrs?\.?|hours?)/i
+```
+
+ผลที่ผิด:
+
+| id | รายการ | เดิมเดาเป็น | ที่ถูก |
+|---|---|---|---|
+| 54 | Avolites Tiger Touch II (`80 W / 110-240V AC 50-60Hz`) | **4800 Wh** | ไม่มีแบต (null) |
+| 60 | LumenRadio CRMX Nova TX2 RDM (`12 W / ... 47-70Hz`) | **840 Wh** | ไม่มีแบต (null) |
+
+ทั้งสองเป็น DMX controller กินไฟ AC ไม่มีแบตเตอรี่ ถ้า export ค่านี้ขึ้น Supabase
+จะทำให้ข้อมูลกลางเสียถาวร
+
+**แก้:** เติม `\b` ปิดท้าย unit — `\b` ไม่เกิดระหว่าง `H` กับ `z` จึงไม่ match `Hz`
+แต่ยัง match `20 H.` / `20 hrs` / `20 hours` ได้ปกติ
+
+```js
+/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i
+```
+
+เพิ่ม test 3 ตัว: กันอ่าน Hz เป็นชั่วโมง, ยืนยันยังอ่าน runtime จริงได้,
+และตรวจกับข้อมูลจริงว่า id 54/60 ต้องเป็น null ส่วน id 55 (`Li-ion 70Wh`) ต้องได้ 70
+
+> จับได้เพราะไล่ตรวจค่าที่จะ export ก่อนเขียน SQL — ไม่ได้จับจาก test เดิม
+> เพราะ test เดิมมีแต่เคส `'15 W (20 H.)'` ไม่มีเคสที่มีความถี่ไฟบ้านปน
+
+### 2. แก้ path รูป 30 รายการที่ชี้ไปไฟล์ไม่มีอยู่จริง
+
+อาการที่รายงาน: รูปแสดงครบบนคอม แต่หายบางรูปบนมือถือ/iPad
+
+วัดรูปทั้ง repo เพื่อตัดสาเหตุที่สงสัยออกก่อน — **ไม่ใช่เรื่องขนาดรูป**:
+
+| สมมติฐาน | ผลวัด |
+|---|---|
+| CMYK JPEG (iOS Safari แสดงไม่ได้) | ทั้ง 122 ไฟล์เป็น **sRGB** |
+| Progressive / interlaced | **None** ทั้งหมด (baseline) |
+| ใหญ่เกินเพดาน decode มือถือ | ใหญ่สุด **3.0 MP / 580 KB** |
+
+สาเหตุจริงคือข้อมูล: fixtures **26 จาก 64** และ accessories **5 จาก 72** ชี้ไปไฟล์ที่ไม่มีใน repo
+ที่มองไม่เห็นเพราะ `<img>` ทุกตัวใช้ `onerror="this.style.display='none'"` — รูปที่ 404
+จึงถูกลบออกจากหน้าเงียบ ๆ ไม่โชว์ไอคอนรูปพัง
+
+**ทำไมต่างระหว่างคอมกับ iPad:** โหมด local merge ทับด้วย `localStorage` ซึ่งแยกตาม
+เครื่อง/origin — คอมที่เคยแก้ข้อมูลไว้ในรอบก่อน resolve path จาก localStorage ของตัวเอง
+ส่วน iPad ที่ localStorage ว่างตกกลับมาใช้ path ดิบใน `data/*.json` จึงเจอชุดที่พัง
+
+- แก้ 18 รายการให้ชี้ไฟล์จริง (ตรวจทีละไฟล์ก่อนเขียน ไม่เดา) เช่น
+  `vortex 8.jpg` → `Creamsource Vortex 8.jpg`, id=55 ชี้โฟลเดอร์ `Assetsory/`
+  ทั้งที่ไฟล์อยู่ `Control/`
+- 7 รายการ LiteGear Litemat ไม่มีรูปใน repo เลย → `images/placeholder.svg`
+  (ไม่หารูปอื่นมาแทน ไม่มั่วสเปก)
+- 5 accessories ของ Aladdin อ้าง `images/page-014.jpg` ที่ไม่มี (สแกนเริ่มที่ page-015)
+  → `images/placeholder.svg`
+- เปลี่ยน `onerror` ทั้ง 6 จุด ให้ fallback เป็น placeholder แทนการหายเงียบ
+  (ใส่ `this.onerror=null` กัน loop ถ้า placeholder พังอีก)
+
+### 3. เพิ่ม `test/check-images.mjs`
+
+ตรวจ path รูป 136 รายการ ครอบคลุม 4 เรื่อง:
+
+1. ไฟล์มีอยู่จริง
+2. **ชื่อไฟล์ตรงตัวพิมพ์เล็ก/ใหญ่** — Vercel และ GitHub Pages รันบน Linux ซึ่งแบ่งตัวพิมพ์
+   ต่างจาก macOS/Windows ชื่อที่เปิดได้บนเครื่อง dev จึงอาจ 404 บน production
+3. path ที่โหมด Supabase สร้างใหม่จาก brand+model มีไฟล์รองรับ
+   (ไม่งั้นพอเชื่อม Supabase สำเร็จ รูปที่เคยขึ้นจะหาย)
+4. ขนาดพิกเซล/ไบต์ ไม่เกินเพดานที่มือถือถอดรหัสได้
+
+อ่านขนาดจาก header ของ JPEG/PNG ตรง ๆ จึงไม่ต้องพึ่ง ImageMagick
+พิสูจน์ว่าไม่ผ่านเปล่าโดยแกล้งใส่ fault 3 แบบ (ไฟล์หาย / case ผิด / path เก่า) — จับได้ครบ
+
+### 4. เพิ่ม `supabase/migration-2026-10-21.sql`
+
+ไฟล์เดียวรันจบ สำหรับผู้ที่มีตาราง Supabase อยู่แล้ว (ไม่ต้องรัน `schema.sql` ใหม่):
+
+- เพิ่มคอลัมน์ `battery_wh numeric`
+- แก้ path รูป 30 รายการให้ตรงกับที่แก้ใน `data/*.json`
+- เติม `battery_wh` 9 รายการที่มีหลักฐานในข้อมูล
+  (Astera Ax3/Ax5/Ax9/HydraPanel จาก `วัตต์ x ชั่วโมง`, Voyager 2FT/4FT และ
+  Gaffer's Control จาก `Wh` ที่ระบุไว้ตรง ๆ, EcoFlow DELTA Pro จาก `3.6kWh`)
+
+ทุกคำสั่ง idempotent — `alter table ... add column if not exists` และ
+`update ... where id = N and (battery_wh is null or battery_wh = 0)` จึงไม่ทับค่าที่กรอกเองไว้
+
+**จงใจไม่เติม** ให้ FXLION V-Mount (id 61, 62) เพราะข้อมูลมีแค่แรงดัน (V)
+ไม่มีกระแส (Ah) หรือ Wh คำนวณไม่ได้ — การเดาจะได้ค่าผิด ให้กรอกเองเมื่อทราบสเปกจริง
+
+ปิดท้ายด้วย query ตรวจผล 5 ตัว (คอลัมน์มีไหม / path แปลกปลอม / สรุป battery_wh /
+แหล่งจ่ายไฟที่ยังไม่มีความจุ)
+
+ตรวจโครงสร้างแล้ว: 46 statement, ทุก UPDATE มี WHERE, quote ครบคู่ทุกบรรทัด,
+id ที่อ้างทั้งหมดมีอยู่จริงใน `data/*.json`
+
+### 5. ผลต่อ test
+
+44 เคส (เดิม 41) — เพิ่มชุดกันบั๊ก Hz
+
+---
+
+## 2026-10-21 (รอบสอง) แก้ Supabase เชื่อมไม่ติด + แบตเตอรี่ใช้ความจุ Wh
+
+### 1. แก้บั๊กที่ทำให้ Supabase เชื่อมไม่ติด (เว็บค้างที่โหมด local)
+
+แผงสถานะในหน้า admin รายงานว่า `ตาราง fixtures เข้าไม่ได้` พร้อมข้อความ
+`window.sb.from(...).select(...).catch is not a function`
+
+**ต้นเหตุ:** query builder ของ supabase-js v2 เป็นแค่ **PromiseLike** — มี `.then()`
+อย่างเดียว **ไม่มี `.catch()` / `.finally()`** แต่โค้ดไปเขียน
+
+```js
+window.sb.from(accessoryTableName())
+  .select('id,name,compatible_with,compatibleWith')
+  .catch(() => null)          // <- ไม่มี method นี้ โยน TypeError ทันที
+```
+
+exception ถูกโยนก่อนที่ยิง query ไปยังตาราง `fixtures` จริง ๆ ป้าย "เข้าไม่ได้"
+จึงเป็นการวินิจฉัยผิด — ตารางไม่ได้หาย และ RLS ไม่ได้บล็อก
+
+บรรทัดเดียวกันยังมีปัญหาซ้อน: `select()` ระบุคอลัมน์ `compatibleWith` (camelCase)
+ซึ่งไม่มีอยู่ในฐานข้อมูล PostgREST จะปฏิเสธอยู่ดี
+
+**แก้:** เพิ่ม helper `safeQuery()` ครอบด้วย try/catch แทนการต่อ `.catch()` ท้าย builder
+และเปลี่ยนเป็น `select('*')` ทั้งคู่ เลิกเดาชื่อคอลัมน์ (โค้ดอ่านได้ทั้ง snake_case และ
+camelCase อยู่แล้ว) ตาราง `accessories` เป็นแค่ข้อมูลเสริม ถ้าพังจะข้ามโดยไม่ล้มการโหลด fixtures
+
+**ทำไม test เดิมจับไม่ได้:** mock ใน `test/harness.mjs` ใส่ `.catch()` และ `.finally()`
+ให้ builder ทำให้ mock *เก่งกว่าของจริง* และปิดบังความไม่เข้ากันไว้ ถอดออกแล้วเพื่อให้
+ซื่อตรงกับ supabase-js และเพิ่ม test 3 ตัวกันเกิดซ้ำ: ตรวจว่า mock ไม่มี `.catch()`,
+สแกน source ว่าไม่มี `.catch()`/`.finally()` ต่อท้าย `window.sb` chain (ไล่ chain ย้อนกลับ
+จริงเพื่อไม่ให้ false positive กับ `fetch().catch()` ซึ่งถูกต้องเพราะ fetch คืน Promise จริง),
+และตรวจว่า accessories พังต้องไม่ล้ม fixtures
+
+### 2. แผงสถานะ Supabase แยกเป็นรายตาราง
+
+เดิมป้ายสถานะสะท้อนแค่ตาราง `fixtures` ทำให้กรณีสองตารางต่อติดไม่พร้อมกันอ่านไม่ออก
+(เช่น `accessories` เชื่อมผ่านแต่ `fixtures` พัง) ตอนนี้แยกป้าย per-table:
+`ผ่านเน็ต · Supabase` / `ตารางว่าง` / `เข้าไม่ได้` / `โหมด local (fallback)`
+พร้อมสรุปภาพรวมว่า "ครบทุกตาราง" "ได้บางตาราง" หรือ "ไม่ได้เชื่อมเลย"
+
+### 3. แบตเตอรี่: ใช้ความจุ Wh แทนวัตต์ที่กิน
+
+**ปัญหา:** รายการที่เป็นแบตเตอรี่/power station เก็บค่าไว้ในฟิลด์ `power` ซึ่งเป็นวัตต์ที่กิน
+Set Builder จึงบวกมันเข้าไปเป็นโหลด เช่น EcoFlow DELTA Pro (`power=3600.0`)
+ถูกนับเป็นอุปกรณ์กินไฟ 3600 W ทั้งที่เป็นตัวจ่ายไฟ — `powerRaw` ของมันเขียนไว้ชัดว่า
+`3600W AC output / 7200W surge / 3600Wh capacity`
+
+**เพิ่มฟิลด์ `batteryWh` (คอลัมน์ `battery_wh`)** แยกจากความจุ และเพิ่ม helper ใน `js/search.js`:
+
+| helper | หน้าที่ |
+|---|---|
+| `isPowerSource(item)` | แยกแหล่งจ่ายไฟ (type=power, category=Battery/Power Station) ออกจากตัวกินไฟ |
+| `getPowerDraw(item)` | วัตต์ที่กินจริง — แหล่งจ่ายไฟคืน 0 |
+| `getBatteryWh(item)` | ความจุ Wh ตามลำดับ: ค่าที่ระบุไว้ → kWh → Wh ใน `powerRaw` → คำนวณจาก W × ชั่วโมง |
+| `hasBuiltInBattery(item)` | ไฟที่มีแบตในตัว (เป็นทั้งตัวกินและแหล่งจ่าย) |
+| `estimateRuntimeHours(wh, w)` | ประมาณ runtime |
+| `formatWh` / `formatHours` | แสดงผลอ่านง่าย (3600 → `3.6 kWh`, 1.5 → `1 ชม. 30 นาที`) |
+| `powerSpecText` / `powerCardText` / `currentAt220` | ข้อความแสดงผล ใช้ซ้ำทุกหน้า |
+
+`getBatteryWh` เดาได้จากข้อมูลที่มีอยู่จริง เช่น
+- `3.6kWh LFP power station` → 3600 Wh
+- `3600Wh capacity` → 3600 Wh (จับ Wh ไม่จับ W output)
+- `15 W (20 H.)` + power 15 → 300 Wh (Astera Ax3)
+- `45 W ( 20 H.)` → 900 Wh (Ax5)
+
+**แต่ถ้าเดาไม่ได้จะคืน `null` ไม่มั่วสเปก** — FXLION V-Mount (id 61, 62) ยังไม่รู้ความจุจริง
+จึงเว้นว่างให้กรอกผ่านหน้า Admin (สอดคล้องกับที่ CHANGELOG รอบก่อนบันทึกไว้ว่า
+"exact Wh / size / weight variant still unresolved")
+
+**Set Builder** (`js/power.js` + `setbuilder.html`):
+- `totalPower()` ไม่นับแหล่งจ่ายไฟเป็นโหลด → ชุดที่เคยโชว์ 4100 W ตอนนี้เป็น 500 W
+- เพิ่ม `totalBatteryWh()` และ `countPowerSources()`
+- กล่องสรุปเพิ่ม 3 แถว: แหล่งจ่ายไฟในชุด / ความจุแบตเตอรี่รวม / เลี้ยงโหลดได้นานประมาณ
+  พร้อมหมายเหตุบอกสูตรที่ใช้และเตือนว่ายังไม่หักการสูญเสียของ inverter
+- การ์ดรายชิ้นของแหล่งจ่ายไฟโชว์ความจุ Wh แทนวัตต์ และไม่คิดกระแสไฟ (เพราะไม่ใช่โหลด)
+- อุปกรณ์ที่มีแบตในตัวโชว์ความจุต่อท้าย เช่น `15 W (20 H.) · แบต 300 Wh`
+- ตารางในหน้าพิมพ์ PDF อัปเดตตาม
+
+**หน้า detail** (`equipment.html`, `fixture.html`): แบตเตอรี่เปลี่ยนหัวข้อจาก
+"กำลังไฟ"/"Power" เป็น "ความจุแบตเตอรี่"/"Battery Capacity" และไม่คำนวณ Current @ 220V ให้
+
+**ตัวกรอง `maxPower`** ใช้ `getPowerDraw()` — เดิมค้น "ไม่เกิน 500W" จะกรอง DELTA Pro ทิ้ง
+เพราะ power=3600 ทั้งที่มันไม่ใช่โหลด
+
+**ฟอร์มแก้ไข** เพิ่มช่อง "Battery Capacity (Wh)" พร้อมโชว์ค่าที่ระบบเดาให้เทียบ
+
+**ฐานข้อมูล:** `supabase/schema.sql` เพิ่มคอลัมน์ `battery_wh numeric`
+(สคริปต์ใช้ `add column if not exists` จึงรันซ้ำทับของเดิมได้)
+
+### 4. อื่น ๆ
+
+- แก้ข้อความ warn ที่อ้างชื่อตารางผิด (`describeError` อ้างตาราง fixtures เสมอ
+  ทำให้อ่านผิดตอนตาราง accessories พัง)
+- test เพิ่มเป็น 41 เคส (เดิม 22)
+
+---
+
 ## 2026-10-21 แก้หน้า Admin ที่เข้าไม่ได้ + เชื่อม Supabase ให้ทำงานจริง
 
 ### อาการ

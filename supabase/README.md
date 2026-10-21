@@ -10,12 +10,23 @@
 
 เปิด Supabase Dashboard → **SQL Editor** → วางเนื้อหาทั้งหมดของ [`schema.sql`](./schema.sql) → **Run**
 
+> **ถ้าสร้างตารางไปก่อนหน้าแล้ว** ให้รัน [`migration-2026-10-21.sql`](./migration-2026-10-21.sql) เพิ่ม
+> ไฟล์นี้จะเพิ่มคอลัมน์ `battery_wh`, แก้ path รูป 30 รายการที่ชี้ไปไฟล์ไม่มีอยู่จริง
+> และเติมความจุแบตเตอรี่จากสเปกที่มีหลักฐาน — รันซ้ำได้ปลอดภัยเหมือนกัน
+
 สคริปต์รันซ้ำได้ปลอดภัย (ใช้ `IF NOT EXISTS` ทั้งหมด) และจะสร้าง:
 
 | ตาราง | คอลัมน์หลัก |
 |---|---|
-| `fixtures` | `id`, `brand`, `model`, `category`, `type`, `power`, `power_raw`, `weight`, `stock_count`, `accessories` (text[]), `hidden`, `reserved`, `in_use`, `remaining`, ... |
+| `fixtures` | `id`, `brand`, `model`, `category`, `type`, `power`, `power_raw`, `battery_wh`, `weight`, `stock_count`, `accessories` (text[]), `hidden`, `reserved`, `in_use`, `remaining`, ... |
 | `accessories` | `id`, `name`, `brand`, `category`, `stock`, `image`, `pdf_page`, `compatible_with` (bigint[]), `hidden` |
+
+> **`power` vs `battery_wh`** — `power` คือวัตต์ที่อุปกรณ์ *กิน* (ใช้คำนวณโหลดและกระแสไฟ)
+> ส่วน `battery_wh` คือความจุแบตเตอรี่เป็น Wh (ใช้คำนวณว่าเลี้ยงโหลดได้นานแค่ไหน)
+> รายการที่เป็นแบตเตอรี่หรือ power station จะ **ไม่ถูกนับเป็นโหลด** ใน Set Builder
+> ถ้า `battery_wh` ว่าง เว็บจะพยายามเดาจาก `power_raw` ให้เอง เช่น
+> `15 W (20 H.)` → 300 Wh หรือ `3.6kWh LFP` → 3600 Wh — แต่ถ้าเดาไม่ได้จะเว้นว่างไว้
+> **ไม่มั่วสเปก** ให้กรอกผ่านหน้า Admin เอง
 
 พร้อม policy:
 - **อ่าน** ได้ทุกคน (รวมผู้เยี่ยมชมที่ยังไม่ login)

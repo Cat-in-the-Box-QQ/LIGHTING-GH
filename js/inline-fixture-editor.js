@@ -102,6 +102,11 @@ function fixtureEditorHtml(fixture = {}, formId = 'fixtureEditorForm', options =
           <div class="col-md-6"><label class="form-label small mb-0">Beam</label><input class="form-control" name="beam" value="${editorEscape(fixture.beam)}"></div>
           <div class="col-md-6"><label class="form-label small mb-0">Wireless</label><input class="form-control" name="wireless" value="${editorEscape(fixture.wireless)}"></div>
           <div class="col-md-6"><label class="form-label small mb-0">Battery</label><input class="form-control" name="battery" value="${editorEscape(fixture.battery)}"></div>
+          <div class="col-md-3">
+            <label class="form-label small mb-0">Battery Capacity (Wh)</label>
+            <input type="number" step="0.1" min="0" class="form-control" name="batteryWh" value="${editorEscape(fixture.batteryWh ?? '')}">
+            <div class="small text-muted mt-1">ความจุแบตเตอรี่ ไม่ใช่วัตต์ที่กิน${options.isCreate ? '' : ` · ระบบเดาให้: ${editorEscape(typeof getBatteryWh === 'function' ? (getBatteryWh(fixture) || '-') : '-')}`}</div>
+          </div>
           <div class="col-md-6"><label class="form-label small mb-0">White Light</label><input class="form-control" name="whiteLight" value="${editorEscape(fixture.whiteLight)}"></div>
           <div class="col-md-6"><label class="form-label small mb-0">Color</label><input class="form-control" name="color" value="${editorEscape(fixture.color)}"></div>
           <div class="col-md-3">
@@ -145,6 +150,7 @@ function normalizeFixturePatchFromForm(form) {
     beam: form.elements.beam.value.trim() || null,
     wireless: form.elements.wireless.value.trim() || null,
     battery: form.elements.battery.value.trim() || null,
+    batteryWh: form.elements.batteryWh.value === '' ? null : Number(form.elements.batteryWh.value),
     whiteLight: form.elements.whiteLight.value.trim() || null,
     color: form.elements.color.value.trim() || null,
     colorTagStyle: form.elements.colorTagStyle.value.trim() || null,

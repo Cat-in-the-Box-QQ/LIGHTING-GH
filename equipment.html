@@ -474,7 +474,7 @@ function showDetail(key) {
     document.getElementById('detailBody').innerHTML = `
       <div class="row g-3">
         <div class="col-md-5">
-          <img src="${item.image || ''}" class="img-fluid rounded" alt="${item.model}" onerror="this.style.display='none'">
+          <img src="${item.image || ''}" class="img-fluid rounded" alt="${item.model}" onerror="this.onerror=null;this.src='images/placeholder.svg'">
         </div>
         <div class="col-md-7">
           <div class="spec-row"><span>ID / Group</span><span>#${item.id} · ${itemTypeLabel(item)}</span></div>
@@ -494,7 +494,7 @@ function showDetail(key) {
     document.getElementById('detailBody').innerHTML = `
       <div class="row g-3">
         <div class="col-md-5">
-          <img src="${item.image || ''}" class="img-fluid rounded" alt="${item.model}" onerror="this.style.display='none'">
+          <img src="${item.image || ''}" class="img-fluid rounded" alt="${item.model}" onerror="this.onerror=null;this.src='images/placeholder.svg'">
         </div>
         <div class="col-md-7">
           <div class="spec-row"><span>ID / Group</span><span>#${item.id} · ${itemTypeLabel(item)}</span></div>
@@ -503,7 +503,8 @@ function showDetail(key) {
           <div class="spec-row"><span>Lumens</span><span>${item.lumens ?? '-'}</span></div>
           <div class="spec-row"><span>Beam Angle</span><span>${item.beam || '-'}</span></div>
           ${specRowHtml('Dimensions', item.dimensions || '-', isAdminUnlocked() ? item.id : null, 'dimensions')}
-          ${specRowHtml('กำลังไฟ', item.powerRaw || (item.power != null ? `${item.power} W` : '-'), isAdminUnlocked() ? item.id : null, 'powerRaw')}
+          ${specRowHtml(isPowerSource(item) ? 'ความจุแบตเตอรี่' : 'กำลังไฟ', powerSpecText(item), isAdminUnlocked() ? item.id : null, 'powerRaw')}
+          ${isPowerSource(item) ? '<div class="spec-row"><span>หมายเหตุ</span><span class="small text-muted">แหล่งจ่ายไฟ — ไม่นับเป็นโหลดใน Set Builder</span></div>' : ''}
           ${specRowHtml('น้ำหนัก', item.weightRaw || (item.weight != null ? `${item.weight} kg` : '-'), isAdminUnlocked() ? item.id : null, 'weightRaw')}
           ${specRowHtml('Wireless', item.wireless || '-', isAdminUnlocked() ? item.id : null, 'wireless')}
           <div class="spec-row"><span>White Light</span><span>${item.whiteLight || '-'}</span></div>
@@ -586,7 +587,7 @@ function render() {
       const crmxBadge = hasCrmx(item) ? `<span class="badge bg-warning text-dark">CRMX</span>` : '';
       col.innerHTML = `
         <div class="fixture-card" role="button" data-key="${item._key}">
-          <img src="${item.image || ''}" alt="${item.model}" onerror="this.style.display='none'">
+          <img src="${item.image || ''}" alt="${item.model}" onerror="this.onerror=null;this.src='images/placeholder.svg'">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
               <strong>${item.model}</strong>
@@ -601,7 +602,7 @@ function render() {
             </div>
             <div class="small mb-2">
               <div><strong>${typeLabel}</strong> · Stock ${stockCount}</div>
-              <div>${item.power != null ? `${item.power} W` : '-'} · ${item.weight != null ? `${item.weight} kg` : '-'}</div>
+              <div>${powerCardText(item)} · ${item.weight != null ? `${item.weight} kg` : '-'}</div>
             </div>
             <div class="d-flex flex-wrap gap-1 mb-2">
               ${colorLabel && colorLabel !== '-' ? `<span class="badge ${colorBadgeClass}">${colorLabel}</span>` : ''}

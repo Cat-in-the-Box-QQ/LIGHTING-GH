@@ -29,6 +29,8 @@ create table if not exists public.fixtures (
   color_tag_style    text,
   ip                 text,
   battery            text,
+  -- ความจุแบตเตอรี่เป็น Wh (ไม่ใช่วัตต์ที่กิน) ใช้คำนวณ runtime ใน Set Builder
+  battery_wh         numeric,
   stock              text,
   stock_count        numeric,
   stock_note         text,
@@ -65,6 +67,7 @@ alter table public.fixtures add column if not exists color              text;
 alter table public.fixtures add column if not exists color_tag_style    text;
 alter table public.fixtures add column if not exists ip                 text;
 alter table public.fixtures add column if not exists battery            text;
+alter table public.fixtures add column if not exists battery_wh         numeric;
 alter table public.fixtures add column if not exists stock              text;
 alter table public.fixtures add column if not exists stock_count        numeric;
 alter table public.fixtures add column if not exists stock_note         text;

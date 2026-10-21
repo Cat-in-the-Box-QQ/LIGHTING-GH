@@ -80,7 +80,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   const stockCount = getStockCount(f);
-  const current220 = f.power ? (f.power / 220).toFixed(2) : "-";
+  const current220 = currentAt220(f);
+  const isSource = isPowerSource(f);
   const stockLine = f.stockNote ? `${stockCount} Pieces · ${f.stockNote}` : `${stockCount} Pieces`;
   const canBuild = isSetAddableItem(f);
   const colorBadgeClass = colorTagClass(f);
@@ -91,7 +92,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     <div class="row g-3">
       <div class="col-md-5">
         <div class="filter-panel h-100">
-          <img src="${f.image || ''}" class="img-fluid rounded shadow-sm mb-3" alt="${f.model}" onerror="this.style.display='none'">
+          <img src="${f.image || ''}" class="img-fluid rounded shadow-sm mb-3" alt="${f.model}" onerror="this.onerror=null;this.src='images/placeholder.svg'">
           <div class="d-flex gap-2 flex-wrap mb-3 align-items-center">
             ${canBuild ? `<input type="number" min="1" value="1" id="detailQtyInput" class="form-control form-control-sm qty-inline">` : ''}
             ${canBuild ? `<button id="addToSetBtn" class="btn btn-dark btn-sm">+</button>` : ''}
@@ -113,9 +114,11 @@ document.addEventListener("DOMContentLoaded", async () => {
           ${f.hidden ? `<span class="badge bg-danger">Hidden</span>` : ''}
         </div>
 
-        ${specRowHtml('Power', f.powerRaw || (f.power != null ? `${f.power} W` : '-'), isAdminUnlocked() ? f.id : null, 'powerRaw')}
+        ${specRowHtml(isSource ? 'Battery Capacity' : 'Power', powerSpecText(f), isAdminUnlocked() ? f.id : null, 'powerRaw')}
         ${specRowHtml('Weight', f.weightRaw || (f.weight != null ? `${f.weight} kg` : '-'), isAdminUnlocked() ? f.id : null, 'weightRaw')}
-        <div class="spec-row"><span>Current @ 220V</span><span>${current220} A</span></div>
+        ${isSource
+          ? '<div class="spec-row"><span>Current @ 220V</span><span class="small text-muted">-</span></div>'
+          : `<div class="spec-row"><span>Current @ 220V</span><span>${current220} A</span></div>`}
         <div class="spec-row"><span>Lux</span><span>${f.lux || '-'}</span></div>
         <div class="spec-row"><span>Lumens</span><span>${f.lumens ?? '-'}</span></div>
         <div class="spec-row"><span>Beam Angle</span><span>${f.beam || '-'}</span></div>
