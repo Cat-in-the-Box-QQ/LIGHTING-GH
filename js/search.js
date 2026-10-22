@@ -40,16 +40,103 @@ function itemTypeLabel(item) {
   return "Fixture";
 }
 
+// แยก comma-list เป็น tag ย่อย — แต่ต้อง "ไม่" แยก comma ที่อยู่ข้างในวงเล็บ
+// เพราะคำอธิบายในวงเล็บมี comma ได้ เช่น
+//   'LED (หัวไฟ, Control Box และสายเคเบิล)'  ต้องเป็น tag เดียว ไม่ใช่สอง
+// ค่าที่ไม่มีวงเล็บได้ผลเหมือน .split(',') เดิมทุกประการ
 function splitTagParts(value) {
-  return String(value || "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
+  const s = String(value || "");
+
+  // ถ้าวงเล็บไม่สมดุล (กรอกมือแล้วลืมปิด หรือมีเครื่องหมายเกินมา) ให้ถอยกลับไป
+  // แยก comma แบบเดิมทั้งหมด — ดีกว่าปล่อย depth ค้างแล้วกลืน tag ที่เหลือหายทั้งก้อน
+  // เช่น 'LED (หัวไฟ, Fresnel' ต้องได้ ['LED (หัวไฟ', 'Fresnel'] ไม่ใช่ tag เดียวยาว
+  let depth = 0;
+  let balanced = true;
+  for (const ch of s) {
+    if (ch === "(" || ch === "[") depth++;
+    else if (ch === ")" || ch === "]") depth--;
+    if (depth < 0) { balanced = false; break; }
+  }
+  if (depth !== 0) balanced = false;
+
+  const out = [];
+  let cur = "";
+  depth = 0;
+  for (const ch of s) {
+    if (ch === "(" || ch === "[") depth++;
+    else if (ch === ")" || ch === "]") depth = Math.max(0, depth - 1);
+    if (ch === "," && (depth === 0 || !balanced)) {
+      out.push(cur);
+      cur = "";
+      continue;
+    }
+    cur += ch;
+  }
+  out.push(cur);
+  return out.map((item) => item.trim()).filter(Boolean);
 }
 
-function badgesHtmlFromCommaList(value, className = 'bg-dark') {
+// escape สำหรับใส่ใน attribute (เช่น title="...")
+// จำเป็นเพราะค่าเหล่านี้มาจากผู้ใช้ผ่านหน้า Admin — ถ้ามี " จะพัง attribute
+function escapeAttrText(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// ตัดส่วนขยายในวงเล็บออก เหลือเฉพาะ "หัว tag" สำหรับแสดงบนการ์ดที่พื้นที่แคบ
+//   'IP65 (ทั้งหัวไฟ, Control Box และสายเคเบิล)' -> 'IP65'
+// รองรับทั้ง ( ) และ [ ] เพราะข้อมูลกรอกมืออาจใช้แบบใดแบบหนึ่ง
+function shortTagText(value) {
+  const s = String(value ?? '').trim();
+  if (!s) return '';
+  const i = s.search(/[(\[]/);
+  if (i < 0) return s;              // ไม่มีวงเล็บ -> ใช้ข้อความเดิมทั้งก้อน
+  const head = s.slice(0, i).trim();
+  return head || s;                 // ขึ้นต้นด้วยวงเล็บเลย -> อย่าให้ badge ว่าง
+}
+
+// badge แบบสั้นสำหรับ "การ์ด" — แสดงเฉพาะหัว tag นอกวงเล็บ
+// ถ้ามีส่วนขยายในวงเล็บ จะใส่ title ไว้ให้ hover ดูค่าเต็มได้
+//   'IP65 (ทั้งหัวไฟ, Control Box และสายเคเบิล)' -> <span ... title="ค่าเต็ม">IP65</span>
+function shortBadgeHtml(value, className = 'bg-secondary') {
+  const full = String(value ?? '').trim();
+  if (!full) return '';
+  const label = shortTagText(full);
+  // ผูก title กับ "label สั้นกว่าค่าเต็ม" ไม่ใช่กับการหาวงเล็บให้ครบคู่
+  // เคสวงเล็บปิดไม่ครบ เช่น 'LED (หัวไฟ, Fresnel' จะถูกตัดเหลือ 'LED'
+  // ถ้ารอให้เจอวงเล็บปิดก่อนจึงใส่ title ข้อความส่วนนั้นจะหายถาวรไม่มีทางดูได้เลย
+  const title = label === full ? '' : ` title="${escapeAttrText(full)}"`;
+  return `<span class="badge ${className}"${title}>${escapeAttrText(label)}</span>`;
+}
+
+// หน้ารายละเอียด: คงข้อความ "ทั้งหมด" ไว้ แต่ทำส่วนในวงเล็บให้จางลง
+//
+// ห้ามประกอบใหม่จาก "หัว tag + วงเล็บแรก" เด็ดขาด เพราะค่าที่มีหลายวงเล็บ
+// จะถูกตัดทิ้ง เช่น '62° (Hyper-Reflector) / 93° (No Reflector)'
+// จะได้แค่ '62° (Hyper-Reflector)' — หายไปทั้ง '/ 93° (No Reflector)'
+// (ค่า beam จริงใน data/fixtures.json มีรูปแบบนี้อยู่ 16 รายการ)
+//
+// ใช้ <span> จึงซ้อนใน spec-row ที่เป็น <span> ได้โดยไม่ผิด HTML
+// คืน '-' เมื่อค่าว่าง เพื่อให้ตรงกับรูปแบบเดิมของ spec-row
+function tagDetailHtml(value) {
+  const full = String(value ?? '').trim();
+  if (!full) return '-';
+  const esc = escapeAttrText(full);
+  if (!/[(\[]/.test(esc)) return esc;   // ไม่มีวงเล็บ -> คืนค่าเต็มตามเดิม
+  return esc.replace(/([(\[][^)\]]*[)\]])/g, '<span class="small text-muted">$1</span>');
+}
+
+// opts.short = true  -> แสดงเฉพาะหัว tag (สำหรับการ์ด) พร้อม title ให้ hover ดูค่าเต็ม
+// opts.short = false -> แสดงค่าเต็มตามเดิม (สำหรับหน้ารายละเอียด)
+function badgesHtmlFromCommaList(value, className = 'bg-dark', opts = {}) {
   return splitTagParts(value)
-    .map((tag) => `<span class="badge ${className}">${tag}</span>`)
+    .map((tag) => {
+      if (!opts.short) return `<span class="badge ${className}">${tag}</span>`;
+      return shortBadgeHtml(tag, className);
+    })
     .join(' ');
 }
 
@@ -281,7 +368,9 @@ function filterFixtures(fixtures, filters) {
     if (filters.brand && f.brand !== filters.brand) return false;
     if (filters.category && f.category !== filters.category) return false;
     if (filters.type && inferItemType(f) !== filters.type) return false;
-    if (filters.ip && f.ip !== filters.ip) return false;
+    // เทียบด้วย "หัว tag" นอกวงเล็บ เพื่อให้ 'IP65' กับ 'IP65 (ทั้งหัวไฟ...)' จัดเป็นกลุ่มเดียวกัน
+    // ข้อมูลเดิมที่ไม่มีวงเล็บ shortTagText() คืนค่าเท่าเดิมทุกประการ จึงไม่กระทบของเก่า
+    if (filters.ip && shortTagText(f.ip) !== shortTagText(filters.ip)) return false;
     if (filters.wireless === "yes" && !hasWireless(f)) return false;
     if (filters.wireless === "no" && hasWireless(f)) return false;
     if (filters.wireless === "crmx" && !hasCrmx(f)) return false;
