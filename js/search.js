@@ -40,11 +40,40 @@ function itemTypeLabel(item) {
   return "Fixture";
 }
 
+// แยก comma-list เป็น tag ย่อย — แต่ต้อง "ไม่" แยก comma ที่อยู่ข้างในวงเล็บ
+// เพราะคำอธิบายในวงเล็บมี comma ได้ เช่น
+//   'LED (หัวไฟ, Control Box และสายเคเบิล)'  ต้องเป็น tag เดียว ไม่ใช่สอง
+// ค่าที่ไม่มีวงเล็บได้ผลเหมือน .split(',') เดิมทุกประการ
 function splitTagParts(value) {
-  return String(value || "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
+  const s = String(value || "");
+
+  // ถ้าวงเล็บไม่สมดุล (กรอกมือแล้วลืมปิด หรือมีเครื่องหมายเกินมา) ให้ถอยกลับไป
+  // แยก comma แบบเดิมทั้งหมด — ดีกว่าปล่อย depth ค้างแล้วกลืน tag ที่เหลือหายทั้งก้อน
+  // เช่น 'LED (หัวไฟ, Fresnel' ต้องได้ ['LED (หัวไฟ', 'Fresnel'] ไม่ใช่ tag เดียวยาว
+  let depth = 0;
+  let balanced = true;
+  for (const ch of s) {
+    if (ch === "(" || ch === "[") depth++;
+    else if (ch === ")" || ch === "]") depth--;
+    if (depth < 0) { balanced = false; break; }
+  }
+  if (depth !== 0) balanced = false;
+
+  const out = [];
+  let cur = "";
+  depth = 0;
+  for (const ch of s) {
+    if (ch === "(" || ch === "[") depth++;
+    else if (ch === ")" || ch === "]") depth = Math.max(0, depth - 1);
+    if (ch === "," && (depth === 0 || !balanced)) {
+      out.push(cur);
+      cur = "";
+      continue;
+    }
+    cur += ch;
+  }
+  out.push(cur);
+  return out.map((item) => item.trim()).filter(Boolean);
 }
 
 // escape สำหรับใส่ใน attribute (เช่น title="...")
@@ -69,13 +98,6 @@ function shortTagText(value) {
   return head || s;                 // ขึ้นต้นด้วยวงเล็บเลย -> อย่าให้ badge ว่าง
 }
 
-// ดึงเฉพาะข้อความในวงเล็บ (ไม่รวมเครื่องหมาย) ใช้แสดงเพิ่มในหน้ารายละเอียด
-//   'IP65 (ทั้งหัวไฟ, Control Box และสายเคเบิล)' -> 'ทั้งหัวไฟ, Control Box และสายเคเบิล'
-function tagParenNote(value) {
-  const m = String(value ?? '').match(/[(\[]([^)\]]*)[)\]]/);
-  return m ? m[1].trim() : '';
-}
-
 // badge แบบสั้นสำหรับ "การ์ด" — แสดงเฉพาะหัว tag นอกวงเล็บ
 // ถ้ามีส่วนขยายในวงเล็บ จะใส่ title ไว้ให้ hover ดูค่าเต็มได้
 //   'IP65 (ทั้งหัวไฟ, Control Box และสายเคเบิล)' -> <span ... title="ค่าเต็ม">IP65</span>
@@ -83,27 +105,28 @@ function shortBadgeHtml(value, className = 'bg-secondary') {
   const full = String(value ?? '').trim();
   if (!full) return '';
   const label = shortTagText(full);
-  const note = tagParenNote(full);
-  const title = note ? ` title="${escapeAttrText(full)}"` : '';
+  // ผูก title กับ "label สั้นกว่าค่าเต็ม" ไม่ใช่กับการหาวงเล็บให้ครบคู่
+  // เคสวงเล็บปิดไม่ครบ เช่น 'LED (หัวไฟ, Fresnel' จะถูกตัดเหลือ 'LED'
+  // ถ้ารอให้เจอวงเล็บปิดก่อนจึงใส่ title ข้อความส่วนนั้นจะหายถาวรไม่มีทางดูได้เลย
+  const title = label === full ? '' : ` title="${escapeAttrText(full)}"`;
   return `<span class="badge ${className}"${title}>${escapeAttrText(label)}</span>`;
 }
 
-// ส่วนขยายในวงเล็บ สำหรับแสดง "เพิ่ม" ในหน้ารายละเอียด
-// คืน '' ถ้าไม่มีวงเล็บ จะได้ไม่เกิดแถวว่าง
-function tagNoteHtml(value, className = 'small text-muted') {
-  const note = tagParenNote(value);
-  return note ? `<div class="${className}">${escapeAttrText(note)}</div>` : '';
-}
-
-// หน้ารายละเอียด: แสดงหัว tag + ส่วนขยายในวงเล็บต่อท้าย
-// ใช้ <span> ทั้งก้อน จึงซ้อนใน spec-row ที่เป็น <span> ได้โดยไม่ผิด HTML
+// หน้ารายละเอียด: คงข้อความ "ทั้งหมด" ไว้ แต่ทำส่วนในวงเล็บให้จางลง
+//
+// ห้ามประกอบใหม่จาก "หัว tag + วงเล็บแรก" เด็ดขาด เพราะค่าที่มีหลายวงเล็บ
+// จะถูกตัดทิ้ง เช่น '62° (Hyper-Reflector) / 93° (No Reflector)'
+// จะได้แค่ '62° (Hyper-Reflector)' — หายไปทั้ง '/ 93° (No Reflector)'
+// (ค่า beam จริงใน data/fixtures.json มีรูปแบบนี้อยู่ 16 รายการ)
+//
+// ใช้ <span> จึงซ้อนใน spec-row ที่เป็น <span> ได้โดยไม่ผิด HTML
 // คืน '-' เมื่อค่าว่าง เพื่อให้ตรงกับรูปแบบเดิมของ spec-row
 function tagDetailHtml(value) {
   const full = String(value ?? '').trim();
   if (!full) return '-';
-  const head = escapeAttrText(shortTagText(full));
-  const note = tagParenNote(full);
-  return note ? `${head} <span class="small text-muted">(${escapeAttrText(note)})</span>` : head;
+  const esc = escapeAttrText(full);
+  if (!/[(\[]/.test(esc)) return esc;   // ไม่มีวงเล็บ -> คืนค่าเต็มตามเดิม
+  return esc.replace(/([(\[][^)\]]*[)\]])/g, '<span class="small text-muted">$1</span>');
 }
 
 // opts.short = true  -> แสดงเฉพาะหัว tag (สำหรับการ์ด) พร้อม title ให้ hover ดูค่าเต็ม

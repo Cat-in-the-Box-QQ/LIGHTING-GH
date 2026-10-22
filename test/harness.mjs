@@ -229,8 +229,8 @@ function makeContext({ supabaseMode = 'ok', seed = null, supabaseLibPresent = tr
     + ' window.formatWh = formatWh; window.formatHours = formatHours;'
     + ' window.powerSpecText = powerSpecText; window.powerCardText = powerCardText;'
     + ' window.currentAt220 = currentAt220; window.filterFixtures = filterFixtures;'
-    + ' window.shortTagText = shortTagText; window.tagParenNote = tagParenNote;'
-    + ' window.shortBadgeHtml = shortBadgeHtml; window.tagNoteHtml = tagNoteHtml;'
+    + ' window.shortTagText = shortTagText;'
+    + ' window.shortBadgeHtml = shortBadgeHtml;'
     + ' window.tagDetailHtml = tagDetailHtml; window.escapeAttrText = escapeAttrText;'
     + ' window.badgesHtmlFromCommaList = badgesHtmlFromCommaList;',
     ctx,
@@ -790,15 +790,6 @@ await test('shortTagText ต้องไม่คืนค่าว่างจ�
   assert.strictEqual(sandbox.shortTagText('   IP65   '), 'IP65');
 });
 
-await test('tagParenNote ดึงเฉพาะข้อความในวงเล็บ', async () => {
-  const { sandbox } = makeContext({ supabaseLibPresent: false });
-  assert.strictEqual(
-    sandbox.tagParenNote('IP65 (ทั้งหัวไฟ, Control Box และสายเคเบิล)'),
-    'ทั้งหัวไฟ, Control Box และสายเคเบิล');
-  assert.strictEqual(sandbox.tagParenNote('IP65'), '');
-  assert.strictEqual(sandbox.tagParenNote(null), '');
-});
-
 await test('shortBadgeHtml ใส่ title ให้ hover ดูค่าเต็มได้', async () => {
   const { sandbox } = makeContext({ supabaseLibPresent: false });
   const full = 'IP65 (ทั้งหัวไฟ, Control Box และสายเคเบิล)';
@@ -844,6 +835,51 @@ await test('badgesHtmlFromCommaList: short=true ย่อทุก tag, ค่�
   assert.ok(!short.includes('ทั้งหัวไฟ</span>'), 'ห้ามโชว์ส่วนขยายเป็นข้อความ badge');
   const full = sandbox.badgesHtmlFromCommaList('LED, IP65 (ทั้งหัวไฟ)', 'bg-dark');
   assert.ok(full.includes('IP65 (ทั้งหัวไฟ)'), 'ค่า default ต้องแสดงเต็มเหมือนเดิม');
+});
+
+await test('tagDetailHtml ต้องไม่ทำข้อมูลหายเมื่อมีหลายวงเล็บ', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  // ค่า beam จริงใน data/fixtures.json มี 16 รายการที่เป็นรูปแบบนี้
+  // ถ้าประกอบใหม่จาก "หัว tag + วงเล็บแรก" จะได้แค่ '62° (Hyper-Reflector)'
+  // คือหายทั้ง '/ 93° (No Reflector)'
+  const beam = '62° (Hyper-Reflector) / 93° (No Reflector)';
+  const html = sandbox.tagDetailHtml(beam);
+  assert.strictEqual(html.replace(/<[^>]*>/g, ''), beam,
+    'ถอด tag HTML แล้วต้องได้ข้อความเดิมครบทุกตัวอักษร');
+  assert.ok(html.includes('93°'), 'ต้องมีค่าที่สอง');
+  assert.ok(html.includes('No Reflector'), 'ต้องมีคำอธิบายวงเล็บที่สอง');
+
+  const multi = 'IP65 (หัวไฟ) / IP54 (Control Box)';
+  assert.strictEqual(sandbox.tagDetailHtml(multi).replace(/<[^>]*>/g, ''), multi);
+});
+
+await test('splitTagParts ต้องไม่แยก comma ที่อยู่ข้างในวงเล็บ', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  // คำอธิบายในวงเล็บมี comma ได้ — ต้องนับเป็น tag เดียว
+  assert.deepStrictEqual(
+    [...sandbox.splitTagParts('LED (หัวไฟ, Control Box และสายเคเบิล)')],
+    ['LED (หัวไฟ, Control Box และสายเคเบิล)']);
+  // แต่ comma นอกวงเล็บยังแยกตามเดิม
+  assert.deepStrictEqual([...sandbox.splitTagParts('LED (หัวไฟ), Fresnel')], ['LED (หัวไฟ)', 'Fresnel']);
+  assert.deepStrictEqual([...sandbox.splitTagParts('LED, Fresnel, DMX')], ['LED', 'Fresnel', 'DMX']);
+  // รองรับ [ ] ด้วย
+  assert.deepStrictEqual([...sandbox.splitTagParts('LED [a, b], HMI')], ['LED [a, b]', 'HMI']);
+});
+
+await test('splitTagParts วงเล็บปิดไม่ครบต้องไม่ทำให้ tag ที่เหลือหาย', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  // ข้อมูลกรอกมือ — วงเล็บอาจปิดไม่ครบ ถ้า depth ติดลบแล้วค้าง จะกลืน tag ถัดไปหมด
+  assert.deepStrictEqual([...sandbox.splitTagParts('LED (หัวไฟ, Fresnel')], ['LED (หัวไฟ', 'Fresnel'],
+    'วงเล็บไม่ปิด ต้องถอยกลับมาแยก comma ตามเดิม');
+  assert.deepStrictEqual([...sandbox.splitTagParts('LED), Fresnel')], ['LED)', 'Fresnel']);
+});
+
+await test('badgesHtmlFromCommaList(short) ไม่แตก tag เดียวที่มี comma ในวงเล็บ', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const html = sandbox.badgesHtmlFromCommaList('LED (หัวไฟ, Control Box และสายเคเบิล)', 'bg-dark', { short: true });
+  assert.strictEqual(html.match(/<span/g).length, 1, 'ต้องได้ badge เดียว ไม่ใช่สอง');
+  assert.ok(html.includes('>LED</span>'));
+  assert.ok(html.includes('title="LED (หัวไฟ, Control Box และสายเคเบิล)"'), 'ค่าเต็มต้องอยู่ใน title');
 });
 
 await test('ตัวกรอง IP จับคู่ด้วยหัว tag จึงรวมกลุ่มที่มีคำขยายต่างกัน', async () => {
