@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
           </div>
           <div class="small text-muted mb-1">${item.brand || '-'}</div>
-          <div class="d-flex flex-wrap gap-1 mb-2">${item.category ? badgesHtmlFromCommaList(item.category, 'bg-dark') : ''}</div>
+          <div class="d-flex flex-wrap gap-1 mb-2">${item.category ? badgesHtmlFromCommaList(item.category, 'bg-dark', { short: true }) : ''}</div>
           <div class="small mb-2">${item.stock || 'ไม่ระบุ stock'}</div>
           <div class="small"><strong>ใช้กับ:</strong> ${compatible.length ? compatible.join(', ') : 'ยังไม่ระบุ'}</div>
           ${adminUnlocked() ? `<div class="small text-danger mt-2">Admin: คลิกเพื่อแก้ไข / ซ่อน / ลบ</div>` : ''}

@@ -228,7 +228,11 @@ function makeContext({ supabaseMode = 'ok', seed = null, supabaseLibPresent = tr
     + ' window.countPowerSources = countPowerSources; window.estimateRuntimeHours = estimateRuntimeHours;'
     + ' window.formatWh = formatWh; window.formatHours = formatHours;'
     + ' window.powerSpecText = powerSpecText; window.powerCardText = powerCardText;'
-    + ' window.currentAt220 = currentAt220; window.filterFixtures = filterFixtures;',
+    + ' window.currentAt220 = currentAt220; window.filterFixtures = filterFixtures;'
+    + ' window.shortTagText = shortTagText; window.tagParenNote = tagParenNote;'
+    + ' window.shortBadgeHtml = shortBadgeHtml; window.tagNoteHtml = tagNoteHtml;'
+    + ' window.tagDetailHtml = tagDetailHtml; window.escapeAttrText = escapeAttrText;'
+    + ' window.badgesHtmlFromCommaList = badgesHtmlFromCommaList;',
     ctx,
     { filename: 'test-export.js' }
   );
@@ -756,6 +760,104 @@ await test('อุปกรณ์กินไฟ AC ต้องไม่ถู�
   const gaffers = byId.get(55);
   assert.ok(gaffers, "ต้องมี Gaffer's Control id=55");
   assert.strictEqual(sandbox.getBatteryWh(gaffers), 70, 'ต้องอ่าน 70Wh จากฟิลด์ battery ได้');
+});
+
+// ---------------- ย่อ tag บนการ์ด: ตัดส่วนในวงเล็บ ----------------
+console.log('\n[ ย่อ tag บนการ์ด ]');
+
+await test('shortTagText ตัดส่วนในวงเล็บออก เหลือแค่หัว tag', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  assert.strictEqual(
+    sandbox.shortTagText('IP65 (ทั้งหัวไฟ, Control Box และสายเคเบิล)'), 'IP65');
+  assert.strictEqual(sandbox.shortTagText('IP65 [head only]'), 'IP65');
+});
+
+await test('shortTagText ต้องไม่เปลี่ยนค่าเดิมที่ไม่มีวงเล็บ (ไม่กระทบข้อมูลเก่า)', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  // ค่า ip จริงทั้งหมดใน data/fixtures.json ไม่มีวงเล็บ ต้องได้ค่าเดิมทุกตัว
+  for (const ip of ['IP32', 'IP54', 'IP65', 'IP66', 'IP20', 'IP44', 'IPX5']) {
+    assert.strictEqual(sandbox.shortTagText(ip), ip);
+  }
+  assert.strictEqual(sandbox.shortTagText(''), '');
+  assert.strictEqual(sandbox.shortTagText(null), '');
+  assert.strictEqual(sandbox.shortTagText(undefined), '');
+});
+
+await test('shortTagText ต้องไม่คืนค่าว่างจน badge หาย', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  // ขึ้นต้นด้วยวงเล็บเลย — ถ้าตัดแล้วได้ '' badge จะว่างเปล่า จึงต้องคืนค่าเดิม
+  assert.strictEqual(sandbox.shortTagText('(เริ่มด้วยวงเล็บ)'), '(เริ่มด้วยวงเล็บ)');
+  assert.strictEqual(sandbox.shortTagText('   IP65   '), 'IP65');
+});
+
+await test('tagParenNote ดึงเฉพาะข้อความในวงเล็บ', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  assert.strictEqual(
+    sandbox.tagParenNote('IP65 (ทั้งหัวไฟ, Control Box และสายเคเบิล)'),
+    'ทั้งหัวไฟ, Control Box และสายเคเบิล');
+  assert.strictEqual(sandbox.tagParenNote('IP65'), '');
+  assert.strictEqual(sandbox.tagParenNote(null), '');
+});
+
+await test('shortBadgeHtml ใส่ title ให้ hover ดูค่าเต็มได้', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const full = 'IP65 (ทั้งหัวไฟ, Control Box และสายเคเบิล)';
+  const html = sandbox.shortBadgeHtml(full);
+
+  // แยก "ข้อความที่มองเห็น" ออกจาก attribute — คนละเรื่องกัน
+  // (ข้อความเต็มต้องอยู่ใน title แต่ต้องไม่หลุดออกมาเป็น label)
+  const label = html.match(/>([^<]*)<\/span>$/)?.[1];
+  const title = html.match(/title="([^"]*)"/)?.[1];
+
+  assert.strictEqual(label, 'IP65', 'ข้อความบน badge ต้องเหลือแค่หัว tag');
+  assert.strictEqual(title, full, 'title ต้องเก็บค่าเต็มไว้ให้ hover ดู');
+
+  // ไม่มีวงเล็บ -> ไม่มี title เกินมา
+  assert.strictEqual(sandbox.shortBadgeHtml('IP65'), '<span class="badge bg-secondary">IP65</span>');
+  assert.strictEqual(sandbox.shortBadgeHtml(''), '');
+});
+
+await test('shortBadgeHtml ต้อง escape ค่าที่ผู้ใช้กรอก (กันพัง attribute)', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const html = sandbox.shortBadgeHtml('IP65 (มี "quote" และ <tag>)');
+  assert.ok(!html.includes('"quote"'), 'ต้อง escape " ใน title ไม่งั้น attribute พัง');
+  assert.ok(html.includes('&quot;quote&quot;'));
+  assert.ok(html.includes('&lt;tag&gt;'));
+});
+
+await test('tagDetailHtml แสดงหัว tag + ส่วนขยายในวงเล็บ (หน้ารายละเอียด)', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const html = sandbox.tagDetailHtml('IP65 (ทั้งหัวไฟ, Control Box และสายเคเบิล)');
+  assert.ok(html.startsWith('IP65 '), 'ต้องขึ้นด้วยหัว tag');
+  assert.ok(html.includes('(ทั้งหัวไฟ, Control Box และสายเคเบิล)'), 'ต้องมีส่วนขยาย');
+  assert.ok(html.includes('text-muted'), 'ส่วนขยายต้องเป็น muted');
+  assert.strictEqual(sandbox.tagDetailHtml('IP65'), 'IP65');
+  assert.strictEqual(sandbox.tagDetailHtml(''), '-');   // ตรงกับรูปแบบ spec-row เดิม
+  assert.strictEqual(sandbox.tagDetailHtml(null), '-');
+});
+
+await test('badgesHtmlFromCommaList: short=true ย่อทุก tag, ค่า default ยังแสดงเต็ม', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const short = sandbox.badgesHtmlFromCommaList('LED, IP65 (ทั้งหัวไฟ)', 'bg-dark', { short: true });
+  assert.ok(short.includes('>LED</span>'));
+  assert.ok(short.includes('>IP65</span>'), 'ต้องย่อเหลือ IP65');
+  assert.ok(!short.includes('ทั้งหัวไฟ</span>'), 'ห้ามโชว์ส่วนขยายเป็นข้อความ badge');
+  const full = sandbox.badgesHtmlFromCommaList('LED, IP65 (ทั้งหัวไฟ)', 'bg-dark');
+  assert.ok(full.includes('IP65 (ทั้งหัวไฟ)'), 'ค่า default ต้องแสดงเต็มเหมือนเดิม');
+});
+
+await test('ตัวกรอง IP จับคู่ด้วยหัว tag จึงรวมกลุ่มที่มีคำขยายต่างกัน', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const rows = [
+    { id: 1, brand: 'A', model: 'x', ip: 'IP65 (ทั้งหัวไฟ, Control Box และสายเคเบิล)' },
+    { id: 2, brand: 'B', model: 'y', ip: 'IP65' },
+    { id: 3, brand: 'C', model: 'z', ip: 'IP54' },
+  ];
+  const hit = sandbox.filterFixtures(rows, { ip: 'IP65' });
+  assert.deepStrictEqual(hit.map((f) => f.id).sort(), [1, 2],
+    'เลือก IP65 ต้องได้ทั้งตัวที่มีคำขยายและตัวที่ไม่มี');
+  assert.deepStrictEqual(sandbox.filterFixtures(rows, { ip: 'IP54' }).map((f) => f.id), [3]);
+  assert.strictEqual(sandbox.filterFixtures(rows, {}).length, 3, 'ไม่กรองต้องได้ครบ');
 });
 
 console.log(`\nสรุป: ผ่าน ${passed} / ไม่ผ่าน ${failed}\n`);

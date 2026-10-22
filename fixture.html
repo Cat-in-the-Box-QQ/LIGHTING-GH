@@ -109,8 +109,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         <h2>${f.brand} ${f.model}</h2>
         <div class="d-flex gap-2 flex-wrap mb-3">
           <span class="badge bg-dark">${f.category || '-'}</span>
-          ${f.ip ? `<span class="badge bg-secondary">${f.ip}</span>` : ''}
-          ${f.color ? `<span class="badge ${colorBadgeClass}">${f.color}</span>` : ''}
+          ${shortBadgeHtml(f.ip)}
+          ${f.color ? shortBadgeHtml(f.color, colorBadgeClass) : ''}
           ${f.hidden ? `<span class="badge bg-danger">Hidden</span>` : ''}
         </div>
 
@@ -125,8 +125,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         ${specRowHtml('Dimensions', f.dimensions || '-', isAdminUnlocked() ? f.id : null, 'dimensions')}
         ${specRowHtml('Wireless Control', f.wireless || '-', isAdminUnlocked() ? f.id : null, 'wireless')}
         <div class="spec-row"><span>White Light</span><span>${f.whiteLight || '-'}</span></div>
-        <div class="spec-row"><span>Color Light</span><span>${f.color || '-'}</span></div>
+        <div class="spec-row"><span>Color Light</span><span>${tagDetailHtml(f.color)}</span></div>
         ${specRowHtml('Battery', f.battery || '-', isAdminUnlocked() ? f.id : null, 'battery')}
+        <div class="spec-row"><span>IP Rating</span><span>${tagDetailHtml(f.ip)}</span></div>
 
         <div class="filter-panel mt-3">
           <h5 class="mb-2">Accessories / อุปกรณ์เสริม</h5>

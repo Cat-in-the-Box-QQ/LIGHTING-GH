@@ -47,9 +47,73 @@ function splitTagParts(value) {
     .filter(Boolean);
 }
 
-function badgesHtmlFromCommaList(value, className = 'bg-dark') {
+// escape สำหรับใส่ใน attribute (เช่น title="...")
+// จำเป็นเพราะค่าเหล่านี้มาจากผู้ใช้ผ่านหน้า Admin — ถ้ามี " จะพัง attribute
+function escapeAttrText(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// ตัดส่วนขยายในวงเล็บออก เหลือเฉพาะ "หัว tag" สำหรับแสดงบนการ์ดที่พื้นที่แคบ
+//   'IP65 (ทั้งหัวไฟ, Control Box และสายเคเบิล)' -> 'IP65'
+// รองรับทั้ง ( ) และ [ ] เพราะข้อมูลกรอกมืออาจใช้แบบใดแบบหนึ่ง
+function shortTagText(value) {
+  const s = String(value ?? '').trim();
+  if (!s) return '';
+  const i = s.search(/[(\[]/);
+  if (i < 0) return s;              // ไม่มีวงเล็บ -> ใช้ข้อความเดิมทั้งก้อน
+  const head = s.slice(0, i).trim();
+  return head || s;                 // ขึ้นต้นด้วยวงเล็บเลย -> อย่าให้ badge ว่าง
+}
+
+// ดึงเฉพาะข้อความในวงเล็บ (ไม่รวมเครื่องหมาย) ใช้แสดงเพิ่มในหน้ารายละเอียด
+//   'IP65 (ทั้งหัวไฟ, Control Box และสายเคเบิล)' -> 'ทั้งหัวไฟ, Control Box และสายเคเบิล'
+function tagParenNote(value) {
+  const m = String(value ?? '').match(/[(\[]([^)\]]*)[)\]]/);
+  return m ? m[1].trim() : '';
+}
+
+// badge แบบสั้นสำหรับ "การ์ด" — แสดงเฉพาะหัว tag นอกวงเล็บ
+// ถ้ามีส่วนขยายในวงเล็บ จะใส่ title ไว้ให้ hover ดูค่าเต็มได้
+//   'IP65 (ทั้งหัวไฟ, Control Box และสายเคเบิล)' -> <span ... title="ค่าเต็ม">IP65</span>
+function shortBadgeHtml(value, className = 'bg-secondary') {
+  const full = String(value ?? '').trim();
+  if (!full) return '';
+  const label = shortTagText(full);
+  const note = tagParenNote(full);
+  const title = note ? ` title="${escapeAttrText(full)}"` : '';
+  return `<span class="badge ${className}"${title}>${escapeAttrText(label)}</span>`;
+}
+
+// ส่วนขยายในวงเล็บ สำหรับแสดง "เพิ่ม" ในหน้ารายละเอียด
+// คืน '' ถ้าไม่มีวงเล็บ จะได้ไม่เกิดแถวว่าง
+function tagNoteHtml(value, className = 'small text-muted') {
+  const note = tagParenNote(value);
+  return note ? `<div class="${className}">${escapeAttrText(note)}</div>` : '';
+}
+
+// หน้ารายละเอียด: แสดงหัว tag + ส่วนขยายในวงเล็บต่อท้าย
+// ใช้ <span> ทั้งก้อน จึงซ้อนใน spec-row ที่เป็น <span> ได้โดยไม่ผิด HTML
+// คืน '-' เมื่อค่าว่าง เพื่อให้ตรงกับรูปแบบเดิมของ spec-row
+function tagDetailHtml(value) {
+  const full = String(value ?? '').trim();
+  if (!full) return '-';
+  const head = escapeAttrText(shortTagText(full));
+  const note = tagParenNote(full);
+  return note ? `${head} <span class="small text-muted">(${escapeAttrText(note)})</span>` : head;
+}
+
+// opts.short = true  -> แสดงเฉพาะหัว tag (สำหรับการ์ด) พร้อม title ให้ hover ดูค่าเต็ม
+// opts.short = false -> แสดงค่าเต็มตามเดิม (สำหรับหน้ารายละเอียด)
+function badgesHtmlFromCommaList(value, className = 'bg-dark', opts = {}) {
   return splitTagParts(value)
-    .map((tag) => `<span class="badge ${className}">${tag}</span>`)
+    .map((tag) => {
+      if (!opts.short) return `<span class="badge ${className}">${tag}</span>`;
+      return shortBadgeHtml(tag, className);
+    })
     .join(' ');
 }
 
@@ -281,7 +345,9 @@ function filterFixtures(fixtures, filters) {
     if (filters.brand && f.brand !== filters.brand) return false;
     if (filters.category && f.category !== filters.category) return false;
     if (filters.type && inferItemType(f) !== filters.type) return false;
-    if (filters.ip && f.ip !== filters.ip) return false;
+    // เทียบด้วย "หัว tag" นอกวงเล็บ เพื่อให้ 'IP65' กับ 'IP65 (ทั้งหัวไฟ...)' จัดเป็นกลุ่มเดียวกัน
+    // ข้อมูลเดิมที่ไม่มีวงเล็บ shortTagText() คืนค่าเท่าเดิมทุกประการ จึงไม่กระทบของเก่า
+    if (filters.ip && shortTagText(f.ip) !== shortTagText(filters.ip)) return false;
     if (filters.wireless === "yes" && !hasWireless(f)) return false;
     if (filters.wireless === "no" && hasWireless(f)) return false;
     if (filters.wireless === "crmx" && !hasCrmx(f)) return false;

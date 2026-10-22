@@ -510,7 +510,7 @@ function showDetail(key) {
           <div class="spec-row"><span>White Light</span><span>${item.whiteLight || '-'}</span></div>
           <div class="spec-row"><span>Color Light</span><span>${item.color || '-'}</span></div>
           ${specRowHtml('Battery', item.battery || '-', isAdminUnlocked() ? item.id : null, 'battery')}
-          <div class="spec-row"><span>IP Rating</span><span>${item.ip || '-'}</span></div>
+          <div class="spec-row"><span>IP Rating</span><span>${tagDetailHtml(item.ip)}</span></div>
           <div class="spec-row"><span>Stock</span><span>${stockCount}${item.stockNote ? ` · ${item.stockNote}` : ''}</span></div>
           <div class="filter-panel mt-3">
             <h6 class="mb-2">Accessories / อุปกรณ์เสริม</h6>
@@ -576,7 +576,7 @@ function render() {
           </div>
           <div class="small text-muted mb-1">${item.brand || '-'}</div>
           <div class="d-flex flex-wrap gap-1 mb-2">
-            ${item.category ? badgesHtmlFromCommaList(item.category, 'bg-dark') : ''}
+            ${item.category ? badgesHtmlFromCommaList(item.category, 'bg-dark', { short: true }) : ''}
             ${crmxBadge}
             ${item.wireless ? `<span class="badge bg-secondary">Wireless</span>` : ''}
           </div>
@@ -592,23 +592,23 @@ function render() {
             <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
               <strong>${item.model}</strong>
               <div class="d-flex gap-1 flex-wrap">
-                ${item.ip ? `<span class="badge bg-secondary">${item.ip}</span>` : ''}
+                ${shortBadgeHtml(item.ip)}
                 ${item.hidden ? `<span class="badge bg-danger">Hidden</span>` : ''}
               </div>
             </div>
             <div class="text-muted small mb-1">#${item.id} · ${item.brand}</div>
             <div class="d-flex flex-wrap gap-1 mb-2">
-              ${badgesHtmlFromCommaList(item.category || '-', 'bg-dark')}
+              ${badgesHtmlFromCommaList(item.category || '-', 'bg-dark', { short: true })}
             </div>
             <div class="small mb-2">
               <div><strong>${typeLabel}</strong> · Stock ${stockCount}</div>
               <div>${powerCardText(item)} · ${item.weight != null ? `${item.weight} kg` : '-'}</div>
             </div>
             <div class="d-flex flex-wrap gap-1 mb-2">
-              ${colorLabel && colorLabel !== '-' ? `<span class="badge ${colorBadgeClass}">${colorLabel}</span>` : ''}
+              ${colorLabel && colorLabel !== '-' ? shortBadgeHtml(colorLabel, colorBadgeClass) : ''}
               ${item.wireless ? `<span class="badge bg-secondary">Wireless</span>` : ''}
               ${crmxBadge}
-              ${item.stockNote ? `<span class="badge bg-light text-dark border">${item.stockNote}</span>` : ''}
+              ${shortBadgeHtml(item.stockNote, 'bg-light text-dark border')}
             </div>
             <div class="card-add-row">
               ${isSetAddableItem(item) ? `<input type="number" min="1" value="1" class="form-control form-control-sm add-qty-input" data-key="${item._key}">` : ''}
@@ -691,7 +691,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   const ipSel = document.getElementById('fIp');
-  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => item.ip).filter(Boolean))].sort().forEach((ip) => {
+  // dedupe ด้วย "หัว tag" นอกวงเล็บ — 'IP65' กับ 'IP65 (ทั้งหัวไฟ, Control Box และสายเคเบิล)'
+  // จะได้ไม่ขึ้นซ้ำกันใน dropdown
+  // ตัวกรองเทียบด้วย shortTagText ทั้งสองข้าง จึงยังจับคู่ได้ครบทุกรายการในกลุ่มเดียวกัน
+  [...new Set([...allFixtures, ...allAccessoryItems].map((item) => shortTagText(item.ip)).filter(Boolean))].sort().forEach((ip) => {
     const o = document.createElement('option');
     o.value = ip; o.textContent = ip;
     ipSel.appendChild(o);
