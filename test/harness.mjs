@@ -1269,7 +1269,7 @@ await test('API ต้องไม่มี create และไม่มี remo
   assert.strictEqual(typeof sandbox.MemberStore.setActive, 'function', 'ต้องมี setActive ไว้ใช้แทน remove');
 });
 
-await test('pending() / activeAdmins() / counts() แยกสถานะได้ถูก', async () => {
+await test('inactive() / activeAdmins() / counts() แยกสถานะได้ถูก', async () => {
   const { sandbox } = makeContext({
     supabaseMode: 'ok',
     seed: {
@@ -1283,13 +1283,16 @@ await test('pending() / activeAdmins() / counts() แยกสถานะได
     },
   });
   await sandbox.MemberStore.load();
-  assert.deepStrictEqual([...sandbox.MemberStore.pending()].map((m) => m.code), ['TK02', 'TK03']);
+  assert.deepStrictEqual([...sandbox.MemberStore.inactive()].map((m) => m.code), ['TK02', 'TK03']);
   assert.deepStrictEqual([...sandbox.MemberStore.activeAdmins()].map((m) => m.code), ['ADMIN01']);
   const c = sandbox.MemberStore.counts();
   assert.strictEqual(c.admin, 1, 'admin ที่ active เท่านั้น');
   assert.strictEqual(c.crew, 1);
-  assert.strictEqual(c.pending, 2);
+  assert.strictEqual(c.inactive, 2, 'นับจาก active=false — ตอนนี้แปลว่าถูกปิดใช้งาน ไม่ใช่รออนุมัติ');
   assert.strictEqual(c.total, 4);
+  // ชื่อเก่าต้องหายไปจริง ๆ ไม่งั้นโค้ดที่เรียก pending() จะพังเงียบ ๆ (undefined is not a function)
+  assert.strictEqual(sandbox.MemberStore.pending, undefined, 'pending() ถูกเปลี่ยนชื่อเป็น inactive() แล้ว');
+  assert.strictEqual(c.pending, undefined, 'counts().pending ถูกเปลี่ยนชื่อเป็น counts().inactive แล้ว');
 });
 
 await test('findByEmail() ไม่สนตัวพิมพ์ และคืน null เมื่อไม่เจอ', async () => {
@@ -1532,6 +1535,43 @@ await test('migration 2026-11-13 ต้องมี alter function ปัก sea
     !/security definer/i.test(fillCode[1]),
     'members_fill_code ต้องไม่เป็น security definer (ไม่จำเป็น = ความเสี่ยงเพิ่ม)',
   );
+});
+
+await test('ทุกไฟล์ SQL ต้องสร้าง trigger ด้วย active ค่าเดียวกัน (กัน repo กับ DB เลื่อนออกจากกัน)', async () => {
+  // เคยเกิดจริง: แก้ค่าในฐานข้อมูลเป็น active=true แล้ว แต่ไฟล์ SQL ยังเขียน false
+  // ไฟล์นี้เป็น create or replace function จึง "รันซ้ำแล้ว revert เงียบ ๆ"
+  // บัญชีใหม่จะกลับไปค้างรอยืนยันโดยไม่มีใครรู้ — จึงต้องล็อกว่าทุกไฟล์พูดเรื่องเดียว
+  const found = new Map();
+  for (const rel of sqlFiles) {
+    const body = stripSqlComments(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
+    for (const m of body.matchAll(
+      /insert into public\.members[\s\S]{0,200}?values\s*\(\s*new\.id\s*,[\s\S]*?'crew'\s*,\s*(true|false)\s*\)/g,
+    )) {
+      found.set(rel, m[1]);
+    }
+  }
+  assert.ok(found.size >= 2, `ควรเจอ trigger insert อย่างน้อย 2 ไฟล์ แต่เจอ ${found.size}: ${[...found.keys()].join(', ')}`);
+  const values = [...new Set(found.values())];
+  assert.deepStrictEqual(values, ['true'],
+    'ทุกไฟล์ต้องสร้างแถวสมาชิกใหม่เป็น active = true (ไม่ต้องมีขั้นอนุมัติ)'
+    + `\n  ค่าที่เจอ: ${[...found].map(([f, v]) => `${f}=${v}`).join(', ')}`);
+});
+
+await test('ต้องมีไฟล์ migration บันทึกการถอดขั้นอนุมัติ และเตือนเรื่องห้ามเหมาเปิด active', async () => {
+  const rel = 'supabase/migration-2026-11-13b-no-approval.sql';
+  const full = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+  // การเปลี่ยนครั้งนี้ทำผ่าน SQL + การตั้งค่า Authentication จึงต้องบันทึกไว้ทั้งสองส่วน
+  assert.ok(/disable_signup/.test(full), 'ต้องบันทึกการตั้งค่า disable_signup ไว้เป็นเอกสาร');
+  assert.ok(/Dashboard|Management API/i.test(full), 'ต้องบอกว่า disable_signup ตั้งใน SQL ไม่ได้');
+  // คำเตือนสำคัญ: การเหมา update active=true ทั้งตารางจะไปเปิดคืนให้คนที่ admin จงใจปิด
+  assert.ok(
+    /ห้ามรันแบบนี้เด็ดขาด/.test(full) && /set active = true where active = false/.test(full),
+    'ต้องเตือนห้าม update active=true เหมาทั้งตาราง เพราะจะถอนการนำคนออกเงียบ ๆ',
+  );
+  // ไฟล์เก่าต้องชี้มาไฟล์ใหม่ ไม่งั้นคนรันซ้ำจะไม่รู้ว่าค่าถูกแก้แล้ว
+  const old = fs.readFileSync(path.join(ROOT, 'supabase/migration-2026-11-13-member-admin.sql'), 'utf8');
+  assert.ok(/migration-2026-11-13b-no-approval\.sql/.test(old),
+    'migration ไฟล์เดิมต้องมีคำเตือนชี้ไปไฟล์ 11-13b');
 });
 
 await test('auth_uid ต้องมี unique — ไม่งั้น on conflict (auth_uid) จะ error', async () => {

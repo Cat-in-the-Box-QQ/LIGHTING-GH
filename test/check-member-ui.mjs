@@ -10,7 +10,7 @@
 //
 //   1. เรียก bindMemberEditor(formId, id, { onSaved }) แทน (formId, id, onSaved, opts)
 //      -> typeof onSaved !== 'function' -> บันทึกสำเร็จแต่หน้าเว็บไม่ทำอะไรเงียบ ๆ
-//   2. ตัวเทียบเรียงลำดับเขียนกลับด้าน -> คิวรอยืนยันไปอยู่ท้ายตารางแทนที่จะอยู่หัว
+//   2. ตัวเทียบเรียงลำดับเขียนกลับด้าน -> คิวปิดใช้งานไปอยู่ท้ายตารางแทนที่จะอยู่หัว
 //      (ไม่ error, ไม่พัง, แค่ผิดที่ — มองไม่เห็นถ้าไม่เรนเดอร์จริง)
 //
 // วิธีทำ: สกัดฟังก์ชันออกจาก IIFE ด้วยการนับวงเล็บปีกกา แล้วรันใน vm ที่มี DOM shim
@@ -39,7 +39,7 @@ function extract(name) {
   throw new Error(`วงเล็บปีกกาของ ${name} ไม่ปิด`);
 }
 
-const FUNCS = ['renderMembers', 'openMemberModal', 'refreshMembers'];
+const FUNCS = ['applyRoleVisibility', 'renderMembers', 'openMemberModal', 'refreshMembers'];
 const WRAPPED = '(async () => {\n' + FUNCS.map(extract).join('\n\n')
   + '\n' + FUNCS.map((f) => `window.${f} = ${f};`).join('\n')
   + ' })()';
@@ -133,7 +133,9 @@ function mockClient(tables, opts = {}) {
 }
 
 // ---------------- ประกอบ sandbox ----------------
-function build({ rows = [], error = null, loginEmail = 'zombe.jpm@gmail.com' } = {}) {
+function build({
+  rows = [], error = null, loginEmail = 'zombe.jpm@gmail.com', role = 'admin', member = null,
+} = {}) {
   const sb = {
     console, document: fakeDocument,
     String, Number, Boolean, Object, Array, JSON, RegExp, Math, Set, Map, Promise, Date, Error,
@@ -155,7 +157,14 @@ function build({ rows = [], error = null, loginEmail = 'zombe.jpm@gmail.com' } =
   };
   sb.showStatus = (msg, ok = true) => sb.__status.push([ok, msg]);
   sb.refreshData = async () => {};
-  sb.AdminAuth = { getEmail: () => loginEmail, getRole: () => 'admin' };
+  // role/member ต้องตั้งได้ — หน้า sign-in ตอนนี้เรนเดอร์ต่างกันตามสิทธิ์ (admin เห็นทุกแถว,
+  // crew เห็นแถวตัวเองแถวเดียว) ถ้า hardcode 'admin' ไว้จะทดสอบ crew view ไม่ได้เลย
+  sb.AdminAuth = {
+    getEmail: () => loginEmail,
+    getRole: () => role,
+    getMember: () => member,
+    getMemberCode: () => member?.code || null,
+  };
 
   vm.createContext(sb);
   for (const f of ['js/supabase-config.js', 'js/member-store.js', 'js/inline-member-editor.js']) {
@@ -179,7 +188,7 @@ const cellTexts = (tr) => cells(tr).map((c) => c.textContent);
 // ถ้านับทุกช่องจะได้ badge ปนมาด้วย (เคยทำให้เทสต์วัดผิดตัว)
 const btnTexts = (tr) => cells(tr).at(-1).children.map((b) => b.textContent);
 const badgeTexts = (tr) => cells(tr).flatMap((c) => c.children.map((b) => b.textContent));
-// หาแถวจากรหัสประจำตัว เพราะลำดับแสดงผลถูกจัดใหม่ (คิวรอยืนยันขึ้นก่อน)
+// หาแถวจากรหัสประจำตัว เพราะลำดับแสดงผลถูกจัดใหม่ (คิวปิดใช้งานขึ้นก่อน)
 const rowOf = (tb, code) => tb.children.find((tr) => cellTexts(tr)[0] === code);
 const tbodyOf = (el) => el._tbody || el;
 
@@ -202,7 +211,7 @@ function chk(label, cond, extra = '') {
 console.log('=== หน้าจัดการทีมงาน (renderMembers รันจริงใน DOM ปลอม) ===');
 
 // ---------- เคส 1: สมาชิก 3 คน ----------
-console.log('\n[1] สมาชิก 3 คน — admin ตัวเอง / crew / รอยืนยัน');
+console.log('\n[1] สมาชิก 3 คน — admin ตัวเอง / crew / ถูกปิดใช้งาน');
 clearDom();
 const sb = build({ rows: ROWS });
 try {
@@ -217,12 +226,12 @@ const tb = tbodyOf(byId.memberList);
 chk('สร้างตาราง 3 แถว', tb.children.length === 3, 'ได้ ' + tb.children.length);
 chk(
   'summary นับถูก',
-  /admin ใช้งาน 1 คน.*crew ใช้งาน 1 คน.*รอยืนยัน 1 คน.*ทั้งหมด 3 แถว/.test(byId.memberSummary.textContent),
+  /admin ใช้งาน 1 คน.*crew ใช้งาน 1 คน.*ปิดใช้งาน 1 คน.*ทั้งหมด 3 แถว/.test(byId.memberSummary.textContent),
   byId.memberSummary.textContent,
 );
-chk('แถบรอยืนยันโผล่', byId.memberPendingBox.style.display === 'block', byId.memberPendingBox.textContent.slice(0, 50));
+chk('แถบปิดใช้งานโผล่', byId.memberPendingBox.style.display === 'block', byId.memberPendingBox.textContent.slice(0, 50));
 chk('แผงปัญหาซ่อน', byId.memberProblemBox.style.display === 'none', byId.memberProblemBox.textContent.slice(0, 60));
-chk('คิวรอยืนยันขึ้นเป็นแถวแรก', cellTexts(tb.children[0])[0] === 'M001', tb.children.map((tr) => cellTexts(tr)[0]).join(' → '));
+chk('แถวที่ถูกปิดใช้งานขึ้นเป็นแถวแรก', cellTexts(tb.children[0])[0] === 'M001', tb.children.map((tr) => cellTexts(tr)[0]).join(' → '));
 chk(
   'admin ขึ้นก่อน crew',
   cellTexts(tb.children[1])[0] === 'ADMIN01' && cellTexts(tb.children[2])[0] === 'TK01',
@@ -239,8 +248,8 @@ chk('แถวตัวเองมีปุ่ม แก้ไข + ปิด�
 chk('badge สถานะตัวเอง = ใช้งาน', badgeTexts(self).includes('ใช้งาน'), badgeTexts(self).join(','));
 
 const pend = rowOf(tb, 'M001');
-chk('แถวรอยืนยันมีปุ่ม แก้ไข + อนุมัติ', btnTexts(pend).join(',') === 'แก้ไข,อนุมัติ', btnTexts(pend).join(','));
-chk('แถวรอยืนยัน badge = รอยืนยัน', badgeTexts(pend).includes('รอยืนยัน'), badgeTexts(pend).join(','));
+chk('แถวที่ถูกปิดใช้งานมีปุ่ม แก้ไข + เปิดใช้งาน', btnTexts(pend).join(',') === 'แก้ไข,เปิดใช้งาน', btnTexts(pend).join(','));
+chk('แถวที่ถูกปิดใช้งาน badge = ปิดใช้งาน', badgeTexts(pend).includes('ปิดใช้งาน'), badgeTexts(pend).join(','));
 chk('แถว crew แสดงอีเมลจริง', cellTexts(rowOf(tb, 'TK01')).join('|').includes('somchai@company.com'), cellTexts(rowOf(tb, 'TK01')).join(' | '));
 chk('badge สิทธิ์ถูก', badgeTexts(self).includes('admin') && badgeTexts(rowOf(tb, 'TK01')).includes('crew'));
 chk('ทุกช่องเป็น textContent ไม่ใช่ innerHTML (กัน XSS)', tb.children.every((tr) => tr.children.every((c) => c._html === '')));
@@ -286,7 +295,7 @@ const sbEmpty = build({ rows: [] });
 await sbEmpty.refreshMembers();
 const tbEmpty = tbodyOf(byId.memberList);
 chk('ยังนับเป็นโหมด Supabase (ไม่โชว์ข้อมูลปลอม)', sbEmpty.MemberStore.isSupabase() === true);
-chk('แถบรอยืนยันซ่อน', byId.memberPendingBox.style.display === 'none');
+chk('แถบปิดใช้งานซ่อน', byId.memberPendingBox.style.display === 'none');
 chk(
   'มีแถวบอกวิธีเพิ่มคน ชี้ไป Authentication',
   tbEmpty.children.length === 1 && /Authentication/.test(tbEmpty.children[0].children[0].textContent),
@@ -350,6 +359,99 @@ chk(
 );
 chk('ปุ่มกลับมาใช้งานได้อีก (ไม่ค้าง disabled)', blockedBtn.disabled === false);
 chk('ไม่ reload และไม่มี error หลุดไปหาผู้ใช้', errSpy.length === 1, 'console.error ถูกเรียก ' + errSpy.length + ' ครั้ง (คาด 1 = log ไว้ตรวจ)');
+
+// ---------- เคส 8: ปุ่มจอง ----------
+console.log('\n[8] ปุ่มจองท้ายแถวตัวเอง — ต้องปิดอยู่จนกว่าหน้าจองจะพร้อม');
+clearDom();
+const sbBook = build({ rows: ROWS });
+await sbBook.refreshMembers();
+const tbBook = tbodyOf(byId.memberList);
+const selfRow = rowOf(tbBook, 'ADMIN01');
+const bookBtn = cells(selfRow).at(-2).children[0];
+chk('แถวตัวเองมีปุ่มจอง', !!bookBtn && /จอง/.test(bookBtn.textContent), bookBtn?.textContent);
+chk(
+  'ปุ่มจองปิดอยู่ (หน้า booking.html ยังไม่มี — ห้ามให้กดแล้วเจอ 404)',
+  bookBtn?.disabled === true && /เร็ว ๆ นี้/.test(bookBtn?.textContent || ''),
+  `disabled=${bookBtn?.disabled} text=${bookBtn?.textContent}`,
+);
+chk('ปุ่มจองมี title บอกว่าทำไมกดไม่ได้', (bookBtn?.title || '').length > 0, bookBtn?.title);
+chk(
+  'แถวคนอื่นไม่มีปุ่มจองให้กดแทน',
+  cells(rowOf(tbBook, 'TK01')).at(-2).children.length === 0
+    && cellTexts(rowOf(tbBook, 'TK01')).at(-2) === '—',
+  cellTexts(rowOf(tbBook, 'TK01')).join(' | '),
+);
+chk('admin เห็น 7 คอลัมน์ (รวม สถานะ + จอง + จัดการ)', cells(selfRow).length === 7, 'ได้ ' + cells(selfRow).length);
+
+// ---------- เคส 9: crew login เข้ามา ----------
+console.log('\n[9] crew — เห็นแค่แถวของตัวเอง และไม่มีปุ่มแก้ไขของ admin');
+clearDom();
+const sbCrew = build({
+  rows: ROWS,                              // store มี 3 แถว (จำลองโหมด local ที่ RLS ไม่กรอง)
+  loginEmail: 'somchai@company.com',
+  role: 'crew',
+  member: { id: 'u-2', code: 'TK01', full_name: 'สมชาย ใจดี', role: 'crew', active: true },
+});
+await sbCrew.refreshMembers();
+const tbCrew = tbodyOf(byId.memberList);
+chk('เห็นแถวเดียว', tbCrew.children.length === 1, 'ได้ ' + tbCrew.children.length + ' แถว');
+chk(
+  'แถวนั้นคือของตัวเอง (ไม่ใช่ admin)',
+  cellTexts(tbCrew.children[0])[0] === 'TK01' && /← คุณ/.test(cellTexts(tbCrew.children[0]).join('|')),
+  cellTexts(tbCrew.children[0] || {}).join(' | '),
+);
+chk('crew เห็น 5 คอลัมน์ (ไม่มี สถานะ + จัดการ)', cells(tbCrew.children[0]).length === 5, 'ได้ ' + cells(tbCrew.children[0]).length);
+chk(
+  'ไม่มีปุ่ม แก้ไข / ปิดใช้งาน ให้ crew',
+  !cellTexts(tbCrew.children[0]).includes('แก้ไข')
+    && tbCrew.children[0].children.every((c) => !c.children.some((b) => b.textContent === 'แก้ไข' || b.textContent === 'ปิดใช้งาน')),
+  tbCrew.children[0].children.flatMap((c) => c.children.map((b) => b.textContent)).join(','),
+);
+chk('crew มีปุ่มจองของตัวเอง', /จอง/.test(cells(tbCrew.children[0]).at(-1).children[0]?.textContent || ''), cells(tbCrew.children[0]).at(-1).children[0]?.textContent);
+chk(
+  'summary ไม่เผยจำนวนทีมงานคนอื่น',
+  !/ทั้งหมด \d+ แถว/.test(byId.memberSummary.textContent) && /บัญชีของคุณ/.test(byId.memberSummary.textContent),
+  byId.memberSummary.textContent,
+);
+chk('แถบปิดใช้งานซ่อน (เป็นเรื่องของ admin)', byId.memberPendingBox.style.display === 'none');
+
+// crew เรียก openMemberModal ตรง ๆ (เช่นจาก console) ต้องไม่เปิดฟอร์ม
+console.log('\n[10] crew เรียก openMemberModal() ตรง ๆ — ต้องปฏิเสธ');
+sbCrew.__status.length = 0;
+sbCrew.__modalShown = false;
+sbCrew.openMemberModal('u-2');
+chk(
+  'ไม่เปิด modal และบอกให้ติดต่อ admin',
+  sbCrew.__modalShown === false && sbCrew.__status.some(([ok, m]) => ok === false && /crew/.test(m)),
+  JSON.stringify(sbCrew.__status.at(-1)),
+);
+
+// ---------- เคส 11: ซ่อนแผงตามสิทธิ์ ----------
+console.log('\n[11] applyRoleVisibility() — crew ต้องไม่เห็นแผงเครื่องมือ admin');
+clearDom();
+const sbVis = build({ rows: ROWS, role: 'crew' });
+const ADMIN_PANELS = ['connectionPanel', 'verifyPanel', 'tipsPanel', 'dataPanel', 'memberAdminHint', 'refreshMembersBtn'];
+sbVis.applyRoleVisibility(false);
+chk(
+  'crew: ซ่อนแผง admin ครบทุกแผง',
+  ADMIN_PANELS.every((id) => byId[id].style.display === 'none'),
+  ADMIN_PANELS.filter((id) => byId[id].style.display !== 'none').join(','),
+);
+chk('crew: โชว์คำอธิบายฝั่ง crew', byId.memberCrewHint.style.display === '');
+// memberPanel ไม่ได้ถูก applyRoleVisibility แตะ (ต้องโชว์เสมอสำหรับทุกสิทธิ์)
+// จึงต้องขอ element ผ่าน fakeDocument ก่อน — byId สร้างตอนถูก getElementById เท่านั้น
+chk(
+  'crew: แผงทีมงานยังโชว์ (เป็นแผงเดียวที่เขาเห็น)',
+  (fakeDocument.getElementById('memberPanel').style.display ?? '') === '',
+  'display=' + fakeDocument.getElementById('memberPanel').style.display,
+);
+sbVis.applyRoleVisibility(true);
+chk(
+  'admin: กลับมาเห็นทุกแผง',
+  ADMIN_PANELS.every((id) => byId[id].style.display === ''),
+  ADMIN_PANELS.filter((id) => byId[id].style.display !== '').join(','),
+);
+chk('admin: ซ่อนคำอธิบายฝั่ง crew', byId.memberCrewHint.style.display === 'none');
 
 console.log(`\nสรุป: ผ่าน ${passed} / ไม่ผ่าน ${failed}\n`);
 process.exit(failed ? 1 : 0);

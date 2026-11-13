@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Admin - Lighting GH</title>
+<title>Sign in - Lighting GH</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
 <link href="css/style.css" rel="stylesheet">
@@ -17,20 +17,21 @@
       <a class="nav-link text-light" href="accessories.html">Accessories</a>
       <a class="nav-link text-light" href="setbuilder.html">Set Builder</a>
       <a class="nav-link text-light" href="inventory.html">Inventory</a>
-      <a class="nav-link text-light active" href="admin.html">Admin</a>
+      <a class="nav-link text-light active" href="admin.html">Sign in</a>
     </div>
   </div>
 </nav>
 
 <div class="container pb-5" style="max-width:980px">
-  <div class="filter-panel mb-3">
+  <div class="filter-panel mb-3" id="connectionPanel">
     <div id="supabaseStatusBox" class="small text-muted">กำลังตรวจสถานะการเชื่อมต่อ Supabase...</div>
   </div>
 
   <div id="adminLockScreen" class="filter-panel" style="max-width:480px; margin:0 auto;">
-    <h4 class="mb-3">Admin Access</h4>
+    <h4 class="mb-3">เข้าสู่ระบบ</h4>
     <p class="text-muted small">
-      เข้าสู่ระบบด้วยบัญชี Admin ของ Supabase เพื่อจัดการข้อมูลกลางที่ใช้ร่วมกันทุกเครื่อง
+      เข้าสู่ระบบด้วยบัญชี Supabase ของทีมงาน — <strong>admin</strong> จะเห็นเครื่องมือจัดการข้อมูลและสิทธิ์
+      ส่วน <strong>crew</strong> จะเห็นข้อมูลบัญชีของตัวเองและปุ่มจองอุปกรณ์
     </p>
 
     <form id="adminLoginForm">
@@ -52,7 +53,7 @@
         autocomplete="current-password"
       >
 
-      <button id="adminLoginBtn" class="btn btn-dark w-100" type="submit">เข้าสู่ระบบ Admin</button>
+      <button id="adminLoginBtn" class="btn btn-dark w-100" type="submit">เข้าสู่ระบบ</button>
       <div id="adminLoginStatus" class="small text-danger mt-2"></div>
     </form>
   </div>
@@ -61,17 +62,17 @@
     <div class="filter-panel mb-3">
       <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
         <div>
-          <h4 class="mb-1">Admin Mode เปิดใช้งานแล้ว</h4>
+          <h4 class="mb-1" id="adminAppTitle">เข้าสู่ระบบแล้ว</h4>
           <div class="small text-muted">
-            บัญชี: <strong id="adminUserEmail">-</strong> <span id="adminUserRole"></span> · ตอนนี้ปุ่ม “แก้ไข / ซ่อน / ลบ” จะปรากฏในหน้า Detail ของอุปกรณ์และ Accessories
+            บัญชี: <strong id="adminUserEmail">-</strong> <span id="adminUserRole"></span><span id="adminAppHint"></span>
           </div>
           <div id="adminRoleWarning" class="small text-warning mt-1" style="display:none;"></div>
         </div>
-        <button id="adminLogoutBtn" class="btn btn-outline-danger btn-sm" type="button">ออกจากระบบ Admin</button>
+        <button id="adminLogoutBtn" class="btn btn-outline-danger btn-sm" type="button">ออกจากระบบ</button>
       </div>
     </div>
 
-    <div class="filter-panel mb-3">
+    <div class="filter-panel mb-3" id="verifyPanel">
       <h5 class="mb-3">สถานะการตรวจสอบข้อมูล</h5>
       <div class="row g-3 mb-3">
         <div class="col-6 col-md-3">
@@ -112,11 +113,11 @@
       <div class="small text-muted" id="verifyMetaText"></div>
     </div>
 
-    <div class="filter-panel mb-3">
+    <div class="filter-panel mb-3" id="tipsPanel">
       <h5 class="mb-3">คำแนะนำการใช้งาน</h5>
       <ol class="small text-muted mb-0" style="padding-left:1.1rem;">
         <li>เปิดหน้า <strong>Equipment</strong> หรือ <strong>Accessories</strong> แล้วกดดูรายละเอียดของรายการที่ต้องการ</li>
-        <li>เมื่ออยู่ใน Admin Mode จะเห็นปุ่ม <strong>แก้ไข / ซ่อน / ลบ</strong> ใน popup รายละเอียด</li>
+        <li>สิทธิ์ <strong>admin</strong> จะเห็นปุ่ม <strong>แก้ไข / ซ่อน / ลบ</strong> ใน popup รายละเอียด ส่วน <strong>crew</strong> จะไม่เห็นปุ่มเหล่านี้</li>
         <li>ปุ่ม <strong>+ เพิ่ม Fixture</strong> และ <strong>+ เพิ่ม Accessory</strong> อยู่ในส่วนจัดการข้อมูลของหน้านี้</li>
         <li>ดูกล่อง <strong>การเชื่อมต่อ Supabase</strong> ด้านบนสุดของหน้านี้ก่อนเสมอ — ถ้าขึ้นป้ายสีเขียว “เชื่อมต่อ Supabase แล้ว” ข้อมูลที่บันทึกจะเขียนลงฐานข้อมูลกลางที่ใช้ร่วมกันทุกเครื่อง</li>
         <li>ถ้าขึ้นป้ายสีเหลือง “โหมด local (fallback)” แปลว่า Supabase ใช้ไม่ได้ชั่วคราว ข้อมูลจะถูกลงไว้ในเครื่องนี้ก่อน กด <strong>ตรวจซ้ำ</strong> เพื่อลองเชื่อมต่อใหม่</li>
@@ -124,7 +125,7 @@
       </ol>
     </div>
 
-    <div class="filter-panel">
+    <div class="filter-panel" id="dataPanel">
       <h5 class="mb-3">จัดการข้อมูล</h5>
 
       <div class="d-flex gap-2 flex-wrap mb-2">
@@ -146,12 +147,12 @@
       </div>
     </div>
 
-    <div class="filter-panel mt-3">
+    <div class="filter-panel mt-3" id="memberPanel">
       <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-2">
         <div>
           <h5 class="mb-1">ทีมงานและสิทธิ์</h5>
-          <div class="small text-muted">
-            ใคร login ได้ ใครแก้ไขข้อมูลได้ และใครยังรออนุมัติ
+          <div class="small text-muted" id="memberSectionSubtitle">
+            ใคร login ได้ และใครแก้ไขข้อมูลได้
           </div>
         </div>
         <button id="refreshMembersBtn" class="btn btn-outline-dark btn-sm" type="button">ตรวจซ้ำ</button>
@@ -163,12 +164,20 @@
 
       <div id="memberList" class="table-responsive"></div>
 
-      <div class="small text-muted mt-3">
+      <div class="small text-muted mt-3" id="memberAdminHint">
         <strong>เพิ่มทีมงาน:</strong> สร้างบัญชีที่ Supabase → Authentication → Users → Add user
-        (ติ๊ก <em>Auto Confirm User</em>) แล้วแถวจะโผล่ที่นี่อัตโนมัติในสถานะ <strong>รอยืนยัน</strong>
-        — กดแก้ไขเพื่อตั้งรหัสประจำตัว เลือกสิทธิ์ แล้วติ๊กอนุมัติ
+        (ติ๊ก <em>Auto Confirm User</em>) แล้วแถวจะโผล่ที่นี่อัตโนมัติเป็นสิทธิ์ <strong>crew</strong>
+        และใช้งานได้ทันทีโดยไม่ต้องกดอนุมัติ — กดแก้ไขเพื่อตั้งรหัสประจำตัว หรือเลื่อนสิทธิ์เป็น admin
         <br>เว็บสร้างบัญชี login เองไม่ได้ เพราะ publishable key ไม่มีสิทธิ์จัดการ Authentication
-        และการนำคนออกใช้<strong>ปิดใช้งาน</strong>แทนการลบ จึงกดคืนได้ทันที
+        และปิดการสมัครเองไว้แล้ว จึงมีเฉพาะ admin ที่สร้างบัญชีใน Dashboard ได้
+        <br>การนำคนออกใช้<strong>ปิดใช้งาน</strong>แทนการลบ จึงกดคืนได้ทันที
+      </div>
+
+      <div class="small text-muted mt-3" id="memberCrewHint" style="display:none;">
+        นี่คือบัญชีของคุณ — สิทธิ์ <strong>crew</strong> ใช้จองอุปกรณ์ได้อย่างเดียว
+        จึงไม่เห็นปุ่มแก้ไขข้อมูลและไม่เห็นรายชื่อทีมงานคนอื่น
+        <br>ปุ่ม <strong>จอง</strong> ท้ายชื่อจะกดได้เมื่อระบบจองพร้อมใช้งาน
+        <br>ถ้าต้องการสิทธิ์แก้ไขข้อมูล ให้ติดต่อ admin
       </div>
     </div>
   </div>

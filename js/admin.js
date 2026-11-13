@@ -203,6 +203,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ถ้าร้อยตรง ๆ จะเปิดช่อง XSS ให้คนที่ถูกเพิ่มเข้ามาในตาราง members
   //
   // โครง <table> ที่ไม่มีข้อมูลผู้ใช้ร้อยด้วย innerHTML ได้ (เป็น markup คงที่)
+  //
+  // สิทธิ์: admin เห็นทุกแถว + ปุ่มแก้ไข/ปิดใช้งาน
+  //        crew เห็นแถวเดียวของตัวเอง + ปุ่มจองเท่านั้น
+  // RLS กันไว้ที่ฐานข้อมูลอยู่แล้ว (crew อ่าน members ได้แค่แถวตัวเอง)
+  // ตัวกรองข้างล่างจึงเป็นแค่ชั้น UI — กันโหมด local และกันเรนเดอร์ปุ่มที่กดแล้วจะ error
   function renderMembers() {
     const listEl = document.getElementById('memberList');
     const summaryEl = document.getElementById('memberSummary');
@@ -211,21 +216,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!listEl) return;
 
     const st = MemberStore.status();
-    // เรียงสำหรับแสดงผล: คนที่ยังไม่อนุมัติขึ้นก่อน (นี่คือคิวที่ต้องทำ)
+    const viewerRole = AdminAuth.getRole();
+    const viewerIsAdmin = viewerRole === 'admin';
+    const viewerId = String((AdminAuth.getMember() || {}).id || '');
+    const myEmail = String(AdminAuth.getEmail() || '').trim().toLowerCase();
+    // "แถวของตัวเอง" เทียบทั้ง id และอีเมล — ในโหมด local แถวอาจไม่มี id ตรงกับ session
+    const isSelfRow = (m) => (
+      (!!viewerId && String(m.id) === viewerId)
+      || (!!myEmail && String(m.email || '').trim().toLowerCase() === myEmail)
+    );
+
+    // เรียงสำหรับแสดงผล: คนที่ถูกปิดใช้งานขึ้นก่อน (นี่คือคิวที่ admin ต้องดู)
     // ตามด้วย admin ก่อน crew แล้วค่อยเรียงตามรหัส
     // ทำสำเนาเพราะ getAll() คืน array ภายใน — ห้าม sort ทับของ store
     // (store เรียงตาม code ไว้ให้ที่อื่นใช้ คงที่)
     //
     // ตัวเทียบต้องให้ "ค่าน้อย = ขึ้นก่อน" จึงจัดอันดับเป็นเลขแล้วลบกัน
     // (เขียนกลับด้านจะได้ลำดับตรงข้ามโดยไม่ error — เคยพลาดมาแล้ว)
-    const pendingRank = (m) => (m.active === true ? 1 : 0);
+    const inactiveRank = (m) => (m.active === true ? 1 : 0);
     const roleRank = (m) => (m.role === 'admin' ? 0 : 1);
     const all = [...MemberStore.getAll()].sort((a, b) => (
-      pendingRank(a) - pendingRank(b)
+      inactiveRank(a) - inactiveRank(b)
       || roleRank(a) - roleRank(b)
       || String(a.code || '').localeCompare(String(b.code || ''))
     ));
-    const myEmail = String(AdminAuth.getEmail() || '').trim().toLowerCase();
+    const visible = viewerIsAdmin ? all : all.filter(isSelfRow);
 
     // ---- แผงเตือนปัญหา ----
     const problems = [];
@@ -246,18 +261,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ---- สรุปจำนวน ----
     if (summaryEl) {
-      summaryEl.textContent = st.isSupabase
-        ? `admin ใช้งาน ${st.admin} คน · crew ใช้งาน ${st.crew} คน · รอยืนยัน ${st.pending} คน · ทั้งหมด ${st.total} แถว`
-        : `ยังไม่เชื่อมต่อกับ Supabase — แสดงข้อมูลจากเครื่องนี้เท่านั้น`;
+      if (!viewerIsAdmin) {
+        // crew เห็นแถวเดียวของตัวเอง — นับสรุปทั้งตารางไม่ได้ (RLS ไม่ส่งมา)
+        summaryEl.textContent = visible.length
+          ? 'นี่คือบัญชีของคุณ — สิทธิ์ crew ใช้จองอุปกรณ์ได้อย่างเดียว'
+          : 'ไม่พบบัญชีของคุณในตาราง members — ให้ admin ตรวจสอบ';
+      } else {
+        summaryEl.textContent = st.isSupabase
+          ? `admin ใช้งาน ${st.admin} คน · crew ใช้งาน ${st.crew} คน · ปิดใช้งาน ${st.inactive} คน · ทั้งหมด ${st.total} แถว`
+          : `ยังไม่เชื่อมต่อกับ Supabase — แสดงข้อมูลจากเครื่องนี้เท่านั้น`;
+      }
     }
 
-    // ---- แถบเตือนรายการรอยืนยัน ----
-    const pendingList = MemberStore.pending();
+    // ---- แถบเตือนบัญชีที่ถูกปิดใช้งาน (ของ admin เท่านั้น) ----
+    // เดิมเป็นแถบ "รอยืนยัน" — เลิกใช้แล้วเพราะไม่มีขั้นอนุมัติ
+    // (migration-2026-11-13b-no-approval.sql: แถวใหม่ active = true ใช้งานได้ทันที)
+    const inactiveList = MemberStore.inactive();
     if (pendingBox) {
-      if (pendingList.length) {
-        pendingBox.textContent = `มี ${pendingList.length} บัญชีรอยืนยัน — สร้างบัญชีใน Supabase แล้ว`
-          + ' ระบบจะเพิ่มแถวให้อัตโนมัติเป็น crew และยังไม่เปิดใช้งาน'
-          + ' กด "แก้ไข" เพื่อตั้งรหัสประจำตัว เลือกสิทธิ์ แล้วติ๊กอนุมัติ';
+      if (viewerIsAdmin && inactiveList.length) {
+        pendingBox.textContent = `มี ${inactiveList.length} บัญชีถูกปิดใช้งานไว้`
+          + ' — บัญชีเหล่านี้ login ไม่ได้จนกว่าจะกด "เปิดใช้งาน" คืน';
         pendingBox.style.display = 'block';
       } else {
         pendingBox.style.display = 'none';
@@ -265,6 +288,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ---- ตาราง ----
+    // crew เห็น 5 คอลัมน์ (ไม่มี สถานะ / จัดการ) เพราะเขาแก้ใครไม่ได้และเห็นแค่แถวตัวเอง
+    // หัวตารางเป็น markup คงที่ทั้งหมด (ไม่มีข้อมูลผู้ใช้) จึงร้อย innerHTML ได้
+    const colCount = viewerIsAdmin ? 7 : 5;
     listEl.innerHTML = `
       <table class="table table-sm align-middle mb-0">
         <thead>
@@ -273,30 +299,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             <th>ชื่อ</th>
             <th>อีเมล</th>
             <th>สิทธิ์</th>
-            <th>สถานะ</th>
-            <th class="text-end">จัดการ</th>
+            ${viewerIsAdmin ? '<th>สถานะ</th>' : ''}
+            <th>จอง</th>
+            ${viewerIsAdmin ? '<th class="text-end">จัดการ</th>' : ''}
           </tr>
         </thead>
         <tbody></tbody>
       </table>`;
     const tbody = listEl.querySelector('tbody');
 
-    if (!all.length) {
+    if (!visible.length) {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
-      td.colSpan = 6;
+      td.colSpan = colCount;
       td.className = 'small text-muted py-3 text-center';
-      td.textContent = st.isSupabase
-        ? 'ยังไม่มีทีมงานในตาราง members — สร้างบัญชีที่ Supabase → Authentication → Users แล้วกด "ตรวจซ้ำ"'
-        : 'โหมด local ไม่มีรายชื่อทีมงานให้จัดการ';
+      if (!viewerIsAdmin) {
+        td.textContent = 'ไม่พบบัญชีของคุณในตาราง members — ให้ admin ตรวจสอบ';
+      } else {
+        td.textContent = st.isSupabase
+          ? 'ยังไม่มีทีมงานในตาราง members — สร้างบัญชีที่ Supabase → Authentication → Users แล้วกด "ตรวจซ้ำ"'
+          : 'โหมด local ไม่มีรายชื่อทีมงานให้จัดการ';
+      }
       tr.appendChild(td);
       tbody.appendChild(tr);
       return;
     }
 
-    all.forEach((m) => {
+    visible.forEach((m) => {
       const tr = document.createElement('tr');
-      const isSelf = !!myEmail && String(m.email || '').trim().toLowerCase() === myEmail;
+      const isSelf = isSelfRow(m);
       if (isSelf) tr.className = 'table-light';
 
       const cells = [
@@ -319,65 +350,96 @@ document.addEventListener('DOMContentLoaded', async () => {
       tdRole.appendChild(roleBadge);
       tr.appendChild(tdRole);
 
-      // badge สถานะ
-      const tdActive = document.createElement('td');
-      const activeBadge = document.createElement('span');
-      activeBadge.className = m.active ? 'badge bg-success' : 'badge bg-warning text-dark';
-      activeBadge.textContent = m.active ? 'ใช้งาน' : 'รอยืนยัน';
-      tdActive.appendChild(activeBadge);
-      tr.appendChild(tdActive);
+      // badge สถานะ — เฉพาะ admin (crew เห็นแค่แถวตัวเองซึ่งต้อง active อยู่แล้วจึง login ได้)
+      if (viewerIsAdmin) {
+        const tdActive = document.createElement('td');
+        const activeBadge = document.createElement('span');
+        activeBadge.className = m.active ? 'badge bg-success' : 'badge bg-danger';
+        activeBadge.textContent = m.active ? 'ใช้งาน' : 'ปิดใช้งาน';
+        tdActive.appendChild(activeBadge);
+        tr.appendChild(tdActive);
+      }
 
-      // ปุ่มจัดการ
-      const tdBtn = document.createElement('td');
-      tdBtn.className = 'text-end';
+      // ปุ่มจอง — อยู่ท้ายชื่อของตัวเองตามที่ต้องการ
+      // ยังเป็นปุ่มปิดอยู่เพราะหน้าจอง (booking.html) ยังไม่ถูกสร้าง
+      // ระบบจองจะเปิดปุ่มนี้ให้เองใน PR ถัดไป — ห้ามให้กดได้ก่อนมีหน้ารองรับ
+      const tdBook = document.createElement('td');
+      tdBook.className = 'text-end';
+      if (isSelf) {
+        const bookBtn = document.createElement('button');
+        bookBtn.type = 'button';
+        bookBtn.className = 'btn btn-outline-secondary btn-sm';
+        bookBtn.disabled = true;
+        bookBtn.textContent = 'จอง — เร็ว ๆ นี้';
+        bookBtn.title = 'ระบบจองอุปกรณ์กำลังจะถูกเพิ่ม — ปุ่มนี้จะกดได้เมื่อหน้าจองพร้อมใช้งาน';
+        tdBook.appendChild(bookBtn);
+      } else {
+        // แถวของคนอื่นไม่ใช่ของที่จะกดจองแทน
+        tdBook.textContent = '—';
+      }
+      tr.appendChild(tdBook);
 
-      const editBtn = document.createElement('button');
-      editBtn.type = 'button';
-      editBtn.className = 'btn btn-outline-dark btn-sm';
-      editBtn.textContent = 'แก้ไข';
-      editBtn.addEventListener('click', () => openMemberModal(String(m.id)));
-      tdBtn.appendChild(editBtn);
+      // ปุ่มจัดการ — ของ admin เท่านั้น
+      // crew ไม่มีสิทธิ์เขียนตาราง members (RLS ปฏิเสธ) จึงไม่เรนเดอร์ปุ่มให้กดแล้ว error
+      if (viewerIsAdmin) {
+        const tdBtn = document.createElement('td');
+        tdBtn.className = 'text-end';
 
-      const toggleBtn = document.createElement('button');
-      toggleBtn.type = 'button';
-      toggleBtn.className = m.active
-        ? 'btn btn-outline-danger btn-sm ms-1'
-        : 'btn btn-dark btn-sm ms-1';
-      toggleBtn.textContent = m.active ? 'ปิดใช้งาน' : 'อนุมัติ';
-      toggleBtn.addEventListener('click', async () => {
-        const turningOff = m.active === true;
-        if (turningOff) {
-          const head = isSelf
-            ? 'ปิดใช้งานบัญชีของคุณเอง?'
-            : `ปิดใช้งาน ${m.fullName || m.code || 'สมาชิกรายนี้'}?`;
-          const ok = window.confirm(
-            head
-            + '\n\nจะ login เข้าใช้สิทธิ์ใด ๆ ไม่ได้อีกจนกว่าจะกดอนุมัติคืน'
-            + '\n(ถ้าเป็น admin คนสุดท้าย ฐานข้อมูลจะปฏิเสธเพื่อไม่ให้ทุกคนถูกล็อกออก)'
-          );
-          if (!ok) return;
-        }
-        toggleBtn.disabled = true;
-        try {
-          await MemberStore.setActive(String(m.id), !turningOff);
-          await refreshMembers();
-          // ถ้าปิดใช้งานตัวเองสำเร็จ สิทธิ์ admin หายทันที ต้องโหลดหน้าใหม่
-          if (turningOff && isSelf) location.reload();
-        } catch (err) {
-          console.error('เปลี่ยนสถานะสมาชิกไม่สำเร็จ:', err);
-          // ข้อความจาก trigger protect_last_admin เป็นภาษาไทยอยู่แล้ว
-          showStatus((err && err.message) || 'เปลี่ยนสถานะไม่สำเร็จ', false);
-          toggleBtn.disabled = false;
-        }
-      });
-      tdBtn.appendChild(toggleBtn);
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'btn btn-outline-dark btn-sm';
+        editBtn.textContent = 'แก้ไข';
+        editBtn.addEventListener('click', () => openMemberModal(String(m.id)));
+        tdBtn.appendChild(editBtn);
 
-      tr.appendChild(tdBtn);
+        const toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = m.active
+          ? 'btn btn-outline-danger btn-sm ms-1'
+          : 'btn btn-dark btn-sm ms-1';
+        toggleBtn.textContent = m.active ? 'ปิดใช้งาน' : 'เปิดใช้งาน';
+        toggleBtn.addEventListener('click', async () => {
+          const turningOff = m.active === true;
+          if (turningOff) {
+            const head = isSelf
+              ? 'ปิดใช้งานบัญชีของคุณเอง?'
+              : `ปิดใช้งาน ${m.fullName || m.code || 'สมาชิกรายนี้'}?`;
+            const ok = window.confirm(
+              head
+              + '\n\nจะ login เข้าใช้สิทธิ์ใด ๆ ไม่ได้อีกจนกว่าจะกดเปิดใช้งานคืน'
+              + '\n(ถ้าเป็น admin คนสุดท้าย ฐานข้อมูลจะปฏิเสธเพื่อไม่ให้ทุกคนถูกล็อกออก)'
+            );
+            if (!ok) return;
+          }
+          toggleBtn.disabled = true;
+          try {
+            await MemberStore.setActive(String(m.id), !turningOff);
+            await refreshMembers();
+            // ถ้าปิดใช้งานตัวเองสำเร็จ สิทธิ์ admin หายทันที ต้องโหลดหน้าใหม่
+            if (turningOff && isSelf) location.reload();
+          } catch (err) {
+            console.error('เปลี่ยนสถานะสมาชิกไม่สำเร็จ:', err);
+            // ข้อความจาก trigger protect_last_admin เป็นภาษาไทยอยู่แล้ว
+            showStatus((err && err.message) || 'เปลี่ยนสถานะไม่สำเร็จ', false);
+            toggleBtn.disabled = false;
+          }
+        });
+        tdBtn.appendChild(toggleBtn);
+
+        tr.appendChild(tdBtn);
+      }
+
       tbody.appendChild(tr);
     });
   }
 
   function openMemberModal(memberId) {
+    // crew ไม่ควรมาถึงที่นี่ (ปุ่มแก้ไขไม่ถูกเรนเดอร์ให้) — กันไว้เผื่อเรียกจาก console
+    // เพราะถึงเปิดฟอร์มได้ RLS ก็ปฏิเสธตอนบันทึกอยู่ดี ดีกว่าให้กรอกเสร็จแล้ว error
+    if (AdminAuth.getRole() !== 'admin') {
+      showStatus('สิทธิ์ crew แก้ไขข้อมูลทีมงานไม่ได้ — ติดต่อ admin', false);
+      return;
+    }
     const m = MemberStore.getById(memberId);
     if (!m) {
       showStatus('ไม่พบสมาชิกรายนี้ — กด "ตรวจซ้ำ" แล้วลองใหม่', false);
@@ -513,15 +575,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     itemModal.show();
   }
 
-  // ---------------- เข้าโหมด admin ----------------
+  // ---------------- แสดง/ซ่อนตามสิทธิ์ ----------------
+  // crew login เข้าหน้านี้ได้ แต่เห็นเฉพาะแผง "ทีมงานและสิทธิ์" (แถวของตัวเอง)
+  //
+  // สำคัญ: การซ่อนนี้ไม่ใช่กำแพงความปลอดภัย — RLS ต่างหากที่เป็นกำแพงจริง
+  // (crew อ่าน members ได้แค่แถวตัวเอง และเขียน fixtures/accessories/members ไม่ได้เลย)
+  // ที่ซ่อนเพราะไม่อยากให้เห็นปุ่มที่กดแล้วจะ error และไม่ต้องโหลดข้อมูลที่เขาไม่ได้ใช้
+  function applyRoleVisibility(isAdminViewer) {
+    const setVisible = (id, visible) => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = visible ? '' : 'none';
+    };
+    // แผงที่เป็นเครื่องมือ admin ล้วน ๆ
+    // connectionPanel มีปุ่ม "Import ข้อมูล local ขึ้น Supabase" ซึ่งเป็นงานเขียน
+    setVisible('connectionPanel', isAdminViewer);
+    setVisible('verifyPanel', isAdminViewer);
+    setVisible('tipsPanel', isAdminViewer);
+    setVisible('dataPanel', isAdminViewer);
+    // ในแผงทีมงาน: วิธีเพิ่มคน + ปุ่มตรวจซ้ำ เป็นของ admin
+    setVisible('memberAdminHint', isAdminViewer);
+    setVisible('refreshMembersBtn', isAdminViewer);
+    setVisible('memberCrewHint', !isAdminViewer);
+  }
+
+  // ---------------- เข้าหน้าหลัง login (admin เห็นทุกแผง / crew เห็นแผงเดียว) ----------------
   let appBound = false;
 
   async function showApp() {
+    const myRole = AdminAuth.getRole();
+    const isAdminViewer = myRole === 'admin';
+    applyRoleVisibility(isAdminViewer);
+
     if (lockScreen) lockScreen.style.display = 'none';
     if (app) app.style.display = 'block';
 
     const who = document.getElementById('adminUserEmail');
     if (who) who.textContent = AdminAuth.getEmail() || '';
+
+    // คำอธิบายใต้บัญชีต้องต่างกันตามสิทธิ์ — crew ไม่ได้เข้า "โหมด admin"
+    const hintEl = document.getElementById('adminAppHint');
+    if (hintEl) {
+      hintEl.textContent = isAdminViewer
+        ? ' · ตอนนี้ปุ่ม "แก้ไข / ซ่อน / ลบ" จะปรากฏในหน้า Detail ของอุปกรณ์และ Accessories'
+        : ' · สิทธิ์ crew เห็นเฉพาะบัญชีของตัวเอง (ปุ่มจองอุปกรณ์จะกดได้เร็ว ๆ นี้)';
+    }
 
     // โชว์สิทธิ์ + รหัสประจำตัวจากตาราง members
     // ใช้ textContent/createElement ทั้งหมด เพราะค่ามาจากฐานข้อมูล
@@ -529,12 +626,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const roleEl = document.getElementById('adminUserRole');
     if (roleEl) {
       roleEl.textContent = '';
-      const role = AdminAuth.getRole();
-      if (role) {
+      if (myRole) {
         const badge = document.createElement('span');
         badge.className = 'badge bg-dark';
         const code = AdminAuth.getMemberCode();
-        badge.textContent = code ? `${role} · ${code}` : String(role);
+        badge.textContent = code ? `${myRole} · ${code}` : String(myRole);
         roleEl.appendChild(badge);
       }
     }
@@ -548,28 +644,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       warnEl.style.display = roleError ? 'block' : 'none';
     }
 
-    await refreshData();
-
-    // ทีมงานและสิทธิ์ — โหลดเฉพาะตอนปลดล็อกแล้ว เพราะแผงนี้อยู่ใน adminApp
+    // ทีมงานและสิทธิ์ — โหลดเฉพาะตอน login แล้ว เพราะแผงนี้อยู่ใน adminApp
     // และ RLS ให้ crew อ่านได้แค่แถวของตัวเอง จึงไม่เสีย query ฟรีตอนยังไม่ login
+    // crew ก็ต้องโหลด เพราะนี่คือแผงเดียวที่ crew เห็น
     await refreshMembers();
 
-    const summary = VerificationStore.getSummary();
-    if (summary) {
-      const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value ?? '-'; };
-      set('verifyTotal', summary.totalFixtures);
-      set('verifyVerified', summary.statuses?.verified);
-      set('verifyPartial', summary.statuses?.partially_verified);
-      set('verifyPending', summary.statuses?.pending);
-      const meta = document.getElementById('verifyMetaText');
-      if (meta) {
-        meta.textContent = `อัปเดตล่าสุด ${summary.generatedAt} · ตรวจโดย ${summary.verifiedBy} · แหล่งอ้างอิง ${summary.sourceCount} แหล่ง`;
-      }
-    }
+    // งานของ admin ล้วน ๆ — crew ข้ามไปเลย ไม่ต้องยิง query ที่เขาไม่มีสิทธิ์แก้
+    // (แผงพวกนี้ถูกซ่อนไว้ใน applyRoleVisibility แล้ว)
+    if (isAdminViewer) {
+      await refreshData();
 
-    renderConnectionPanel();
-    await renderHiddenList();
-    await renderDataSummary();
+      const summary = VerificationStore.getSummary();
+      if (summary) {
+        const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value ?? '-'; };
+        set('verifyTotal', summary.totalFixtures);
+        set('verifyVerified', summary.statuses?.verified);
+        set('verifyPartial', summary.statuses?.partially_verified);
+        set('verifyPending', summary.statuses?.pending);
+        const meta = document.getElementById('verifyMetaText');
+        if (meta) {
+          meta.textContent = `อัปเดตล่าสุด ${summary.generatedAt} · ตรวจโดย ${summary.verifiedBy} · แหล่งอ้างอิง ${summary.sourceCount} แหล่ง`;
+        }
+      }
+
+      renderConnectionPanel();
+      await renderHiddenList();
+      await renderDataSummary();
+    }
 
     if (appBound) return;
     appBound = true;
@@ -655,7 +756,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       setLoginBusy(true);
       try {
         const result = await AdminAuth.signIn(emailInput?.value, passwordInput?.value);
-        if (result.ok) {
+        // crew ก็เข้าหน้านี้ได้ (เห็นเฉพาะบัญชีตัวเอง + ปุ่มจอง) จึงไม่รอให้ result.ok
+        // ซึ่ง admin-only — เช็คแค่ "login ผ่าน และมีสิทธิ์ในตาราง members"
+        // role เป็น null เมื่อ active=false หรือไม่มีแถวในตาราง → ต้องค้างที่หน้า login
+        const canEnter = result.ok || (!!result.loggedIn && !!result.role);
+        if (canEnter) {
           showLoginError('เข้าสู่ระบบสำเร็จ กำลังโหลดข้อมูล...', true);
           await showApp();
         } else {
@@ -673,7 +778,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ---------------- ตอนเปิดหน้า ----------------
   await AdminAuth.ready;
 
-  if (AdminAuth.isUnlocked()) {
+  // เปิดหน้ามาแล้วมี session ค้างอยู่ → เข้าหน้าได้เลย
+  // ต้องเช็ค isLoggedIn() ไม่ใช่ isUnlocked() เพราะ isUnlocked() เป็น admin-only
+  // ไม่งั้น crew ที่ login ค้างไว้จะถูกดีดกลับมาหน้า login ทุกครั้งที่รีเฟรช
+  // และต้องมี role ด้วย — role เป็น null เมื่อ active=false หรือไม่มีแถวในตาราง members
+  if (AdminAuth.isLoggedIn() && AdminAuth.getRole()) {
     await showApp();
   } else {
     // โหลดข้อมูลไว้ก่อนเพื่อให้แผงสถานะ/ปุ่ม import ทำงานได้แม้ยังไม่ได้ login

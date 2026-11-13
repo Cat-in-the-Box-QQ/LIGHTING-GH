@@ -190,7 +190,10 @@ $$;
 -- เพราะเบราว์เซอร์ถือแค่ publishable key จึงสร้างบัญชีและอ่าน auth.users ไม่ได้
 -- หน้าเว็บจึงจัดการได้แค่แถวในตาราง members — trigger นี้เชื่อมช่องว่างนั้น
 --
--- role = 'crew' และ active = false เสมอ -> รอ admin อนุมัติในหน้าเว็บ
+-- role = 'crew' และ active = true -> ใช้งานได้ทันที ไม่ต้องมีขั้นอนุมัติ
+-- (เพราะปิด public signup แล้ว บัญชีใหม่จึงเกิดจาก admin สร้างใน Dashboard เท่านั้น
+--  ดู migration-2026-11-13b-no-approval.sql)
+-- ยังเป็น crew เสมอ จึงแก้ไขข้อมูลของไม่ได้จนกว่า admin จะเลื่อนสิทธิ์ให้
 -- ไม่ต้องส่ง code เพราะ trigger members_fill_code จะออกรหัสให้อัตโนมัติ
 create or replace function public.handle_new_auth_user()
 returns trigger
@@ -214,7 +217,7 @@ begin
   -- จึงต้องเก็บ error ไว้เป็น warning แล้วปล่อยผ่านเสมอ
   begin
     insert into public.members (auth_uid, email, full_name, role, active)
-    values (new.id, new.email, v_name, 'crew', false)
+    values (new.id, new.email, v_name, 'crew', true)
     on conflict (auth_uid) do nothing;
   exception when others then
     raise warning

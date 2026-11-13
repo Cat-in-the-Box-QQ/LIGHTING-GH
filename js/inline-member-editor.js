@@ -3,7 +3,8 @@
 // ไม่มีฟอร์ม "เพิ่มทีมงาน" โดยจงใจ — บัญชี login สร้างจากเบราว์เซอร์ไม่ได้
 // (publishable key เรียก auth.admin.createUser() ไม่ได้ และอ่าน auth.users ไม่ได้)
 // trigger handle_new_auth_user ใน Supabase จะสร้างแถว members ให้อัตโนมัติ
-// เป็น crew + active=false งานของหน้านี้คือ "อนุมัติและตั้งสิทธิ์" เท่านั้น
+// เป็น crew + active=true (ใช้งานได้ทันที ไม่มีขั้นอนุมัติ — ดู
+// supabase/migration-2026-11-13b-no-approval.sql) งานของหน้านี้คือ "ตั้งสิทธิ์" เท่านั้น
 //
 // ไม่มีปุ่มลบ — การนำคนออกใช้ปิดใช้งาน (active=false) ซึ่งกดคืนได้ทันที
 
@@ -62,7 +63,7 @@ function memberEditorHtml(member = {}, formId = 'memberEditorForm', options = {}
           <div class="col-md-4 d-flex align-items-end">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="${activeId}" name="active"${m.active ? ' checked' : ''}>
-              <label class="form-check-label small" for="${activeId}">อนุมัติให้ใช้งาน</label>
+              <label class="form-check-label small" for="${activeId}">เปิดใช้งาน (ให้ login ได้)</label>
             </div>
           </div>
 
