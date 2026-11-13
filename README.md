@@ -73,22 +73,26 @@ Deploy บน **Vercel** (production deploy จาก branch `main` อัตโ
 │   ├── supabase-client.js  สร้าง client (ห้าม throw — ถ้า throw หน้าจะพังทั้งหน้า)
 │   ├── database.js         data layer ของ fixtures (Supabase + local fallback)
 │   ├── accessory-store.js  data layer ของ accessories (Supabase + local fallback)
-│   ├── admin-auth.js       login ผ่าน Supabase Auth
-│   ├── admin.js            หน้า admin
-│   ├── search.js           helper ค้นหา/กรอง/เรียง/คำนวณประเภทอุปกรณ์
+│   ├── member-store.js     data layer ของทีมงาน (ตาราง members)
+│   ├── booking-store.js    อ่านยอดจองจาก view ของระบบจอง (อ่านอย่างเดียว ไม่พังถ้ายังไม่ได้รัน SQL)
+│   ├── admin-auth.js       login ผ่าน Supabase Auth + ตัดสินสิทธิ์ admin/crew
+│   ├── admin.js            หน้า Sign in (admin เห็นทุกแผง / crew เห็นบัญชีตัวเอง)
+│   ├── search.js           helper ค้นหา/กรอง/เรียง/คำนวณประเภทอุปกรณ์ + stock pill + บรรทัดยอดจอง
 │   ├── inventory.js        หน้า inventory
 │   ├── accessories.js      หน้า accessories
 │   ├── app.js              dashboard
 │   ├── inline-fixture-editor.js     ฟอร์มแก้ไข fixture (ใช้ซ้ำหลายหน้า)
 │   ├── inline-accessory-editor.js   ฟอร์มแก้ไข accessory (ใช้ซ้ำหลายหน้า)
+│   ├── inline-member-editor.js      ฟอร์มแก้ไขสิทธิ์ทีมงาน
 │   ├── verification-store.js        อ่าน metadata การตรวจสอบข้อมูล
 │   ├── setbuilder-helper.js         เก็บ "ชุดปัจจุบัน" ใน localStorage
 │   └── power.js / weight.js         คำนวณกำลังไฟและน้ำหนัก
 ├── data/                   ข้อมูลตั้งต้น (JSON) ใช้เป็น fallback และแหล่ง import
 ├── images/                 รูปภาพอุปกรณ์
 ├── supabase/
-│   ├── schema.sql          สคริปต์สร้างตาราง + RLS policy (รันซ้ำได้ปลอดภัย)
-│   └── README.md           คู่มือตั้งค่า Supabase
+│   ├── schema.sql          สคริปต์สร้างตารางหลัก + RLS policy (รันซ้ำได้ปลอดภัย)
+│   ├── migration-*.sql     ไฟล์เพิ่มทีละรอบ — ติดตั้งใหม่ให้รัน schema.sql แล้วรันไฟล์เหล่านี้ตามลำดับ
+│   └── README.md           คู่มือตั้งค่า Supabase + กติกาของระบบจอง
 └── test/                   ชุดตรวจอัตโนมัติ
 ```
 
@@ -156,6 +160,27 @@ node test/run-all.mjs
 ```js
 window.SUPABASE_ADMIN_EMAILS = [];  // [] = ไม่ยอมให้ใครเป็น admin จากรายชื่ออีเมล
 ```
+
+---
+
+## ระบบจองอุปกรณ์
+
+สถานะตอนนี้: **ชั้นฐานข้อมูลเสร็จและรันบนโปรเจกต์จริงแล้ว** · การ์ดอุปกรณ์และหน้า
+Inventory แสดงยอดจองจริงแล้ว · **หน้าจอง (`booking.html`) ยังไม่มา** ปุ่ม **จอง**
+ท้ายชื่อในหน้า Sign in จึงยังกดไม่ได้ (`จอง — เร็ว ๆ นี้`)
+
+กติกาที่บังคับไว้ที่ฐานข้อมูล (ดู [`supabase/README.md`](./supabase/README.md) หัวข้อ "ระบบจองทำงานยังไง")
+
+| กติกา | ทำไม |
+|---|---|
+| จองได้วันเดียวต่อใบจอง พ้นวันนั้นของกลับคลังเอง | ไม่ต้องใช้ cron และไม่ต้องมีตารางคืนของ |
+| จองเกินจำนวนที่มีไม่ได้ | trigger ล็อกรายชิ้นด้วย `pg_advisory_xact_lock` แล้วนับยอดจอง — สองคนกดพร้อมกันจะเรียงคิว ไม่ใช่ได้ของเกินทั้งคู่ |
+| รายการที่ยังไม่ระบุจำนวน จองไม่ได้ | แสดง "ยังไม่ระบุจำนวน — จองไม่ได้" แทนเลข 0 เพราะ 0 แปลว่าของหมด ซึ่งไม่จริง (ตอนนี้อุปกรณ์เสริม 70 จาก 72 รายการยังไม่กรอก) |
+| ของไม่กลับคลังจริง → admin ปัก `overdue` | ปิดจุดบอดของการคืนอัตโนมัติ เพราะระบบไม่มีทางรู้ว่าของหายไป |
+| จำนวนที่ติดจองคำนวณจากใบจองเสมอ | **ห้าม**แก้คอลัมน์ `stock` — ไม่งั้นจะมีแหล่งความจริงสองก้อนแล้วตัวเลขเหลื่อมกันแบบตามแก้ไม่เจอ |
+
+ยอดที่เห็นบนการ์ดมาจาก view `v_item_availability` ซึ่งเป็น**ก้อนเดียวกับที่ trigger ใช้ตัดสิน**
+ผู้ใช้จึงไม่เจอเหตุการณ์ "หน้าเว็บบอกว่าเหลือ 2 แต่กดจองแล้วโดนปฏิเสธ"
 
 ---
 

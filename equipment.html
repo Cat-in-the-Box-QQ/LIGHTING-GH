@@ -169,6 +169,7 @@
 <script src="js/search.js"></script>
 <script src="js/setbuilder-helper.js"></script>
 <script src="js/accessory-store.js"></script>
+<script src="js/booking-store.js"></script>
 <script src="js/verification-store.js"></script>
 <script src="js/admin-auth.js"></script>
 <script src="js/inline-fixture-editor.js"></script>
@@ -568,6 +569,7 @@ function render() {
       // ถ้าไม่รู้จำนวน (stock ว่าง — ตอนนี้ 70 จาก 72 รายการ) ให้บอกตรง ๆ ว่ายังไม่ระบุ
       // ดีกว่าปล่อยว่างเพราะจะแยกไม่ออกว่า "หมด" หรือ "ยังไม่ได้กรอก"
       const stockPill = stockPillHtml(item);
+      const bookingLine = bookingLineHtml('accessory', item.id);
       col.innerHTML = `
         <div class="filter-panel h-100 accessory-card" role="button" data-key="${item._key}">
           <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
@@ -583,9 +585,10 @@ function render() {
             ${crmxBadge}
             ${item.wireless ? `<span class="badge bg-secondary">Wireless</span>` : ''}
           </div>
-          ${stockPill ? '' : `<div class="small text-muted mb-2">ไม่ระบุ stock</div>`}
+          ${stockPill || bookingLine ? '' : `<div class="small text-muted mb-2">ไม่ระบุ stock</div>`}
           <div class="small"><strong>ใช้กับ:</strong> ${compatible.length ? compatible.join(', ') : 'ยังไม่ระบุ'}</div>
           ${stockPill ? `<div class="card-stock-row">${stockPill}</div>` : ''}
+          ${bookingLine ? `<div class="card-booking-row">${bookingLine}</div>` : ''}
         </div>`;
     } else {
       const crmxBadge = hasCrmx(item) ? `<span class="badge bg-warning text-dark">CRMX</span>` : '';
@@ -618,6 +621,7 @@ function render() {
               ${isSetAddableItem(item) ? `<input type="number" min="1" value="1" class="form-control form-control-sm add-qty-input" data-key="${item._key}">` : ''}
               ${isSetAddableItem(item) ? `<button class="btn btn-dark btn-sm add-to-set-btn" data-key="${item._key}">+</button>` : ''}
               ${isSetAddableItem(item) && hasSetOption(item) ? `<button class="btn btn-outline-dark btn-sm add-set-btn" data-key="${item._key}">+ ชุด</button>` : ''}
+              ${bookingLineHtml('fixture', item.id)}
               ${stockPillHtml(item)}
             </div>
           </div>
@@ -668,7 +672,9 @@ function render() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const [fixtures, accessories] = await Promise.all([DB.load(), AccessoryStore.load(), VerificationStore.load(), AdminAuth.ready]);
+  // BookingStore.load() ไม่ throw (จับ error ไว้ใน status()) จึงใส่ใน Promise.all ได้
+  // และถ้าอ่าน view ไม่ได้ การ์ดจะหน้าตาเหมือนเดิมทุกอย่าง แค่ไม่มีบรรทัดยอดจอง
+  const [fixtures, accessories] = await Promise.all([DB.load(), AccessoryStore.load(), VerificationStore.load(), AdminAuth.ready, BookingStore.load()]);
   allFixtures = buildFixtureItems(fixtures.filter((item) => inferItemType(item) !== 'accessory'));
   allAccessoryItems = buildAccessoryItems(accessories);
 

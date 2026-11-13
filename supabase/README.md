@@ -47,12 +47,18 @@
 >    **ถอดขั้นอนุมัติออก** บัญชีใหม่เป็น `crew` + `active=true` ใช้งานได้ทันที
 >    พร้อมบันทึกว่าต้องปิด `disable_signup` ใน Dashboard (SQL ตั้งให้ไม่ได้)
 >    และคำเตือนเรื่อง **ห้าม** `update members set active = true` ทั้งตาราง
+> 5. [`migration-2026-11-13c-bookings.sql`](./migration-2026-11-13c-bookings.sql) —
+>    **ระบบจองอุปกรณ์** สร้างตาราง `bookings` + `booking_items`, trigger กันจองเกินสต็อก
+>    (ใช้ `pg_advisory_xact_lock` กันสองคนกดจองชิ้นสุดท้ายพร้อมกัน), RLS 8 policy,
+>    view `v_item_availability` (ยอดติดจอง/เหลือ) และ `v_booking_stale` (ของเลยวันยังไม่คืน)
+>    ไฟล์นี้**ไม่ได้**ถูกรวมใน `schema.sql` — ติดตั้งใหม่ต้องรันต่อจาก `schema.sql` เสมอ
 >
-> ทั้งสี่ไฟล์รันซ้ำได้ปลอดภัยเหมือนกัน ต้องรันตามลำดับเพราะขั้นหลังอ้างอิงของขั้นก่อน
+> ทั้งห้าไฟล์รันซ้ำได้ปลอดภัยเหมือนกัน ต้องรันตามลำดับเพราะขั้นหลังอ้างอิงของขั้นก่อน
 >
-> **รันไปแล้วบนโปรเจกต์จริง:** ข้อ 1–4 รันครบและตรวจซ้ำด้วย `SELECT` แล้ว
-> (`handle_new_auth_user()` ตอนนี้ insert `active = true`) — ไฟล์ทั้งสี่ยังเก็บไว้เพื่อให้
-> ติดตั้งซ้ำที่อื่นได้ และเพื่อให้ `schema.sql` กับฐานข้อมูลจริงตรงกัน
+> **รันไปแล้วบนโปรเจกต์จริง:** ข้อ 1–5 รันครบและตรวจซ้ำด้วย `SELECT` แล้ว
+> (`handle_new_auth_user()` ตอนนี้ insert `active = true` · ตารางจอง + trigger + view ติดครบ
+> และทดสอบแล้วว่าปฏิเสธการจองเกินสต็อกจริง) — ไฟล์ทั้งห้ายังเก็บไว้เพื่อให้
+> ติดตั้งซ้ำที่อื่นได้ และเพื่อให้ repo กับฐานข้อมูลจริงตรงกัน
 
 สคริปต์รันซ้ำได้ปลอดภัย (ใช้ `IF NOT EXISTS` ทั้งหมด) และจะสร้าง:
 
@@ -61,6 +67,15 @@
 | `fixtures` | `id`, `brand`, `model`, `category`, `type`, `power`, `power_raw`, `battery_wh`, `weight`, `stock_count`, `accessories` (text[]), `hidden`, `reserved`, `in_use`, `remaining`, ... |
 | `accessories` | `id`, `name`, `brand`, `category`, `stock`, `image`, `pdf_page`, `compatible_with` (bigint[]), `hidden` |
 | `members` | `id` (uuid), `auth_uid`, `code` (รหัสประจำตัว), `full_name`, `email`, `phone`, `role` (`admin`/`crew`), `active`, `note` |
+| `bookings` | `id` (uuid), `member_id` → `members`, `job_name`, `job_location`, `booking_date` (date), `status` (`reserved`/`checked_out`/`overdue`/`cancelled`), `group_ref`, `note`, `created_by` → `auth.users` |
+| `booking_items` | `id` (uuid), `booking_id` → `bookings` (cascade), `item_type` (`fixture`/`accessory`), `item_id` (bigint), `quantity`, `returned_quantity`, `note` · unique (`booking_id`, `item_type`, `item_id`) |
+
+และ view (อ่านอย่างเดียว ใช้โชว์ยอดบนการ์ดอุปกรณ์และหน้า Inventory)
+
+| view | หน้าที่ | ใครอ่านได้ |
+|---|---|---|
+| `v_item_availability` | `stock` / `booked` / `available` / `out_count` / `stock_unknown` ต่อหนึ่งรายการ | ทุกคน (รวม `anon`) — เป็นยอดรวม ไม่มีชื่อคนจอง |
+| `v_booking_stale` | ใบจองที่เลยวันแล้วยังไม่ถูกปักว่าค้างคืน = ของน่าจะยังไม่ได้กลับคลัง | เฉพาะ `admin` (กรองด้วย `is_admin()` ใน where) |
 
 พร้อมฟังก์ชันและ trigger (ทั้งหมดเป็น `security definer` + `set search_path` ยกเว้นตัวออกรหัส):
 
@@ -70,6 +85,14 @@
 | `members_fill_code()` | ออกรหัสประจำตัว `M001`, `M002`, … ให้อัตโนมัติถ้าไม่ได้ระบุ `code` |
 | `handle_new_auth_user()` | สร้างแถว `members` ให้เองเมื่อมีบัญชีใหม่ (`crew` + `active=true` ใช้งานได้ทันที ไม่มีขั้นอนุมัติ) |
 | `protect_last_admin()` | ปฏิเสธการลดสิทธิ์/ปิดใช้งาน admin คนสุดท้าย กันล็อกออกถาวร |
+| `set_updated_at()` | เติม `updated_at` ให้ `fixtures` / `accessories` / `bookings` |
+| `parse_stock_text()` | แกะตัวเลขจากข้อความสต็อก เช่น `"10 Pieces"` → `10` (accessories เก็บเป็น text) |
+| `item_stock()` | สต็อกของหนึ่งรายการ — คืน `null` เมื่อ "ยังไม่ระบุจำนวน" ซึ่งแปลว่า**จองไม่ได้** |
+| `item_label()` | ชื่อรายการสำหรับประกอบข้อความ error ให้คนอ่านรู้เรื่อง |
+| `current_member_id()` | `members.id` ของคนที่กำลังเรียก — policy RLS ใช้เทียบว่าเป็นใบจองของตัวเอง |
+| `booking_check_stock()` | หัวใจของระบบ: ล็อกรายชิ้นแล้วนับยอดจอง **ปฏิเสธถ้าเกินของที่มี** |
+| `bookings_guard()` | trigger: เติม `created_by`/`member_id`, crew จองแทนคนอื่นหรือตั้งสถานะข้ามขั้นไม่ได้, ตรวจสต็อกใหม่เมื่อย้ายวัน |
+| `booking_items_guard()` | trigger: กันจองเกิน + crew แก้ `returned_quantity` ไม่ได้ |
 
 > **`power` vs `battery_wh`** — `power` คือวัตต์ที่อุปกรณ์ *กิน* (ใช้คำนวณโหลดและกระแสไฟ)
 > ส่วน `battery_wh` คือความจุแบตเตอรี่เป็น Wh (ใช้คำนวณว่าเลี้ยงโหลดได้นานแค่ไหน)
@@ -83,6 +106,32 @@
 - **เขียน** `fixtures` / `accessories` ได้เฉพาะ `members.role = 'admin'`
 - **อ่าน** `members` ได้เฉพาะแถวของตัวเอง (admin อ่านได้ทุกคน)
 - **เขียน** `members` ได้เฉพาะ admin
+- **อ่าน** `bookings` / `booking_items` ได้เฉพาะใบจองของตัวเอง (admin อ่านได้ทุกคน)
+- **สร้าง/แก้** `bookings` ได้ทุกคนที่ login และเป็นบัญชีที่ยังเปิดใช้งาน
+  แต่ `booking_items` เพิ่ม/แก้ได้เฉพาะตอนใบจองยัง `reserved`
+- **ลบ** ใบจองได้เฉพาะ admin (เว็บไม่มีปุ่มลบ — ใช้ "ยกเลิก" แทน)
+
+### ระบบจองทำงานยังไง
+
+```
+1 ใบจอง (bookings)  =  ชื่องาน + ชื่อคนจอง + วันที่ใช้งาน 1 วัน + สถานะ
+        └── หลายรายการ (booking_items)  =  (ชนิดของ, id, จำนวน, จำนวนที่คืนแล้ว)
+```
+
+| กติกา | ผลในฐานข้อมูล |
+|---|---|
+| จองได้ **วันเดียว** ต่อใบจอง | `booking_date` เป็น `date` — พ้นวันนั้นไม่นับว่าติดจองแล้ว จึง**คืนคลังอัตโนมัติโดยไม่ต้องใช้ cron** |
+| **ห้ามจองเกินของที่มี** | trigger `booking_items_guard` เรียก `booking_check_stock()` ซึ่งล็อกด้วย `pg_advisory_xact_lock` แล้วนับยอดจองของวันนั้น → เกินคือ `raise exception` |
+| ของที่ยัง**ไม่ระบุจำนวน** จองไม่ได้ | `item_stock()` คืน `null` → trigger ปฏิเสธพร้อมข้อความ "ยังไม่ระบุจำนวนในสต็อก" (ตอนนี้ accessories 70 จาก 72 รายการ) |
+| **ของไม่กลับคลังจริง** | ระบบคืนอัตโนมัติมองไม่เห็นกรณีนี้ จึงมีสถานะ `overdue` ให้ admin ปัก → จะถูกนับว่าติดจอง**ทุกวัน**จนกว่าจะแก้ และโผล่ใน `v_booking_stale` |
+| crew **จองแทนคนอื่นไม่ได้** | `bookings_guard()` เขียนทับ `member_id` เป็นบัญชีของตัวเองเสมอ และตั้งสถานะได้แค่ `reserved`/`cancelled` |
+| crew **แก้จำนวนที่คืนแล้วไม่ได้** | `booking_items_guard()` ปฏิเสธ — เพราะแก้เลขนี้คือปลดสต็อกให้ตัวเองโดยไม่ต้องคืนของจริง |
+| **ห้ามแก้คอลัมน์ `stock`** | ยอดจองถูกคำนวณจาก `booking_items` ทุกครั้ง (แหล่งความจริงแหล่งเดียว) — `fixtures.reserved` / `in_use` / `remaining` ของเดิมเป็นค่ากรอกมือและเลิกใช้แล้ว |
+
+> 🛡️ **trigger คือกำแพงจริง ไม่ใช่ JavaScript** — เว็บเช็คจำนวนให้ก่อนเพื่อความสวยงาม
+> แต่ต่อให้ใครยิง `POST` ข้ามเว็บ หรือแก้ JS ในเบราว์เซอร์ ก็ยังติด trigger อยู่ดี
+> และเพราะล็อกแบบ `pg_advisory_xact_lock` สองคนที่กดจองชิ้นสุดท้ายพร้อมกันจะ**เรียงคิว**
+> คนที่สองจึงเห็นยอดที่คนแรกจองไปแล้ว (ไม่ล็อก = ทั้งคู่ผ่านแล้วได้ของเกินสต็อก)
 
 > ถ้าไม่สร้าง policy เขียนไว้ RLS จะบล็อกการบันทึกทั้งหมด
 > และหน้าเว็บจะขึ้น "บันทึกไม่สำเร็จ: RLS ใน Supabase ไม่อนุญาตให้เขียนข้อมูล"
@@ -193,7 +242,7 @@ window.SUPABASE_ADMIN_EMAILS = [];   // ปกติเว้นว่างไ�
 |---|---|---|
 | `SUPABASE_URL` | `https://bizbhhzmrtntbszqhzyr.supabase.co` | URL ของ project |
 | `SUPABASE_ANON_KEY` | `sb_publishable_...` | publishable key (ใช้กับเบราว์เซอร์ได้ปลอดภัย) |
-| `SUPABASE_TABLES` | `{fixtures, accessories, members}` | ชื่อตาราง ถ้าเปลี่ยนชื่อตารางแก้ที่นี่ |
+| `SUPABASE_TABLES` | `{fixtures, accessories, members, bookings, bookingItems, itemAvailability}` | ชื่อตาราง/view ถ้าเปลี่ยนชื่อแก้ที่นี่ |
 | `SUPABASE_DISABLED` | `false` | `true` = บังคับใช้โหมด local ข้าม Supabase |
 | `SUPABASE_ALLOW_LOCAL_FALLBACK` | `true` | `true` = ถ้า Supabase พังให้ถอยกลับมาใช้ local อัตโนมัติ |
 | `SUPABASE_ADMIN_EMAILS` | `[]` | ทางออกฉุกเฉิน ใช้**เฉพาะ**ตอนอ่านตาราง `members` ไม่ได้ — ตัวตัดสินสิทธิ์จริงคือ `members.role` |

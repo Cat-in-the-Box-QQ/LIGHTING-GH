@@ -64,6 +64,12 @@ function makeMockSupabase(mode, seed) {
     // ถ้าเทสต์อยากได้สภาวะอื่น ให้ส่ง seed.members มาเอง ([] = ยังไม่ได้รัน migration)
     members: (seed?.members || defaultMembers).map((r) => ({ ...r })),
   };
+  // view ของระบบจองใส่ก็ต่อเมื่อเทสต์ seed มา — ถ้าไม่ใส่ คีย์จะไม่มีอยู่
+  // ทำให้ query คืน "relation does not exist" เหมือนฐานข้อมูลที่ยังไม่ได้รัน migration
+  // (จงใจ: ต้องทดสอบได้ว่าการ์ดไม่พังเมื่อระบบจองยังไม่พร้อม)
+  if (seed?.availability) {
+    tables.v_item_availability = seed.availability.map((r) => ({ ...r }));
+  }
   const calls = [];
   let authed = !!seed?.authed;
   let authUser = seed?.authed ? { id: uidFor('admin@test.com'), email: 'admin@test.com' } : null;
@@ -251,6 +257,7 @@ function makeContext({ supabaseMode = 'ok', seed = null, supabaseLibPresent = tr
     'js/database.js',
     'js/accessory-store.js',
     'js/member-store.js',
+    'js/booking-store.js',
     'js/inline-member-editor.js',
     'js/admin-auth.js',
   ];
@@ -277,6 +284,8 @@ function makeContext({ supabaseMode = 'ok', seed = null, supabaseLibPresent = tr
     + ' window.tagDetailHtml = tagDetailHtml; window.escapeAttrText = escapeAttrText;'
     + ' window.badgesHtmlFromCommaList = badgesHtmlFromCommaList;'
     + ' window.getStockCount = getStockCount; window.stockPillHtml = stockPillHtml;'
+    + ' window.bookingLineHtml = bookingLineHtml;'
+    + ' window.BookingStore = BookingStore;'
     + ' window.memberEditorHtml = memberEditorHtml;',
     ctx,
     { filename: 'test-export.js' }
@@ -1585,6 +1594,481 @@ await test('auth_uid ต้องมี unique — ไม่งั้น on conf
     path.join(ROOT, 'supabase/migration-2026-11-13-member-admin.sql'), 'utf8',
   ));
   assert.ok(/on conflict \(auth_uid\) do nothing/.test(mig), 'trigger ต้องมี on conflict กัน insert ซ้ำ');
+});
+
+// ======================= ระบบจอง: ชั้นข้อมูลฝั่งเว็บ (BookingStore) =======================
+// หลักที่ต้องล็อกไว้: ยอดจองต้องมาจากฐานข้อมูลก้อนเดียวกับที่ trigger ใช้ตัดสิน
+// และ "อ่านไม่ได้" ต้องไม่ทำให้การ์ดอุปกรณ์พัง (คืนสตริงว่าง แล้วหน้าตาเหมือนเดิม)
+
+function avRow(over = {}) {
+  return {
+    item_type: 'fixture', item_id: 1, item_name: 'Aputure MC',
+    stock: 28, booked: 0, available: 28, stock_unknown: false, hidden: false, out_count: 0,
+    ...over,
+  };
+}
+
+await test('BookingStore.load() อ่าน view แล้วแยก fixture/accessory แม้ id ซ้ำกัน', async () => {
+  const { sandbox } = makeContext({
+    supabaseMode: 'ok',
+    seed: {
+      fixtures: [], accessories: [],
+      availability: [
+        avRow({ item_type: 'fixture', item_id: 1, stock: 4, booked: 1, available: 3 }),
+        avRow({ item_type: 'accessory', item_id: 1, item_name: 'LiteDimmer Pro Hybrid', stock: '10', booked: 2, available: 8, out_count: 2 }),
+      ],
+    },
+  });
+  const n = await sandbox.BookingStore.load();
+  assert.strictEqual(n, 2, 'ต้องได้ 2 แถว');
+  assert.strictEqual(sandbox.BookingStore.isReady(), true);
+  // id ซ้ำกันคนละตารางต้องไม่ทับกัน (นี่คือเหตุผลที่ต้องใช้คู่ item_type + item_id)
+  assert.strictEqual(sandbox.BookingStore.get('fixture', 1).stock, 4);
+  assert.strictEqual(sandbox.BookingStore.get('accessory', 1).stock, 10);
+  assert.strictEqual(sandbox.BookingStore.get('accessory', '1').stock, 10, 'id เป็น string ต้องหาเจอเหมือนกัน');
+});
+
+await test('stock จาก PostgREST ที่เป็น string ต้องแปลงได้ และ null ต้องคงเป็น null (ห้ามเป็น 0)', async () => {
+  const { sandbox } = makeContext({
+    supabaseMode: 'ok',
+    seed: {
+      fixtures: [], accessories: [],
+      availability: [
+        avRow({ item_id: 5, stock: '12', booked: '3', available: '9' }),
+        avRow({ item_type: 'accessory', item_id: 9, item_name: 'ของที่ยังไม่กรอก', stock: null, booked: 0, available: null, stock_unknown: true }),
+      ],
+    },
+  });
+  await sandbox.BookingStore.load();
+  const num = sandbox.BookingStore.get('fixture', 5);
+  assert.strictEqual(num.stock, 12);
+  assert.strictEqual(num.booked, 3);
+  assert.strictEqual(num.available, 9);
+  // หัวใจของกติกา "stock = null จองไม่ได้": ห้ามกลายเป็น 0 เพราะ 0 แปลว่าของหมด
+  const unknown = sandbox.BookingStore.get('accessory', 9);
+  assert.strictEqual(unknown.stock, null);
+  assert.strictEqual(unknown.available, null);
+  assert.strictEqual(unknown.stockUnknown, true);
+});
+
+await test('available ห้ามติดลบ และ reserved = booked - out_count', async () => {
+  const { sandbox } = makeContext({
+    supabaseMode: 'ok',
+    seed: {
+      fixtures: [], accessories: [],
+      // จำลองกรณี view ค้าง/ข้อมูลเพี้ยน: booked มากกว่า stock
+      availability: [avRow({ item_id: 7, stock: 2, booked: 5, available: -3, out_count: 5 })],
+    },
+  });
+  await sandbox.BookingStore.load();
+  const a = sandbox.BookingStore.get('fixture', 7);
+  assert.strictEqual(a.available, 0, 'เหลือต้องไม่ติดลบ');
+  assert.strictEqual(a.outCount, 5);
+  assert.strictEqual(a.reserved, 0, 'reserved = booked - outCount และต้องไม่ติดลบ');
+});
+
+await test('อ่าน view ไม่ได้ (ยังไม่รัน SQL) ต้องไม่ throw และการ์ดต้องไม่พัง', async () => {
+  const { sandbox } = makeContext({
+    supabaseMode: 'ok',
+    seed: { fixtures: [], accessories: [] },   // ไม่ seed availability = view ไม่มีอยู่จริง
+  });
+  let threw = null;
+  let count = null;
+  try { count = await sandbox.BookingStore.load(); } catch (err) { threw = err; }
+  assert.strictEqual(threw, null, 'load() ห้าม throw — หน้าเว็บต้องไม่ขาวเพราะระบบจอง');
+  assert.strictEqual(count, 0);
+  assert.strictEqual(sandbox.BookingStore.isReady(), false);
+  const st = sandbox.BookingStore.status();
+  assert.strictEqual(st.isSupabase, false);
+  assert.ok(/migration-2026-11-13c-bookings\.sql/.test(st.error),
+    'ต้องบอกให้รันไฟล์ SQL ไหน: ' + st.error);
+  assert.strictEqual(sandbox.BookingStore.get('fixture', 1), null);
+  // สำคัญสุด: การ์ดต้องหน้าตาเหมือนเดิม (ไม่มีบรรทัดยอดจอง ไม่ใช่ขึ้น error)
+  assert.strictEqual(sandbox.bookingLineHtml('fixture', 1), '');
+});
+
+await test('เน็ตหลุดก็ต้องถอยแบบเงียบ ๆ เหมือนกัน', async () => {
+  const { sandbox } = makeContext({
+    supabaseMode: 'network',
+    seed: { fixtures: [], accessories: [], availability: [avRow()] },
+  });
+  await sandbox.BookingStore.load();
+  const st = sandbox.BookingStore.status();
+  assert.strictEqual(st.isSupabase, false);
+  assert.ok(/Supabase ไม่ได้/.test(st.error), st.error);
+  assert.strictEqual(sandbox.bookingLineHtml('fixture', 1), '');
+});
+
+await test('bookingLineHtml แสดง "ติดจอง X · เหลือ Y" เฉพาะตอนมียอดจอง', async () => {
+  const { sandbox } = makeContext({
+    supabaseMode: 'ok',
+    seed: {
+      fixtures: [], accessories: [],
+      availability: [
+        avRow({ item_id: 1, stock: 28, booked: 4, available: 24 }),
+        avRow({ item_id: 2, stock: 4, booked: 0, available: 4 }),
+      ],
+    },
+  });
+  await sandbox.BookingStore.load();
+  const booked = sandbox.bookingLineHtml('fixture', 1);
+  assert.ok(/ติดจอง/.test(booked) && /<strong>4<\/strong>/.test(booked), booked);
+  assert.ok(/เหลือ/.test(booked) && /<strong>24<\/strong>/.test(booked), booked);
+  assert.ok(/booking-active/.test(booked), 'ต้องมี class ให้ CSS จับ: ' + booked);
+  assert.ok(/เหลือให้จอง 24 ชิ้น/.test(booked), 'title ต้องบอกเลขที่เหลือ: ' + booked);
+  // ไม่มีของติดจอง -> ไม่ต้องโชว์ (มี .stock-pill บอกจำนวนทั้งหมดอยู่แล้ว)
+  assert.strictEqual(sandbox.bookingLineHtml('fixture', 2), '');
+  // ยังไม่โหลด store ก็ต้องได้สตริงว่าง ไม่ใช่ 'undefined' โผล่บนการ์ด
+  const fresh = makeContext({ supabaseMode: 'ok', seed: { fixtures: [], accessories: [] } });
+  assert.strictEqual(fresh.sandbox.bookingLineHtml('fixture', 1), '');
+});
+
+await test('bookingLineHtml ต้องบอกว่า "ยังไม่ระบุจำนวน — จองไม่ได้" เมื่อ stock เป็น null', async () => {
+  const { sandbox } = makeContext({
+    supabaseMode: 'ok',
+    seed: {
+      fixtures: [], accessories: [],
+      availability: [avRow({ item_type: 'accessory', item_id: 3, item_name: '200W Dimmer Unit', stock: null, available: null, stock_unknown: true })],
+    },
+  });
+  await sandbox.BookingStore.load();
+  const h = sandbox.bookingLineHtml('accessory', 3);
+  assert.ok(/ยังไม่ระบุจำนวน/.test(h) && /จองไม่ได้/.test(h), h);
+  assert.ok(/booking-unknown/.test(h), h);
+  assert.ok(!/<strong>0<\/strong>/.test(h), 'ห้ามโชว์เลข 0 เพราะจะแปลว่าของหมด: ' + h);
+  assert.strictEqual(sandbox.BookingStore.counts().unknownStock, 1);
+  assert.strictEqual(sandbox.BookingStore.unknownStockItems()[0].itemId, '3');
+});
+
+await test('bookingLineHtml ห้ามเอาข้อความจากฐานข้อมูลมาประกอบ HTML (กัน XSS)', async () => {
+  const evil = '"><img src=x onerror=alert(1)>';
+  const { sandbox } = makeContext({
+    supabaseMode: 'ok',
+    seed: {
+      fixtures: [], accessories: [],
+      availability: [avRow({ item_id: 4, item_name: evil, stock: 4, booked: 1, available: 3 })],
+    },
+  });
+  await sandbox.BookingStore.load();
+  const h = sandbox.bookingLineHtml('fixture', 4);
+  assert.ok(!h.includes('<img'), 'ชื่อรายการจาก DB ต้องไม่กลายเป็น tag: ' + h);
+  assert.ok(!h.includes('onerror'), 'ห้ามมี onerror หลุดออกมา: ' + h);
+  assert.ok(h.includes('ติดจอง'), 'ยังต้องแสดงยอดจองได้ปกติ: ' + h);
+});
+
+await test('getByCardKey / getBySetId ต้องถอดรหัส id ของทั้งสองระบบได้', async () => {
+  const { sandbox } = makeContext({
+    supabaseMode: 'ok',
+    seed: {
+      fixtures: [], accessories: [],
+      availability: [
+        avRow({ item_id: 12, stock: 4, booked: 1, available: 3 }),
+        avRow({ item_type: 'accessory', item_id: 3, item_name: 'acc', stock: 10, booked: 2, available: 8 }),
+      ],
+    },
+  });
+  await sandbox.BookingStore.load();
+  // equipment.html ใช้ data-key = "fixture-12" / "accessory-3"
+  assert.strictEqual(sandbox.BookingStore.getByCardKey('fixture-12').booked, 1);
+  assert.strictEqual(sandbox.BookingStore.getByCardKey('accessory-3').booked, 2);
+  // Set Builder เก็บ id เป็น "12" / "a3"
+  assert.strictEqual(sandbox.BookingStore.getBySetId('12').booked, 1);
+  assert.strictEqual(sandbox.BookingStore.getBySetId('a3').booked, 2);
+  // ของที่ไม่มีอยู่ / key เพี้ยน ต้องได้ null ไม่ใช่โยน error
+  assert.strictEqual(sandbox.BookingStore.getByCardKey('12'), null);
+  assert.strictEqual(sandbox.BookingStore.getByCardKey(''), null);
+  assert.strictEqual(sandbox.BookingStore.getBySetId('virtual-1-x'), null);
+  assert.strictEqual(sandbox.BookingStore.get('fixture', null), null);
+});
+
+await test('load() เรียกซ้ำต้องไม่ยิง query ซ้อน และ force=true ต้องยิงใหม่', async () => {
+  const { sandbox, mockSb } = makeContext({
+    supabaseMode: 'ok',
+    seed: { fixtures: [], accessories: [], availability: [avRow()] },
+  });
+  await sandbox.BookingStore.load();
+  const before = mockSb._calls.filter((c) => c.table === 'v_item_availability').length;
+  await sandbox.BookingStore.load();
+  await sandbox.BookingStore.load();
+  assert.strictEqual(mockSb._calls.filter((c) => c.table === 'v_item_availability').length, before,
+    'โหลดแล้วไม่ต้องยิงซ้ำ — การ์ดทั้งหน้าเรียกคนละครั้งไม่ได้');
+  await sandbox.BookingStore.load({ force: true });
+  assert.strictEqual(mockSb._calls.filter((c) => c.table === 'v_item_availability').length, before + 1);
+});
+
+await test('การ์ดจริงต้องเรียก bookingLineHtml และหน้านั้นต้องโหลด booking-store.js ด้วย', async () => {
+  // บทเรียนจาก data/database.js: เขียน store ไว้แต่ไม่มีหน้าไหนโหลด = โค้ดตาย
+  const pages = ['equipment.html', 'accessories.html', 'inventory.html'];
+  for (const page of pages) {
+    const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
+    assert.ok(/<script src="js\/booking-store\.js"><\/script>/.test(html),
+      `${page} ต้องโหลด js/booking-store.js`);
+    const order = html.indexOf('js/supabase-client.js');
+    const storeAt = html.indexOf('js/booking-store.js');
+    assert.ok(order >= 0 && storeAt > order,
+      `${page} ต้องโหลด booking-store.js หลัง supabase-client.js (ต้องใช้ window.sb)`);
+  }
+  // การ์ดทั้งสองชนิด + หน้า inventory ต้องใช้ยอดจองจริง
+  const equip = fs.readFileSync(path.join(ROOT, 'equipment.html'), 'utf8');
+  assert.ok(/bookingLineHtml\('accessory', item\.id\)/.test(equip), 'การ์ดอุปกรณ์เสริมใน equipment.html ต้องมียอดจอง');
+  assert.ok(/bookingLineHtml\('fixture', item\.id\)/.test(equip), 'การ์ดอุปกรณ์ใน equipment.html ต้องมียอดจอง');
+  const acc = fs.readFileSync(path.join(ROOT, 'js/accessories.js'), 'utf8');
+  assert.ok(/bookingLineHtml\('accessory', item\.id\)/.test(acc), 'หน้า Accessories ต้องมียอดจอง');
+  const inv = fs.readFileSync(path.join(ROOT, 'js/inventory.js'), 'utf8');
+  assert.ok(/BookingStore\.get\('fixture', f\.id\)/.test(inv),
+    'หน้า Inventory ต้องอ่านยอดจาก BookingStore ไม่ใช่คอลัมน์ reserved ที่กรอกมือ');
+  assert.ok(/booking\.reserved/.test(inv) && /booking\.outCount/.test(inv),
+    'Inventory ต้องแยก Reserved กับ In Use ออกจากกัน');
+});
+
+// ======================= ระบบจอง (bookings / booking_items) =======================
+// กติกาที่เจ้าของเว็บล็อกไว้: จองวันเดียว + คืนอัตโนมัติ / ต้อง login /
+// stock เป็น null = จองไม่ได้ / ชุดแตกเป็นรายชิ้น / ห้ามเขียนคอลัมน์ stock
+// ทั้งหมดนี้บังคับที่ฐานข้อมูล เพราะ JS ข้ามได้เสมอ (ยิง POST ตรง ๆ / แก้ในเบราว์เซอร์)
+
+const BOOKINGS_SQL_REL = 'supabase/migration-2026-11-13c-bookings.sql';
+const bookingsSqlRaw = fs.readFileSync(path.join(ROOT, BOOKINGS_SQL_REL), 'utf8');
+const bookingsSql = stripSqlComments(bookingsSqlRaw);
+
+// ตัดก้อน create table ออกมาตรวจคอลัมน์ (นับวงเล็บเพื่อให้ได้ทั้ง DDL)
+function extractCreateTable(src, table) {
+  const start = src.indexOf(`create table if not exists public.${table} (`);
+  assert.ok(start >= 0, `ไม่พบ create table public.${table}`);
+  let depth = 0;
+  for (let i = src.indexOf('(', start); i < src.length; i++) {
+    if (src[i] === '(') depth++;
+    else if (src[i] === ')') { depth--; if (!depth) return src.slice(start, i + 1); }
+  }
+  throw new Error(`วงเล็บของ create table ${table} ไม่ปิด`);
+}
+const bookingsDdl = extractCreateTable(bookingsSql, 'bookings');
+const bookingItemsDdl = extractCreateTable(bookingsSql, 'booking_items');
+
+await test('ตาราง bookings/booking_items ต้องถูกนิยามในไฟล์ SQL ไฟล์เดียว (กัน repo กับ DB เลื่อน)', async () => {
+  // บทเรียนจาก active=false: ไฟล์ SQL สองไฟล์นิยามของชิ้นเดียวกันแล้วค่าไม่ตรงกัน
+  // คนรันไฟล์เก่าซ้ำก็ย้อนฐานข้อมูลกลับแบบเงียบ ๆ
+  for (const table of ['bookings', 'booking_items']) {
+    const owners = sqlFiles.filter((rel) => stripSqlComments(
+      fs.readFileSync(path.join(ROOT, rel), 'utf8'),
+    ).includes(`create table if not exists public.${table} (`));
+    assert.deepStrictEqual(owners, [BOOKINGS_SQL_REL],
+      `public.${table} ต้องถูกสร้างใน ${BOOKINGS_SQL_REL} ที่เดียว แต่เจอใน: ${owners.join(', ') || '(ไม่มีเลย)'}`);
+  }
+});
+
+await test('DDL ของ bookings มีคอลัมน์ครบตามที่เว็บต้องใช้', async () => {
+  // เจ้าของเว็บระบุว่าจะต้องเก็บ: ชื่อคนจอง / ชื่องาน / รายการของ / จำนวน / วันที่จอง
+  for (const col of ['id', 'member_id', 'job_name', 'job_location', 'booking_date',
+    'status', 'group_ref', 'note', 'created_by', 'created_at', 'updated_at']) {
+    assert.ok(new RegExp(`\\n\\s*${col}\\s`).test(bookingsDdl), `bookings ขาดคอลัมน์ ${col}`);
+  }
+  // ชื่อคนจองมาจากตาราง members (ไม่ใช่ text ที่พิมพ์เอง) ไม่งั้นพอเปลี่ยนชื่อแล้วประวัติจะค้างชื่อเก่า
+  assert.ok(/member_id\s+uuid\s+not null\s+references public\.members/i.test(bookingsDdl),
+    'member_id ต้องเป็น FK ไป public.members และเป็น not null');
+  assert.ok(/on delete restrict/i.test(bookingsDdl),
+    'ห้ามลบสมาชิกที่มีใบจอง (on delete restrict) — ตรงกับกติกาที่ไม่มีการลบสมาชิก');
+  assert.ok(/created_by\s+uuid\s+references auth\.users/i.test(bookingsDdl),
+    'created_by ต้องผูกกับ auth.users เพื่อรู้ว่าใครกดสร้าง');
+  assert.ok(/booking_date\s+date\s+not null default current_date/i.test(bookingsDdl),
+    'booking_date ต้องเป็น date (ไม่ใช่ timestamptz) — กติกาจองเป็น "วัน" ไม่ใช่ช่วงเวลาที่แน่นอน');
+});
+
+await test('booking_items ใช้คู่ (item_type, item_id) และกันข้อมูลเพี้ยนด้วย constraint', async () => {
+  for (const col of ['id', 'booking_id', 'item_type', 'item_id', 'quantity', 'returned_quantity']) {
+    assert.ok(new RegExp(`\\n\\s*${col}\\s`).test(bookingItemsDdl), `booking_items ขาดคอลัมน์ ${col}`);
+  }
+  assert.ok(/check \(item_type in \('fixture', 'accessory'\)\)/i.test(bookingItemsDdl),
+    'item_type ต้องจำกัดแค่ fixture/accessory — พิมพ์ผิดจะทำให้ item_stock() หาของไม่เจอ');
+  assert.ok(/item_id\s+bigint\s+not null/i.test(bookingItemsDdl),
+    'item_id ต้องเป็น bigint ให้ตรงกับ fixtures.id / accessories.id');
+  assert.ok(/quantity\s+integer\s+not null check \(quantity > 0\)/i.test(bookingItemsDdl),
+    'quantity ต้อง > 0 — ไม่งั้นเลขติดจองจะเพี้ยนและตรวจเกินสต็อกไม่ได้');
+  assert.ok(/unique \(booking_id, item_type, item_id\)/i.test(bookingItemsDdl),
+    'ต้องมี unique กันรายการซ้ำในใบจองเดียว (กดเพิ่มซ้ำจะทำให้ยอดจองเกินจริง)');
+  assert.ok(/on delete cascade/i.test(bookingItemsDdl),
+    'ลบใบจองต้องลบรายการตาม (on delete cascade) ไม่งั้นรายการกำพร้าจะค้างและนับสต็อกผิด');
+});
+
+await test('status มี check constraint ครบ 4 ค่า และยกเลิกต้องไม่วนกลับมา', async () => {
+  const m = /check \(status in \(([^)]*)\)\)/i.exec(bookingsDdl);
+  assert.ok(m, 'bookings.status ต้องมี check constraint');
+  const allowed = [...m[1].matchAll(/'([a-z_]+)'/g)].map((x) => x[1]).sort();
+  assert.deepStrictEqual(allowed, ['cancelled', 'checked_out', 'overdue', 'reserved'],
+    'ค่า status ต้องตรงกับที่เว็บ/เอกสารใช้ — เพิ่มหรือลบค่าต้องแก้ทั้งสองฝั่ง');
+});
+
+await test('trigger กันจองเกินต้องล็อก advisory lock "ก่อน" นับจำนวนที่ถูกจองไว้', async () => {
+  // สลับลำดับ = ล็อกหลังจากอ่านค่า แล้วคนที่สองก็ยังอ่านค่าเก่าได้ (race ไม่หาย)
+  const fn = /create or replace function public\.booking_check_stock\([\s\S]*?\n\$\$;/m.exec(bookingsSql);
+  assert.ok(fn, 'ต้องมีฟังก์ชัน booking_check_stock()');
+  const body = fn[0];
+  assert.ok(/pg_advisory_xact_lock\(hashtext\(/.test(body),
+    'ต้องใช้ pg_advisory_xact_lock(hashtext(item_type||\':\'||item_id)) ล็อกรายชิ้น');
+  const lockAt = body.indexOf('pg_advisory_xact_lock');
+  const countAt = body.search(/sum\(greatest\(bi\.quantity/i);
+  assert.ok(lockAt >= 0 && countAt >= 0 && lockAt < countAt,
+    `ลำดับผิด: ล็อกที่ ${lockAt} แต่นับจำนวนที่ ${countAt} — ล็อกต้องมาก่อนนับ`);
+  // ต้องนับเฉพาะที่ยังไม่ยกเลิก และนับ overdue ทุกวัน (ของยังไม่กลับคลังจริง)
+  assert.ok(/b\.status <> 'cancelled'/i.test(body), 'ต้องไม่นับใบจองที่ยกเลิกแล้ว');
+  assert.ok(/b\.booking_date = p_date or b\.status = 'overdue'/i.test(body),
+    'สูตรนับต้องเป็น (วันเดียวกัน หรือ ค้างคืน) — ไม่งั้นคืนอัตโนมัติ/overdue จะทำงานผิด');
+  assert.ok(/is distinct from p_exclude_item_id/i.test(body)
+    && /is distinct from p_exclude_booking_id/i.test(body),
+    'ต้องมีตัวข้ามแถวตัวเองตอน UPDATE/ย้ายวัน ไม่งั้นจะนับตัวเองซ้ำแล้วปฏิเสธผิด');
+});
+
+await test('รายการที่ยังไม่ระบุจำนวน (stock = null) ต้องจองไม่ได้ — ห้ามเดาเป็น 0', async () => {
+  const fn = /create or replace function public\.booking_check_stock\([\s\S]*?\n\$\$;/m.exec(bookingsSql)[0];
+  assert.ok(/if v_stock is null then\s+raise exception/i.test(fn),
+    'stock = null ต้อง raise exception (accessories 70 จาก 72 แถวเป็นแบบนี้)');
+  assert.ok(/ยังไม่ระบุจำนวน/.test(bookingsSqlRaw), 'ข้อความต้องบอกว่ายังไม่ระบุจำนวน ไม่ใช่ "ของหมด"');
+  // parse_stock_text ต้องแกะด้วย regex ไม่ใช่ cast ตรง ๆ (cast "10 Pieces"::numeric จะ error ทั้งไฟล์)
+  const parse = /create or replace function public\.parse_stock_text\([\s\S]*?\n\$\$;/m.exec(bookingsSql);
+  assert.ok(parse, 'ต้องมี parse_stock_text() เพราะ accessories.stock เป็น text');
+  assert.ok(/substring\(coalesce\(p_text, ''\) from/i.test(parse[0]),
+    'ต้องแกะตัวเลขด้วย regex — text อย่าง "10 Pieces" cast เป็น numeric ตรง ๆ ไม่ได้');
+});
+
+await test('ห้ามมี SQL บรรทัดไหนเขียนคอลัมน์ stock (ยอดจองต้องถูกคำนวณ ไม่ใช่แก้สต็อก)', async () => {
+  // ถ้ามี update ... set stock/stock_count แปลว่ามีแหล่งความจริง 2 แหล่ง
+  // แล้วตัวเลขบนการ์ดกับยอดจองจริงจะเหลื่อมกันแบบตามแก้ไม่เจอ
+  for (const rel of sqlFiles) {
+    const body = stripSqlComments(fs.readFileSync(path.join(ROOT, rel), 'utf8')).toLowerCase();
+    const hits = [...body.matchAll(/update\s+public\.(fixtures|accessories)\s+set\s+[^;]*?(stock_count|stock)\s*=/g)];
+    assert.deepStrictEqual(hits.map((h) => h[0].slice(0, 70)), [],
+      `${rel} มีการเขียนคอลัมน์ stock — ยอดจองต้องคำนวณจาก booking_items เท่านั้น`);
+  }
+  assert.ok(!/alter table public\.(fixtures|accessories)[^;]*add column[^;]*booked/i.test(bookingsSql),
+    'ห้ามเพิ่มคอลัมน์ booked เข้าตารางอุปกรณ์ — ใช้ view คำนวณแทน');
+});
+
+await test('trigger ต้องเติม created_by/member_id เอง และ crew จองแทนคนอื่นหรือตั้งสถานะข้ามขั้นไม่ได้', async () => {
+  const guard = /create or replace function public\.bookings_guard\(\)[\s\S]*?\n\$\$;/m.exec(bookingsSql);
+  assert.ok(guard, 'ต้องมี trigger bookings_guard()');
+  const body = guard[0];
+  assert.ok(/if v_uid is null then\s+raise exception/i.test(body), 'ไม่ login ต้องจองไม่ได้');
+  assert.ok(/new\.member_id := v_self/i.test(body),
+    'ต้องบังคับ member_id เป็นของตัวเองเสมอ (crew) — ไม่งั้นสวมรอยจองในชื่อคนอื่นได้');
+  assert.ok(/not in \('reserved', 'cancelled'\)/i.test(body),
+    'crew ต้องตั้งสถานะได้แค่ reserved/cancelled — checked_out/overdue เป็นงานของ admin');
+  assert.ok(/v_active is not true/i.test(body), 'บัญชีที่ถูกปิดใช้งานต้องจองไม่ได้');
+  assert.ok(/booking_date < current_date/i.test(body), 'crew ต้องจองย้อนหลังไม่ได้');
+  // returned_quantity ปลดสต็อกได้โดยไม่ต้องคืนของจริง จึงต้องสงวนให้ admin
+  const itemGuard = /create or replace function public\.booking_items_guard\(\)[\s\S]*?\n\$\$;/m.exec(bookingsSql);
+  assert.ok(itemGuard, 'ต้องมี trigger booking_items_guard()');
+  assert.ok(/new\.returned_quantity is distinct from old\.returned_quantity/i.test(itemGuard[0])
+    && /not public\.is_admin\(\)/i.test(itemGuard[0]),
+    'crew ต้องแก้ returned_quantity ไม่ได้ (แก้แล้วสต็อกจะว่างขึ้นโดยไม่มีการคืนของจริง)');
+});
+
+await test('ทุก trigger function ในทุกไฟล์ SQL ต้องปัก search_path', async () => {
+  // เดิมตรวจแค่ schema.sql — แต่ไฟล์ migration เพิ่มฟังก์ชันใหม่เรื่อย ๆ
+  // และฐานข้อมูลจริงเคยมี set_updated_at() ที่ proconfig เป็น null อยู่แล้ว
+  //
+  // ยอมรับได้ 2 ทาง (ตาม pattern ที่มีอยู่จริงใน repo):
+  //   1. ปักไว้ใน CREATE เลย
+  //   2. ไฟล์เก่าไม่ได้ปัก แล้วมี migration รุ่นหลัง alter function ... set search_path ให้
+  //      (members_fill_code() เป็นแบบนี้ — ดูขั้น 4.5 ของ migration-2026-11-13)
+  //      ที่ไม่แก้ไฟล์เก่าเพราะมันถูกรันไปแล้ว และการแก้ไฟล์ที่รันแล้วคือต้นตอ
+  //      ของบั๊ก active=false ที่เพิ่งเจอมา
+  const pinnedByAlter = new Set();
+  let seen = 0;
+  const unpinned = [];
+  for (const rel of sqlFiles) {
+    const body = stripSqlComments(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
+    for (const m of body.matchAll(/alter function public\.([a-z_]+)\s*\(\s*\)\s+set search_path\s*=\s*public,\s*pg_temp/g)) {
+      pinnedByAlter.add(m[1]);
+    }
+  }
+  for (const rel of sqlFiles) {
+    const body = stripSqlComments(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
+    for (const m of body.matchAll(/create or replace function public\.([a-z_]+)\s*\(([\s\S]*?)\n\$\$;/g)) {
+      const [, name, header] = m;
+      if (!/returns\s+trigger/i.test(header)) continue;
+      seen++;
+      if (/set search_path\s*=\s*public,\s*pg_temp/.test(header)) continue;
+      if (pinnedByAlter.has(name)) continue;
+      unpinned.push(`${rel}: public.${name}()`);
+    }
+  }
+  assert.deepStrictEqual(unpinned, [],
+    'trigger function เหล่านี้ไม่ได้ปัก search_path และไม่มี alter function แก้ให้ในไฟล์ไหนเลย:\n  '
+    + unpinned.join('\n  '));
+  assert.ok(seen >= 6, `ควรเจอ trigger function อย่างน้อย 6 ตัว แต่เจอ ${seen}`);
+});
+
+await test('bookings/booking_items ต้องเปิด RLS และมี policy ครบทุกคำสั่ง', async () => {
+  for (const t of ['bookings', 'booking_items']) {
+    assert.ok(new RegExp(`alter table public\\.${t}\\s+enable row level security`).test(bookingsSql),
+      `${t} ต้อง enable row level security — ลืมคือทุกคนอ่านใบจองของทุกคนได้`);
+  }
+  const policies = [...bookingsSql.matchAll(/create policy "([^"]+)"\s+on public\.(\w+)\s+for (\w+)/g)]
+    .map((m) => ({ name: m[1], table: m[2], cmd: m[3] }));
+  for (const t of ['bookings', 'booking_items']) {
+    const cmds = new Set(policies.filter((p) => p.table === t).map((p) => p.cmd));
+    for (const need of ['select', 'insert', 'update', 'delete']) {
+      assert.ok(cmds.has(need), `${t} ขาด policy สำหรับ ${need}`);
+    }
+  }
+  // policy เขียนต้องจำกัดที่ authenticated (anon จองไม่ได้) และอ้างสิทธิ์จริง
+  for (const p of policies) {
+    const block = new RegExp(`create policy "${p.name}"[\\s\\S]*?;`).exec(bookingsSql)[0];
+    assert.ok(/to authenticated/.test(block), `policy "${p.name}" ต้องระบุ to authenticated (ไม่ให้ anon เข้า)`);
+    assert.ok(/is_admin\(\)|current_member_id\(\)|auth\.uid\(\)|from public\.bookings b/i.test(block),
+      `policy "${p.name}" ต้องอ้างสิทธิ์จริง ไม่ใช่ using (true)`);
+  }
+  // booking_items ต้องโยงผ่านใบจองแม่ — ไม่งั้น crew อ่านรายการของคนอื่นได้
+  const itemSelect = /create policy "booking_items read own"[\s\S]*?;/m.exec(bookingsSql)[0];
+  assert.ok(/exists \(select 1 from public\.bookings b where b\.id = booking_id\)/i.test(itemSelect),
+    'policy อ่าน booking_items ต้องกรองผ่านใบจองแม่ (ซึ่งโดน RLS ของ bookings กรองอีกชั้น)');
+});
+
+await test('view ยอดคงเหลือต้องเปิดให้สาธารณะ แต่ view ที่มีชื่อคนต้องล็อกไว้ให้ admin', async () => {
+  // การ์ดอุปกรณ์โชว์ "ติดจอง X / เหลือ Y" ให้ทุกคนเห็น จึงต้องอ่านได้แม้ยังไม่ login
+  // และ view ต้องไม่ใช้ security_invoker — ไม่งั้น anon จะเห็น booked = 0 ทุกชิ้น
+  assert.ok(/create or replace view public\.v_item_availability/i.test(bookingsSql),
+    'ต้องมี view v_item_availability ให้เว็บอ่านยอดคงเหลือ');
+  assert.ok(!/security_invoker/i.test(bookingsSql),
+    'ห้ามตั้ง security_invoker ให้ v_item_availability — RLS ของ bookings จะกรองยอดจองทิ้งจนเหลือ 0');
+  assert.ok(/grant select on public\.v_item_availability to anon, authenticated/i.test(bookingsSql),
+    'ต้อง grant ให้ anon ด้วย (ผู้เยี่ยมชมยังไม่ได้ login ก็ต้องเห็นของเหลือกี่ชิ้น)');
+  assert.ok(/stock_unknown/i.test(bookingsSql)
+    && /case when i\.stock is null then null/i.test(bookingsSql),
+    'stock เป็น null ต้องให้ available เป็น null ด้วย — ห้ามโชว์ 0 เพราะจะแปลว่าของหมด');
+
+  // view นี้ join ตาราง members (มีชื่อคนจอง) จึงต้องล็อกด้วย is_admin() ใน where clause
+  const stale = /create or replace view public\.v_booking_stale as[\s\S]*?;/m.exec(bookingsSql);
+  assert.ok(stale, 'ต้องมี view v_booking_stale ไว้ให้ admin ดูใบจองที่เลยวันแล้วยังไม่คืน');
+  assert.ok(/and public\.is_admin\(\)/i.test(stale[0]),
+    'v_booking_stale ต้องมี and public.is_admin() ใน where — view ข้าม RLS จึงต้องกรองเอง');
+  assert.ok(!/to anon/i.test(/grant select on public\.v_booking_stale[^;]*;/i.exec(bookingsSql)[0]),
+    'v_booking_stale ห้าม grant ให้ anon (มีชื่อคนจองอยู่)');
+});
+
+await test('set_updated_at ต้องมีประกาศใน repo และ trigger ของ bookings ต้องใช้มัน', async () => {
+  // ตรวจจากฐานข้อมูลจริง: trigger fixtures_set_updated_at / accessories_set_updated_at
+  // ทำงานอยู่ แต่ไม่มีไฟล์ SQL ไหนใน repo ประกาศฟังก์ชันนี้ -> ติดตั้งใหม่จะพัง
+  assert.ok(/create or replace function public\.set_updated_at\(\)/i.test(bookingsSql),
+    'ไฟล์ bookings ต้องประกาศ set_updated_at() ไว้ด้วย (ของเดิมมีแต่ในฐานข้อมูล ไม่มีใน repo)');
+  assert.ok(/create trigger bookings_set_updated_at/i.test(bookingsSql),
+    'bookings ต้องมี trigger เติม updated_at');
+  assert.ok(/create trigger fixtures_set_updated_at/i.test(bookingsSql)
+    && /create trigger accessories_set_updated_at/i.test(bookingsSql),
+    'ต้องสร้าง trigger updated_at ของ fixtures/accessories คืนให้ตรงกับฐานข้อมูลจริง');
+  assert.ok(/set search_path = public, pg_temp/i.test(
+    /create or replace function public\.set_updated_at\(\)[\s\S]*?\n\$\$;/m.exec(bookingsSql)[0],
+  ), 'set_updated_at ตัวในฐานข้อมูลยังไม่ปัก search_path — ตัวที่ประกาศใหม่ต้องปัก');
+});
+
+await test('ต้องมีขั้นตรวจหลังรัน และบอกวิธีย้อนกลับ', async () => {
+  assert.ok(/ขั้น 7/.test(bookingsSqlRaw) && /pg_get_triggerdef/.test(bookingsSqlRaw),
+    'ต้องมีขั้นตรวจด้วย pg_get_triggerdef() (ห้ามถอด bitmask tgtype เอง — เคยพังมาแล้ว)');
+  assert.ok(/pg_policies/.test(bookingsSqlRaw), 'ต้องมีขั้นตรวจ policy หลังรัน');
+  assert.ok(/ย้อนกลับ/.test(bookingsSqlRaw) && /drop table if exists public\.booking_items/i.test(bookingsSqlRaw),
+    'ต้องบอกวิธีย้อนกลับ และลบ booking_items ก่อน bookings (FK)');
+  // บล็อกทดสอบต้องลบข้อมูลทดสอบทิ้งเสมอ
+  assert.ok(/delete from public\.bookings where id = v_booking/i.test(bookingsSqlRaw),
+    'บล็อกทดสอบ trigger ต้องลบใบจองทดสอบทิ้ง ไม่งั้นจะค้างไปนับสต็อกจริง');
 });
 
 console.log(`\nสรุป: ผ่าน ${passed} / ไม่ผ่าน ${failed}\n`);

@@ -214,6 +214,53 @@ img {
   margin-top: .75rem;
 }
 
+/* ยอดจองของระบบจอง — "ติดจอง 2 · เหลือ 6"
+   คนละหน้าที่กับ .stock-pill (จำนวนที่มีทั้งหมด) จึงใช้คนละรูปทรง:
+   pill = ตัวเลขเด่น, booking-line = ข้อความสั้น ๆ ที่บอกว่าของกำลังจะถูกใช้ */
+.booking-line {
+  display: inline-flex;
+  align-items: baseline;
+  gap: .25rem;
+  font-size: .74rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: .22rem .5rem;
+  border-radius: .4rem;
+  white-space: nowrap;
+}
+
+.booking-line strong {
+  font-size: .88rem;
+  font-weight: 700;
+}
+
+.booking-line-sep {
+  opacity: .5;
+}
+
+.booking-active {
+  background: #fff3cd;
+  color: #7a5b00;
+  border: 1px solid #ffe08a;
+}
+
+/* รายการที่ยังไม่กรอกจำนวน -> จองไม่ได้ ใช้สีเทาเพราะเป็นสถานะ "ขาดข้อมูล"
+   ไม่ใช่สีแดง (ไม่ใช่ความผิดพลาด และไม่ใช่ของหมด) */
+.booking-unknown {
+  background: #f1f3f5;
+  color: #6c757d;
+  border: 1px dashed #ced4da;
+  font-weight: 500;
+}
+
+/* แถวที่วาง booking-line ใต้ stock pill ในการ์ดอุปกรณ์เสริม */
+.card-booking-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: .4rem;
+}
+
 .cart-header {
   display: flex;
   justify-content: space-between;
