@@ -202,15 +202,16 @@ from public.members;
 --   members_fill_code      -> ออกรหัสประจำตัว M001, M002, ...  (มาจากไฟล์ 2026-10-22)
 --   on_auth_user_created   -> สร้างแถว members ให้เองเมื่อมีบัญชีใหม่  (ขั้นที่ 2)
 --   protect_last_admin     -> กันลดสิทธิ์/ปิดใช้งาน admin คนสุดท้าย  (ขั้นที่ 4)
-select tgname, tgrelid::regclass as on_table,
-       -- ประกอบชื่อจังหวะจาก pg_trigger ตรง ๆ แทนการเดา
-       -- (members_fill_code เป็น BEFORE INSERT ไม่ใช่ AFTER — ดูแค่ tgisinsert ไม่พอ)
-       (case when tgisbefore then 'before ' when tgisafter then 'after ' else 'instead of ' end)
-       || trim(
-            (case when tgisinsert then 'insert ' else '' end)
-         || (case when tgisupdate then 'update ' else '' end)
-         || (case when tgisdelete then 'delete ' else '' end)
-          ) as fires_on
+-- ใช้ pg_get_triggerdef() ดึงคำสั่ง CREATE TRIGGER ตัวจริงมาโชว์เลย
+-- แทนที่จะถอดจังหวะ (before/after, insert/update/delete) เองจากคอลัมน์ใน pg_trigger
+--
+-- เหตุผล: pg_trigger "ไม่มี" คอลัมน์ tgisbefore / tgisafter / tgisinsert / tgisupdate /
+-- tgisdelete — จังหวะทั้งหมดถูกอัดเป็น bitmask ในคอลัมน์ tgtype (smallint)
+-- เวอร์ชันแรกของ query นี้เดาชื่อคอลัมน์เหล่านั้น จึง error 42703 ทั้งไฟล์
+-- (SQL Editor รันเป็น transaction เดียว -> ขั้นที่ 1-4 ถูก rollback ไปด้วยทั้งหมด)
+select tgname,
+       tgrelid::regclass as on_table,
+       pg_get_triggerdef(oid) as definition
 from pg_trigger
 where tgname in ('on_auth_user_created', 'protect_last_admin', 'members_fill_code')
   and not tgisinternal

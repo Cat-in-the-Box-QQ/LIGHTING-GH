@@ -143,7 +143,48 @@ select/checkbox สะท้อนค่าปัจจุบัน · **ชื�
 id ปลอมไม่โยน error · ตารางว่าง · เข้าตารางไม่ได้แล้วชี้ไปไฟล์ SQL ·
 ปิดใช้งานตัวเอง → `confirm()` + `reload()` · trigger ปฏิเสธ → โชว์ข้อความไทย ไม่ reload ปุ่มไม่ค้าง
 
-**ผล: harness 89/89** (เดิม 74) · **member UI 38/38 (ใหม่)** · DOM id 141 จุด (เดิม 136) · รูป 136 path
+### 🐛 บั๊กที่หลุดไปถึงมือผู้ใช้จริง: เดาชื่อคอลัมน์ `pg_trigger`
+
+query ตรวจผลขั้น 5.3 เวอร์ชันแรกเขียนว่า
+
+```sql
+case tgisinsert when true then 'after insert' else 'before update/delete' end
+```
+
+แล้วตอนแก้ป้ายผิด (`members_fill_code` เป็น BEFORE INSERT ไม่ใช่ AFTER) ก็ไปเขียนเป็น
+`tgisbefore` / `tgisafter` / `tgisupdate` / `tgisdelete` ซึ่ง**ไม่มีคอลัมน์เหล่านี้เลย**
+
+ผู้ใช้รันจริงแล้วได้ `ERROR: 42703: column "tgisbefore" does not exist` ที่บรรทัด 208
+และเพราะ SQL Editor รันทั้งไฟล์เป็น transaction เดียว **ขั้นที่ 1–4 ถูก rollback ไปด้วยทั้งหมด**
+
+สาเหตุ: `pg_trigger` เก็บจังหวะ (before/after, insert/update/delete) เป็น **bitmask ใน
+`tgtype` (smallint)** ไม่มีคอลัมน์ boolean แยกให้ — ผมเดาชื่อเอาโดยไม่ได้ตรวจ
+เป็นความผิดชนิดเดียวกับที่ห้ามทำเรื่องสเปกอุปกรณ์: **ห้ามเดาสิ่งที่ไม่มีข้อมูลยืนยัน**
+
+แก้เป็น `pg_get_triggerdef(oid)` ซึ่งดึงคำสั่ง `CREATE TRIGGER` ตัวจริงมาโชว์
+แม่นกว่าการถอด bitmask เอง และไม่มีทางเดาผิด
+
+> `tg_op` ที่ใช้ใน `protect_last_admin()` เป็น**ตัวแปร PL/pgSQL ของจริง**
+> ขึ้นต้นด้วย `tg` เหมือนกันแต่ไม่ใช่อันเดียวกับคอลัมน์ `pg_trigger`
+
+### ตัวกันถาวร: เทสต์ล็อกชื่อคอลัมน์ SQL
+
+ใน sandbox **ไม่มี Postgres ให้รันจริง** จึงตรวจ SQL กับเซิร์ฟเวอร์ไม่ได้เลย
+บั๊กชนิดนี้จึงหลุดไปถึงผู้ใช้ได้ เทสต์ใหม่จึงล็อกชื่อไว้เป็น allowlist:
+
+- statement ที่ query `pg_trigger` ต้องอ้างเฉพาะคอลัมน์ที่มีจริง (19 ชื่อ)
+  — ตรวจ**ราย statement** เพราะในไฟล์เดียวกันมี PL/pgSQL body ที่ใช้ `tg_op` ปนอยู่
+  (ถ้ากวาดทั้งไฟล์จะได้ false positive) และยกเว้นตัวแปร PL/pgSQL 6 ตัวไว้
+- ต้องใช้ `pg_get_triggerdef()` และ**ห้ามอ้าง `tgtype` ตรง ๆ**
+- DDL ของ `members` ต้องมีคอลัมน์ครบตามที่เว็บใช้
+- ทุก `INSERT INTO public.members (...)` ต้องใช้คอลัมน์ที่มีจริง
+- `auth_uid` ต้องเป็น `unique` — เพราะ `on conflict (auth_uid) do nothing`
+  จะ error ถ้าไม่มี constraint ตรงกับที่ระบุ
+
+**พิสูจน์แล้วว่าตัวกันจับบั๊กเดิมได้จริง** (negative test): ใส่ query เวอร์ชันพังกลับเข้าไป
+ชั่วคราว → เทสต์แดงและชี้ชื่อ `tgisbefore, tgisafter` ถูกตัว → กู้ไฟล์ดีกลับ → เขียว
+
+**ผล: harness 94/94** (เดิม 74) · **member UI 38/38 (ใหม่)** · DOM id 141 จุด (เดิม 136) · รูป 136 path
 
 ### สิ่งที่ยังไม่ทำ (ตั้งใจ)
 

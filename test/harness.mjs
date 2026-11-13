@@ -1405,5 +1405,107 @@ await test('ชื่อช่องในฟอร์มต้องตรง�
   assert.ok(h.includes('id="f1-status"'), 'ต้องมีที่โชว์สถานะ');
 });
 
+console.log('\n=== SQL: ชื่อคอลัมน์ต้องมีจริง (กันเดาชื่อ) ===');
+
+// ใน sandbox ไม่มี Postgres ให้รันจริง จึงตรวจกับเซิร์ฟเวอร์ไม่ได้
+// บั๊กชนิด "เดาชื่อคอลัมน์" จึงหลุดไปถึงมือผู้ใช้ได้ — เคยเกิดจริง:
+// query ตรวจ trigger ไปอ้าง tgisbefore/tgisafter/tgisinsert ซึ่งไม่มีอยู่
+// (pg_trigger เก็บจังหวะเป็น bitmask ใน tgtype) ทำให้ error 42703 ทั้งไฟล์
+// และเพราะ SQL Editor รันเป็น transaction เดียว ขั้นที่ 1-4 ถูก rollback ไปด้วย
+//
+// เทสต์นี้ล็อกชื่อคอลัมน์จริงไว้ ถ้าใครอ้างชื่อที่ไม่มีจริงจะแดงทันที
+
+// ตัดคอมเมนต์ออกก่อน — คอมเมนต์อ้างชื่อปลอมไว้เป็นคำเตือนได้อย่างจงใจ
+function stripSqlComments(sql) {
+  return sql.replace(/--[^\n]*/g, '');
+}
+
+// คอลัมน์จริงของ pg_trigger (PostgreSQL 12+)
+const PG_TRIGGER_COLUMNS = new Set([
+  'oid', 'tgrelid', 'tgparentid', 'tgname', 'tgfoid', 'tgtype', 'tgenabled',
+  'tgisinternal', 'tgconstrrelid', 'tgconstrindid', 'tgconstraint',
+  'tgdeferrable', 'tginitdeferred', 'tgnargs', 'tgattr', 'tgargs', 'tgqual',
+  'tgoldtable', 'tgnewtable',
+]);
+
+// ตัวแปรพิเศษของ PL/pgSQL ใน trigger function — ขึ้นต้นด้วย tg_ เหมือนกัน
+// แต่ "ไม่ใช่" คอลัมน์ของ pg_trigger และเป็นของจริงที่ใช้ได้
+// (ถ้าไม่ยกเว้นไว้จะได้ false positive จาก protect_last_admin ที่ใช้ tg_op)
+const PLPGSQL_TRIGGER_VARS = new Set([
+  'tg_op', 'tg_when', 'tg_level', 'tg_table_name', 'tg_table_schema', 'tg_relid',
+]);
+
+const sqlFiles = fs.readdirSync(path.join(ROOT, 'supabase'))
+  .filter((f) => f.endsWith('.sql'))
+  .map((f) => path.join('supabase', f));
+
+await test('statement ที่ query pg_trigger ต้องอ้างเฉพาะคอลัมน์ที่มีจริง', async () => {
+  for (const rel of sqlFiles) {
+    const body = stripSqlComments(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
+    // จำกัดขอบเขตเป็นราย statement ที่แตะ pg_trigger จริง
+    // เพราะในไฟล์เดียวกันมี PL/pgSQL function body ที่ใช้ตัวแปร tg_op ปนอยู่
+    const statements = body.split(';').filter((s) => /\bfrom\s+pg_trigger\b/i.test(s));
+    for (const stmt of statements) {
+      const used = new Set([...stmt.matchAll(/\b(tg[a-z_]+)\b/g)].map((m) => m[1]));
+      if (/\bpg_get_triggerdef\s*\(\s*oid\s*\)/.test(stmt)) used.add('oid');
+      const fake = [...used].filter((c) => !PG_TRIGGER_COLUMNS.has(c) && !PLPGSQL_TRIGGER_VARS.has(c));
+      assert.deepStrictEqual(
+        fake, [],
+        `${rel} อ้างคอลัมน์ pg_trigger ที่ไม่มีจริง: ${fake.join(', ')}`
+        + `\n  statement: ${stmt.replace(/\s+/g, ' ').trim().slice(0, 160)}`,
+      );
+    }
+  }
+});
+
+await test('query ตรวจ trigger ใช้ pg_get_triggerdef() แทนการถอด bitmask เอง', async () => {
+  const rel = 'supabase/migration-2026-11-13-member-admin.sql';
+  const body = stripSqlComments(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
+  // tgtype เป็น bitmask ที่ถอดมือแล้วพลาดง่าย จึงให้ดึง CREATE TRIGGER ตัวจริงมาโชว์
+  assert.ok(
+    /pg_get_triggerdef\s*\(\s*oid\s*\)/.test(body),
+    'ต้องโชว์นิยาม trigger ด้วย pg_get_triggerdef() — อย่าถอด tgtype เอง',
+  );
+  assert.ok(!/\btgtype\b/.test(body), 'ไม่ควรอ้าง tgtype ตรง ๆ (ถอด bitmask เองพลาดง่าย)');
+});
+
+// คอลัมน์จริงของตาราง members จาก DDL (schema.sql คือแหล่งอ้างอิง)
+const schemaSql = fs.readFileSync(path.join(ROOT, 'supabase/schema.sql'), 'utf8');
+const membersDdl = /create table if not exists public\.members\s*\(([\s\S]*?)\n\);/.exec(schemaSql);
+assert.ok(membersDdl, 'หา DDL ของ public.members ใน schema.sql ไม่เจอ');
+const MEMBERS_COLUMNS = new Set(
+  [...membersDdl[1].matchAll(/^\s{2}([a-z_]+)\s/gm)].map((m) => m[1]),
+);
+
+await test('DDL ของ members มีคอลัมน์ครบตามที่โค้ดฝั่งเว็บใช้', async () => {
+  for (const col of ['id', 'auth_uid', 'code', 'full_name', 'email', 'phone', 'role', 'active', 'note']) {
+    assert.ok(MEMBERS_COLUMNS.has(col), `ตาราง members ขาดคอลัมน์ ${col} (มี: ${[...MEMBERS_COLUMNS].join(', ')})`);
+  }
+});
+
+await test('ทุก INSERT INTO public.members ใช้คอลัมน์ที่มีจริง', async () => {
+  for (const rel of sqlFiles) {
+    const body = stripSqlComments(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
+    for (const m of body.matchAll(/insert into public\.members\s*\(([^)]*)\)/g)) {
+      const cols = m[1].split(',').map((c) => c.trim()).filter(Boolean);
+      const fake = cols.filter((c) => !MEMBERS_COLUMNS.has(c));
+      assert.deepStrictEqual(fake, [], `${rel} insert คอลัมน์ที่ไม่มีจริง: ${fake.join(', ')}`);
+    }
+  }
+});
+
+await test('auth_uid ต้องมี unique — ไม่งั้น on conflict (auth_uid) จะ error', async () => {
+  // trigger handle_new_auth_user ใช้ on conflict (auth_uid) do nothing
+  // ซึ่ง Postgres จะปฏิเสธถ้าไม่มี unique/exclusion constraint ตรงกับที่ระบุ
+  assert.ok(
+    /auth_uid\s+uuid\s+unique/.test(membersDdl[1]),
+    'members.auth_uid ต้องเป็น unique — on conflict (auth_uid) พึ่ง constraint นี้',
+  );
+  const mig = stripSqlComments(fs.readFileSync(
+    path.join(ROOT, 'supabase/migration-2026-11-13-member-admin.sql'), 'utf8',
+  ));
+  assert.ok(/on conflict \(auth_uid\) do nothing/.test(mig), 'trigger ต้องมี on conflict กัน insert ซ้ำ');
+});
+
 console.log(`\nสรุป: ผ่าน ${passed} / ไม่ผ่าน ${failed}\n`);
 process.exit(failed ? 1 : 0);
