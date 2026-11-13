@@ -131,6 +131,7 @@ create table if not exists public.members (
   auth_uid    uuid unique references auth.users (id) on delete set null,
   code        text unique not null,
   full_name   text not null,
+  email       text,
   phone       text,
   role        text not null default 'crew' check (role in ('admin', 'crew')),
   active      boolean not null default true,
@@ -138,14 +139,20 @@ create table if not exists public.members (
   created_at  timestamptz not null default now()
 );
 
+alter table public.members add column if not exists email text;
+
 comment on table  public.members          is 'รายชื่อทีมงาน — code คือรหัสประจำตัวที่แสดงบนเว็บ, auth_uid ผูกกับบัญชี Supabase Auth';
 comment on column public.members.code     is 'รหัสประจำตัว เช่น TK01 — เป็นแค่ป้ายชื่อสำหรับคนอ่าน ไม่ใช่รหัสผ่าน';
 comment on column public.members.role     is 'admin = แก้ไขข้อมูลของได้ / crew = จองของได้อย่างเดียว';
+comment on column public.members.email    is 'สำเนาอีเมลจาก auth.users — trigger handle_new_auth_user เติมให้ แก้ของจริงที่ Supabase → Authentication';
 
 -- ถ้าไม่ระบุ code ตอนเพิ่มสมาชิก ระบบออกรหัสให้อัตโนมัติ (M001, M002, ...)
+-- search_path ต้องปักไว้เสมอ แม้ body จะอ้าง public.members_code_seq แบบเต็มแล้วก็ตาม
+-- (ไม่งั้น Supabase Security Advisor จะเตือน function_search_path_mutable)
 create or replace function public.members_fill_code()
 returns trigger
 language plpgsql
+set search_path = public, pg_temp
 as $$
 begin
   if new.code is null or btrim(new.code) = '' then
@@ -178,6 +185,95 @@ as $$
       and m.active = true
   );
 $$;
+
+-- สร้างแถว members ให้อัตโนมัติเมื่อมีบัญชีใหม่ใน Authentication
+-- เพราะเบราว์เซอร์ถือแค่ publishable key จึงสร้างบัญชีและอ่าน auth.users ไม่ได้
+-- หน้าเว็บจึงจัดการได้แค่แถวในตาราง members — trigger นี้เชื่อมช่องว่างนั้น
+--
+-- role = 'crew' และ active = false เสมอ -> รอ admin อนุมัติในหน้าเว็บ
+-- ไม่ต้องส่ง code เพราะ trigger members_fill_code จะออกรหัสให้อัตโนมัติ
+create or replace function public.handle_new_auth_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_name text;
+begin
+  -- บัญชีแบบสมัครด้วยเบอร์โทรจะมี email เป็น null (full_name เป็น not null)
+  v_name := coalesce(
+    nullif(btrim(new.raw_user_meta_data ->> 'full_name'), ''),
+    nullif(btrim(new.raw_user_meta_data ->> 'name'), ''),
+    nullif(btrim(split_part(coalesce(new.email, new.phone, ''), '@', 1)), ''),
+    'ยังไม่ระบุชื่อ'
+  );
+
+  -- สำคัญ: trigger นี้เป็น AFTER INSERT บน auth.users ถ้า raise exception
+  -- การสร้างบัญชีจะถูก rollback ทั้งก้อน = สมัครไม่ได้ทั้งระบบ
+  -- จึงต้องเก็บ error ไว้เป็น warning แล้วปล่อยผ่านเสมอ
+  begin
+    insert into public.members (auth_uid, email, full_name, role, active)
+    values (new.id, new.email, v_name, 'crew', false)
+    on conflict (auth_uid) do nothing;
+  exception when others then
+    raise warning
+      'handle_new_auth_user: สร้างแถว members ไม่สำเร็จ (%) — บัญชีถูกสร้างแล้ว ให้ admin เพิ่มแถวเองผ่าน SQL Editor',
+      sqlerrm;
+  end;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_auth_user();
+
+-- กันล็อกตัวเองออกถาวร: ห้ามลดสิทธิ์/ปิดใช้งาน admin คนสุดท้าย
+-- ถ้าพลาดจะเข้าหน้า admin และแก้ไขข้อมูลไม่ได้อีก แก้ได้ทาง SQL Editor เท่านั้น
+-- จึงต้องกันที่ฐานข้อมูล ไม่ใช่แค่เช็คฝั่งเว็บ (ซึ่งข้ามได้ด้วย DevTools)
+--
+-- หมายเหตุ: BEFORE DELETE trigger ที่คืนค่า null จะ "ยกเลิก" การลบ จึงต้องคืน old เสมอ
+create or replace function public.protect_last_admin()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_remaining int;
+begin
+  -- แถวที่ไม่ใช่ admin ที่ใช้งานอยู่ -> ไม่กระทบจำนวน admin
+  if old.role is distinct from 'admin' or old.active is distinct from true then
+    return coalesce(new, old);
+  end if;
+
+  -- UPDATE ที่ผลลัพธ์ยังเป็น admin ที่ active อยู่ -> จำนวนไม่เปลี่ยน
+  if tg_op = 'UPDATE' and new.role = 'admin' and new.active = true then
+    return new;
+  end if;
+
+  select count(*) into v_remaining
+  from public.members m
+  where m.role = 'admin'
+    and m.active = true
+    and m.id <> old.id;
+
+  if v_remaining = 0 then
+    raise exception 'หยุด — ทำแบบนี้จะไม่มี admin ที่ใช้งานเหลือเลย จะเข้าหน้า admin และแก้ไขข้อมูลไม่ได้อีก / ตั้ง admin คนอื่นก่อน แล้วค่อยลดสิทธิ์หรือปิดใช้งาน % (%) / ถ้าจำเป็นต้องทำจริงให้แก้ผ่าน Supabase SQL Editor',
+      coalesce(old.code, '(ไม่มีรหัส)'), coalesce(old.email, '(ไม่มีอีเมล)');
+  end if;
+
+  return coalesce(new, old);
+end;
+$$;
+
+drop trigger if exists protect_last_admin on public.members;
+create trigger protect_last_admin
+  before update or delete on public.members
+  for each row execute function public.protect_last_admin();
 
 -- ============================ Row Level Security ============================
 alter table public.fixtures    enable row level security;

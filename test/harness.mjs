@@ -119,7 +119,10 @@ function makeMockSupabase(mode, seed) {
 
       for (const row of incoming) {
         const id = state.filters.length ? state.filters[0][1] : row?.id;
-        const idx = tables[table].findIndex((r) => Number(r.id) === Number(id));
+        // เทียบเป็น string เพราะตาราง members ใช้ uuid เป็น id
+        // Number('9f1c…') ได้ NaN และ NaN === NaN เป็น false จึงหาแถวไม่เจอเงียบ ๆ
+        // (fixtures/accessories ใช้ id เป็นเลข ซึ่ง String() เทียบได้ผลเหมือนกัน)
+        const idx = tables[table].findIndex((r) => String(r.id) === String(id));
 
         if (kind === 'delete') {
           if (idx !== -1) tables[table].splice(idx, 1);
@@ -247,6 +250,8 @@ function makeContext({ supabaseMode = 'ok', seed = null, supabaseLibPresent = tr
     'js/power.js',
     'js/database.js',
     'js/accessory-store.js',
+    'js/member-store.js',
+    'js/inline-member-editor.js',
     'js/admin-auth.js',
   ];
   for (const f of files) {
@@ -259,6 +264,7 @@ function makeContext({ supabaseMode = 'ok', seed = null, supabaseLibPresent = tr
   // (ในเบราว์เซอร์จริง script ทุกตัวแชร์ scope นี้อยู่แล้ว จึงไม่ต้องทำขั้นนี้)
   vm.runInContext(
     'window.DB = DB; window.AccessoryStore = AccessoryStore; window.AdminAuth = AdminAuth;'
+    + ' window.MemberStore = MemberStore;'
     + ' window.getBatteryWh = getBatteryWh; window.isPowerSource = isPowerSource;'
     + ' window.getPowerDraw = getPowerDraw; window.hasBuiltInBattery = hasBuiltInBattery;'
     + ' window.totalPower = totalPower; window.totalBatteryWh = totalBatteryWh;'
@@ -270,7 +276,8 @@ function makeContext({ supabaseMode = 'ok', seed = null, supabaseLibPresent = tr
     + ' window.shortBadgeHtml = shortBadgeHtml;'
     + ' window.tagDetailHtml = tagDetailHtml; window.escapeAttrText = escapeAttrText;'
     + ' window.badgesHtmlFromCommaList = badgesHtmlFromCommaList;'
-    + ' window.getStockCount = getStockCount; window.stockPillHtml = stockPillHtml;',
+    + ' window.getStockCount = getStockCount; window.stockPillHtml = stockPillHtml;'
+    + ' window.memberEditorHtml = memberEditorHtml;',
     ctx,
     { filename: 'test-export.js' }
   );
@@ -1167,6 +1174,377 @@ await test('ข้อมูลจริง: อุปกรณ์เสริม
     assert.strictEqual(sandbox.stockPillHtml(a), '', `${a.name} ไม่มี stock ต้องซ่อน pill`);
   }
   assert.strictEqual(without.length, localAccessories.length - withStock.length);
+});
+
+console.log('\n=== MemberStore (ทีมงานและสิทธิ์) ===');
+
+// แถวสมาชิกหน้าตาแบบที่ Supabase คืนมา (snake_case, id เป็น uuid)
+const sbMemberRow = (over = {}) => ({
+  id: 'aaaa-1111', auth_uid: uidFor('admin@test.com'), code: 'ADMIN01',
+  full_name: 'ผู้ดูแล ระบบ', email: 'admin@test.com', phone: null,
+  role: 'admin', active: true, note: null, ...over,
+});
+
+await test('load() อ่านตาราง members และแปลง snake_case -> camelCase ครบ', async () => {
+  const { sandbox } = makeContext({
+    supabaseMode: 'ok',
+    seed: {
+      fixtures: [], accessories: [],
+      members: [sbMemberRow(), sbMemberRow({ id: 'bbbb-2222', auth_uid: uidFor('crew@test.com'), code: 'TK01', full_name: 'ช่างไฟ', email: 'crew@test.com', role: 'crew', active: false })],
+    },
+  });
+  await sandbox.MemberStore.load();
+  const st = sandbox.MemberStore.status();
+  assert.strictEqual(st.isSupabase, true, 'ต้องเชื่อมต่อ Supabase ได้: ' + JSON.stringify(st));
+  assert.strictEqual(st.count, 2);
+  const [a, b] = sandbox.MemberStore.getAll().sort((x, y) => String(x.code).localeCompare(String(y.code)));
+  assert.strictEqual(a.code, 'ADMIN01');
+  assert.strictEqual(a.fullName, 'ผู้ดูแล ระบบ', 'full_name ต้องถูก map เป็น fullName');
+  assert.strictEqual(a.authUid, uidFor('admin@test.com'), 'auth_uid ต้องถูก map เป็น authUid');
+  assert.strictEqual(a.active, true);
+  assert.strictEqual(b.role, 'crew');
+  assert.strictEqual(b.active, false);
+});
+
+await test('ตาราง members ว่างต้องนับเป็นโหมด Supabase (ไม่ถอยไป local จนโชว์ข้อมูลปลอม)', async () => {
+  const { sandbox } = makeContext({ supabaseMode: 'ok', seed: { fixtures: [], accessories: [], members: [] } });
+  await sandbox.MemberStore.load();
+  assert.strictEqual(sandbox.MemberStore.isSupabase(), true, 'ต่างจาก store อื่นโดยจงใจ');
+  assert.strictEqual(sandbox.MemberStore.getAll().length, 0);
+});
+
+await test('toRow() ห้ามส่ง auth_uid และ email กลับไป (กันเขียนทับสิทธิ์)', async () => {
+  const { sandbox, mockSb } = makeContext({
+    supabaseMode: 'ok',
+    seed: { fixtures: [], accessories: [], members: [sbMemberRow()] },
+  });
+  await sandbox.MemberStore.load();
+  // พยายามเขียนทับทั้งสองฟิลด์ที่ห้ามเขียน พร้อมแก้สิทธิ์ไปด้วยในคำขอเดียว
+  await sandbox.MemberStore.update('aaaa-1111', {
+    code: 'ADMIN02', role: 'crew', active: false,
+    authUid: 'someone-else-uid', email: 'hacker@evil.com',
+  });
+  const calls = mockSb._calls.filter((c) => c.table === 'members' && c.kind === 'update');
+  assert.ok(calls.length >= 1, 'ต้องมีการ update');
+  const payload = calls[calls.length - 1].payload;
+  assert.ok(!('auth_uid' in payload), 'ห้ามส่ง auth_uid: ' + JSON.stringify(payload));
+  assert.ok(!('email' in payload), 'ห้ามส่ง email: ' + JSON.stringify(payload));
+  assert.strictEqual(payload.code, 'ADMIN02');
+  assert.strictEqual(payload.role, 'crew');
+  assert.strictEqual(payload.active, false);
+});
+
+await test('update() หาแถวด้วย uuid ได้จริง (ไม่พังเพราะ Number() ได้ NaN)', async () => {
+  const { sandbox, mockSb } = makeContext({
+    supabaseMode: 'ok',
+    seed: { fixtures: [], accessories: [], members: [sbMemberRow()] },
+  });
+  await sandbox.MemberStore.load();
+  const saved = await sandbox.MemberStore.update('aaaa-1111', { fullName: 'ชื่อใหม่' });
+  assert.ok(saved, 'ต้องคืนแถวที่บันทึกแล้ว');
+  assert.strictEqual(saved.fullName, 'ชื่อใหม่');
+  assert.strictEqual(mockSb._tables.members[0].full_name, 'ชื่อใหม่', 'ต้องลงถึงตารางใน mock');
+  assert.strictEqual(sandbox.MemberStore.getById('aaaa-1111').fullName, 'ชื่อใหม่');
+});
+
+await test('setActive / setRole เปลี่ยนค่าได้ และ normalize เป็น boolean/role ที่ถูกต้อง', async () => {
+  const { sandbox } = makeContext({
+    supabaseMode: 'ok',
+    seed: { fixtures: [], accessories: [], members: [sbMemberRow({ active: false, role: 'crew' })] },
+  });
+  await sandbox.MemberStore.load();
+  await sandbox.MemberStore.setActive('aaaa-1111', true);
+  assert.strictEqual(sandbox.MemberStore.getById('aaaa-1111').active, true);
+  await sandbox.MemberStore.setRole('aaaa-1111', 'ADMIN');
+  assert.strictEqual(sandbox.MemberStore.getById('aaaa-1111').role, 'admin', 'ต้อง normalize ตัวพิมพ์');
+  await sandbox.MemberStore.setRole('aaaa-1111', 'superuser');
+  assert.strictEqual(sandbox.MemberStore.getById('aaaa-1111').role, 'crew', 'role ที่ไม่รู้จักต้อง fail safe เป็น crew');
+});
+
+await test('API ต้องไม่มี create และไม่มี remove (ล็อกการตัดสินใจไว้)', async () => {
+  const { sandbox } = makeContext({ supabaseMode: 'ok', seed: { fixtures: [], accessories: [], members: [] } });
+  // สร้างบัญชีไม่ได้จากเบราว์เซอร์ (ต้องมี service_role) และนำคนออกใช้ปิดใช้งานแทนการลบ
+  assert.strictEqual(typeof sandbox.MemberStore.create, 'undefined', 'ต้องมี create');
+  assert.strictEqual(typeof sandbox.MemberStore.remove, 'undefined', 'ต้องมี remove');
+  assert.strictEqual(typeof sandbox.MemberStore.setActive, 'function', 'ต้องมี setActive ไว้ใช้แทน remove');
+});
+
+await test('pending() / activeAdmins() / counts() แยกสถานะได้ถูก', async () => {
+  const { sandbox } = makeContext({
+    supabaseMode: 'ok',
+    seed: {
+      fixtures: [], accessories: [],
+      members: [
+        sbMemberRow({ id: 'm1', code: 'ADMIN01', role: 'admin', active: true }),
+        sbMemberRow({ id: 'm2', code: 'TK01', role: 'crew', active: true }),
+        sbMemberRow({ id: 'm3', code: 'TK02', role: 'crew', active: false }),
+        sbMemberRow({ id: 'm4', code: 'TK03', role: 'admin', active: false }),
+      ],
+    },
+  });
+  await sandbox.MemberStore.load();
+  assert.deepStrictEqual([...sandbox.MemberStore.pending()].map((m) => m.code), ['TK02', 'TK03']);
+  assert.deepStrictEqual([...sandbox.MemberStore.activeAdmins()].map((m) => m.code), ['ADMIN01']);
+  const c = sandbox.MemberStore.counts();
+  assert.strictEqual(c.admin, 1, 'admin ที่ active เท่านั้น');
+  assert.strictEqual(c.crew, 1);
+  assert.strictEqual(c.pending, 2);
+  assert.strictEqual(c.total, 4);
+});
+
+await test('findByEmail() ไม่สนตัวพิมพ์ และคืน null เมื่อไม่เจอ', async () => {
+  const { sandbox } = makeContext({
+    supabaseMode: 'ok',
+    seed: { fixtures: [], accessories: [], members: [sbMemberRow()] },
+  });
+  await sandbox.MemberStore.load();
+  assert.strictEqual(sandbox.MemberStore.findByEmail('ADMIN@Test.com').code, 'ADMIN01');
+  assert.strictEqual(sandbox.MemberStore.findByEmail('nobody@test.com'), null);
+  assert.strictEqual(sandbox.MemberStore.findByEmail(''), null);
+});
+
+await test('ตาราง members เข้าไม่ได้ -> fallback local + status บอกเหตุผล', async () => {
+  const { sandbox } = makeContext({ supabaseMode: 'no-members', seed: { fixtures: [], accessories: [] } });
+  await sandbox.MemberStore.load();
+  const st = sandbox.MemberStore.status();
+  assert.strictEqual(st.isSupabase, false);
+  assert.strictEqual(st.mode, 'local');
+  assert.ok(st.error.includes('members'), 'ต้องบอกชื่อตาราง: ' + st.error);
+  assert.ok(st.error.includes('migration-2026-10-22-members.sql'), 'ต้องชี้ไปไฟล์ SQL ที่ต้องรัน: ' + st.error);
+});
+
+await test('missingColumns() รายงานคอลัมน์ที่ยังไม่ได้เพิ่ม (เช่นยังไม่ได้รัน migration ตัวใหม่)', async () => {
+  const row = sbMemberRow();
+  delete row.email;   // จำลองตารางที่ยังไม่มีคอลัมน์ email
+  delete row.note;
+  const { sandbox } = makeContext({ supabaseMode: 'ok', seed: { fixtures: [], accessories: [], members: [row] } });
+  await sandbox.MemberStore.load();
+  const missing = [...sandbox.MemberStore.missingColumns()].map((m) => m.column).sort();
+  assert.deepStrictEqual(missing, ['email', 'note']);
+  assert.ok(sandbox.MemberStore.status().missingColumns.length === 2);
+});
+
+await test('missingColumns() คืน [] เมื่อไม่รู้จริง ๆ (โหมด local / ตารางว่าง)', async () => {
+  const { sandbox } = makeContext({ supabaseMode: 'no-members', seed: { fixtures: [], accessories: [] } });
+  await sandbox.MemberStore.load();
+  assert.deepStrictEqual([...sandbox.MemberStore.missingColumns()], []);
+
+  const empty = makeContext({ supabaseMode: 'ok', seed: { fixtures: [], accessories: [], members: [] } });
+  await empty.sandbox.MemberStore.load();
+  assert.deepStrictEqual([...empty.sandbox.MemberStore.missingColumns()], [], 'ตารางว่าง probe ไม่เห็นคอลัมน์ ต้องไม่เดา');
+});
+
+console.log('\n=== ฟอร์มแก้ไขทีมงาน (memberEditorHtml) ===');
+
+// แท็กที่ฟอร์มนี้ควรมี — เจอแท็กอื่นแปลว่ามีค่าจากผู้ใช้หลุดมาเป็น HTML จริง
+const FORM_WHITELIST = new Set(['div', 'form', 'label', 'input', 'select', 'option', 'button', 'span', 'strong', 'em', 'h5', 'br']);
+
+function realTagNames(h) {
+  const out = [];
+  const re = /<\/?([a-zA-Z][a-zA-Z0-9]*)\b/g;
+  let m;
+  while ((m = re.exec(h))) out.push(m[1].toLowerCase());
+  return out;
+}
+
+await test('ค่าที่ผู้ใช้กรอกต้องไม่กลายเป็น HTML (กัน XSS จากตาราง members)', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const payloads = [
+    { code: '"><script>alert(1)</script>', fullName: '<img src=x onerror="alert(2)">', email: 'a@b.com"><b>x</b>', note: '">&lt;script&gt;' },
+    { code: "' OR 1=1 --", fullName: '"><svg/onload=alert(3)>', email: null, note: 'javascript:alert(4)' },
+    { code: 'ปกติ', fullName: 'สมชาย ใจดี', email: 'somchai@company.com', note: 'ทีมไฟ' },
+  ];
+  for (const p of payloads) {
+    const h = sandbox.memberEditorHtml({ id: 'x', phone: null, authUid: null, role: 'crew', active: true, ...p }, 'f1', {});
+    const alien = [...new Set(realTagNames(h).filter((t) => !FORM_WHITELIST.has(t)))];
+    assert.deepStrictEqual(alien, [], `code=${JSON.stringify(p.code)} มีแท็กแปลกปลอมหลุดออกมา`);
+    // attribute ต้องไม่แตก — ฟันหนูในแต่ละ <input> ต้องเป็นคู่
+    for (const m of h.matchAll(/<input\b[^>]*>/g)) {
+      const quotes = (m[0].match(/"/g) || []).length;
+      assert.strictEqual(quotes % 2, 0, 'ฟันหนูคี่ แปลว่าค่าหลุดออกจาก attribute: ' + m[0].slice(0, 90));
+    }
+  }
+});
+
+await test('ช่องอีเมลต้อง readonly (แก้ของจริงได้เฉพาะใน Supabase Authentication)', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const h = sandbox.memberEditorHtml({ id: 'x', code: 'TK01', fullName: 'สมชาย', email: 'somchai@company.com', role: 'crew', active: true }, 'f1', {});
+  const emailInput = [...h.matchAll(/<input\b[^>]*>/g)].map((m) => m[0]).find((t) => t.includes('somchai@company.com'));
+  assert.ok(emailInput, 'ต้องมีช่องอีเมล');
+  assert.ok(/\breadonly\b/.test(emailInput), 'ต้อง readonly: ' + emailInput);
+  assert.ok(!/name="/.test(emailInput), 'ห้ามมี name — จะได้ไม่ถูกส่งกลับไปบันทึก');
+  assert.ok(h.includes('Authentication'), 'ต้องบอกว่าไปแก้จริงที่ไหน');
+});
+
+await test('ฟอร์มสะท้อนสิทธิ์และสถานะปัจจุบัน (select/checkbox ถูกติ๊ก)', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const admin = sandbox.memberEditorHtml({ id: '1', code: 'A1', fullName: 'x', email: 'a@b.com', role: 'admin', active: true }, 'f1', {});
+  assert.ok(/value="admin"[^>]*\sselected/.test(admin), 'admin ต้องถูกเลือก: ');
+  assert.ok(/name="active"[^>]*\schecked/.test(admin), 'active ต้องถูกติ๊ก');
+
+  const pending = sandbox.memberEditorHtml({ id: '2', code: 'M001', fullName: 'y', email: 'y@b.com', role: 'crew', active: false }, 'f1', {});
+  assert.ok(/value="crew"[^>]*\sselected/.test(pending), 'crew ต้องถูกเลือก');
+  assert.ok(!/name="active"[^>]*\schecked/.test(pending), 'รอยืนยันต้องไม่ติ๊ก approved');
+});
+
+await test('ชื่อช่องในฟอร์มต้องตรงกับที่ bindMemberEditor อ่าน (กันบั๊กแบบ adminPinInput)', async () => {
+  // บั๊กที่ทำให้หน้า admin พังรอบแรกคือ HTML กับ JS เรียกชื่อคนละตัว
+  // จึงตรวจสองทาง: ทุก form.elements.X ที่โค้ดอ่าน ต้องมี name="X" ในฟอร์มจริง
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const src = fs.readFileSync(path.join(ROOT, 'js/inline-member-editor.js'), 'utf8');
+  const readNames = [...new Set([...src.matchAll(/form\.elements\.([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]))];
+  assert.ok(readNames.length >= 5, 'ต้องอ่านหลายฟิลด์: ' + readNames.join(','));
+
+  const h = sandbox.memberEditorHtml({ id: 'x', code: 'TK01', fullName: 'สมชาย', email: 'e@x.com', phone: '081', note: 'n', role: 'admin', active: true }, 'f1', {});
+  const formNames = [...h.matchAll(/\bname="([^"]+)"/g)].map((m) => m[1]);
+  for (const n of readNames) {
+    assert.ok(formNames.includes(n), `โค้ดอ่าน form.elements.${n} แต่ในฟอร์มไม่มี name="${n}" (มี: ${formNames.join(',')})`);
+  }
+  // และปุ่ม cancel/status ที่ bind ผ่าน getElementById ต้องมี id ตรง pattern
+  assert.ok(h.includes('id="f1-cancel"'), 'ต้องมีปุ่มปิด');
+  assert.ok(h.includes('id="f1-status"'), 'ต้องมีที่โชว์สถานะ');
+});
+
+console.log('\n=== SQL: ชื่อคอลัมน์ต้องมีจริง (กันเดาชื่อ) ===');
+
+// ใน sandbox ไม่มี Postgres ให้รันจริง จึงตรวจกับเซิร์ฟเวอร์ไม่ได้
+// บั๊กชนิด "เดาชื่อคอลัมน์" จึงหลุดไปถึงมือผู้ใช้ได้ — เคยเกิดจริง:
+// query ตรวจ trigger ไปอ้าง tgisbefore/tgisafter/tgisinsert ซึ่งไม่มีอยู่
+// (pg_trigger เก็บจังหวะเป็น bitmask ใน tgtype) ทำให้ error 42703 ทั้งไฟล์
+// และเพราะ SQL Editor รันเป็น transaction เดียว ขั้นที่ 1-4 ถูก rollback ไปด้วย
+//
+// เทสต์นี้ล็อกชื่อคอลัมน์จริงไว้ ถ้าใครอ้างชื่อที่ไม่มีจริงจะแดงทันที
+
+// ตัดคอมเมนต์ออกก่อน — คอมเมนต์อ้างชื่อปลอมไว้เป็นคำเตือนได้อย่างจงใจ
+function stripSqlComments(sql) {
+  return sql.replace(/--[^\n]*/g, '');
+}
+
+// คอลัมน์จริงของ pg_trigger (PostgreSQL 12+)
+const PG_TRIGGER_COLUMNS = new Set([
+  'oid', 'tgrelid', 'tgparentid', 'tgname', 'tgfoid', 'tgtype', 'tgenabled',
+  'tgisinternal', 'tgconstrrelid', 'tgconstrindid', 'tgconstraint',
+  'tgdeferrable', 'tginitdeferred', 'tgnargs', 'tgattr', 'tgargs', 'tgqual',
+  'tgoldtable', 'tgnewtable',
+]);
+
+// ตัวแปรพิเศษของ PL/pgSQL ใน trigger function — ขึ้นต้นด้วย tg_ เหมือนกัน
+// แต่ "ไม่ใช่" คอลัมน์ของ pg_trigger และเป็นของจริงที่ใช้ได้
+// (ถ้าไม่ยกเว้นไว้จะได้ false positive จาก protect_last_admin ที่ใช้ tg_op)
+const PLPGSQL_TRIGGER_VARS = new Set([
+  'tg_op', 'tg_when', 'tg_level', 'tg_table_name', 'tg_table_schema', 'tg_relid',
+]);
+
+const sqlFiles = fs.readdirSync(path.join(ROOT, 'supabase'))
+  .filter((f) => f.endsWith('.sql'))
+  .map((f) => path.join('supabase', f));
+
+await test('statement ที่ query pg_trigger ต้องอ้างเฉพาะคอลัมน์ที่มีจริง', async () => {
+  for (const rel of sqlFiles) {
+    const body = stripSqlComments(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
+    // จำกัดขอบเขตเป็นราย statement ที่แตะ pg_trigger จริง
+    // เพราะในไฟล์เดียวกันมี PL/pgSQL function body ที่ใช้ตัวแปร tg_op ปนอยู่
+    const statements = body.split(';').filter((s) => /\bfrom\s+pg_trigger\b/i.test(s));
+    for (const stmt of statements) {
+      const used = new Set([...stmt.matchAll(/\b(tg[a-z_]+)\b/g)].map((m) => m[1]));
+      if (/\bpg_get_triggerdef\s*\(\s*oid\s*\)/.test(stmt)) used.add('oid');
+      const fake = [...used].filter((c) => !PG_TRIGGER_COLUMNS.has(c) && !PLPGSQL_TRIGGER_VARS.has(c));
+      assert.deepStrictEqual(
+        fake, [],
+        `${rel} อ้างคอลัมน์ pg_trigger ที่ไม่มีจริง: ${fake.join(', ')}`
+        + `\n  statement: ${stmt.replace(/\s+/g, ' ').trim().slice(0, 160)}`,
+      );
+    }
+  }
+});
+
+await test('query ตรวจ trigger ใช้ pg_get_triggerdef() แทนการถอด bitmask เอง', async () => {
+  const rel = 'supabase/migration-2026-11-13-member-admin.sql';
+  const body = stripSqlComments(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
+  // tgtype เป็น bitmask ที่ถอดมือแล้วพลาดง่าย จึงให้ดึง CREATE TRIGGER ตัวจริงมาโชว์
+  assert.ok(
+    /pg_get_triggerdef\s*\(\s*oid\s*\)/.test(body),
+    'ต้องโชว์นิยาม trigger ด้วย pg_get_triggerdef() — อย่าถอด tgtype เอง',
+  );
+  assert.ok(!/\btgtype\b/.test(body), 'ไม่ควรอ้าง tgtype ตรง ๆ (ถอด bitmask เองพลาดง่าย)');
+});
+
+// คอลัมน์จริงของตาราง members จาก DDL (schema.sql คือแหล่งอ้างอิง)
+const schemaSql = fs.readFileSync(path.join(ROOT, 'supabase/schema.sql'), 'utf8');
+const membersDdl = /create table if not exists public\.members\s*\(([\s\S]*?)\n\);/.exec(schemaSql);
+assert.ok(membersDdl, 'หา DDL ของ public.members ใน schema.sql ไม่เจอ');
+const MEMBERS_COLUMNS = new Set(
+  [...membersDdl[1].matchAll(/^\s{2}([a-z_]+)\s/gm)].map((m) => m[1]),
+);
+
+await test('DDL ของ members มีคอลัมน์ครบตามที่โค้ดฝั่งเว็บใช้', async () => {
+  for (const col of ['id', 'auth_uid', 'code', 'full_name', 'email', 'phone', 'role', 'active', 'note']) {
+    assert.ok(MEMBERS_COLUMNS.has(col), `ตาราง members ขาดคอลัมน์ ${col} (มี: ${[...MEMBERS_COLUMNS].join(', ')})`);
+  }
+});
+
+await test('ทุก INSERT INTO public.members ใช้คอลัมน์ที่มีจริง', async () => {
+  for (const rel of sqlFiles) {
+    const body = stripSqlComments(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
+    for (const m of body.matchAll(/insert into public\.members\s*\(([^)]*)\)/g)) {
+      const cols = m[1].split(',').map((c) => c.trim()).filter(Boolean);
+      const fake = cols.filter((c) => !MEMBERS_COLUMNS.has(c));
+      assert.deepStrictEqual(fake, [], `${rel} insert คอลัมน์ที่ไม่มีจริง: ${fake.join(', ')}`);
+    }
+  }
+});
+
+await test('ทุก trigger function ใน schema.sql ต้องปัก search_path', async () => {
+  // ตรวจเจอจากฐานข้อมูลจริงว่า members_fill_code มี proconfig เป็น null
+  // ทั้งที่อีก 3 ฟังก์ชันปักไว้ครบ — Supabase Security Advisor จะเตือนเป็น
+  // function_search_path_mutable จึงล็อกไว้ไม่ให้ฟังก์ชันใหม่หลุดเกณฑ์อีก
+  const src = stripSqlComments(fs.readFileSync(path.join(ROOT, 'supabase/schema.sql'), 'utf8'));
+  const blocks = [...src.matchAll(
+    /create or replace function public\.([a-z_]+)\s*\(([\s\S]*?)\n\$\$;/g,
+  )];
+  assert.ok(blocks.length >= 4, `ควรเจอฟังก์ชันอย่างน้อย 4 ตัว แต่เจอ ${blocks.length}`);
+  for (const m of blocks) {
+    const [, name, header] = m;
+    assert.ok(
+      /set search_path\s*=\s*public,\s*pg_temp/.test(header),
+      `public.${name}() ไม่ได้ปัก search_path = public, pg_temp`
+      + '\n  header: ' + header.replace(/\s+/g, ' ').trim(),
+    );
+  }
+});
+
+await test('migration 2026-11-13 ต้องมี alter function ปัก search_path ให้ของเดิม', async () => {
+  // ฐานข้อมูลของผู้ใช้รัน migration-2026-10-22 ไปแล้ว จึงแก้ schema.sql อย่างเดียวไม่พอ
+  // ต้องมีคำสั่ง alter สำหรับฐานข้อมูลที่ติดตั้งไปแล้วด้วย
+  const mig = stripSqlComments(fs.readFileSync(
+    path.join(ROOT, 'supabase/migration-2026-11-13-member-admin.sql'), 'utf8',
+  ));
+  assert.ok(
+    /alter function public\.members_fill_code\(\)\s+set search_path\s*=\s*public,\s*pg_temp/i.test(mig),
+    'ต้องมี alter function ... set search_path สำหรับฐานข้อมูลที่ติดตั้งไปแล้ว',
+  );
+  // จงใจไม่ทำให้เป็น security definer — trigger เติม new.code ไม่ควรได้สิทธิ์เกินคนเรียก
+  const fillCode = /create or replace function public\.members_fill_code\(([\s\S]*?)\n\$\$;/.exec(
+    fs.readFileSync(path.join(ROOT, 'supabase/schema.sql'), 'utf8'),
+  );
+  assert.ok(fillCode, 'หา members_fill_code ใน schema.sql ไม่เจอ');
+  assert.ok(
+    !/security definer/i.test(fillCode[1]),
+    'members_fill_code ต้องไม่เป็น security definer (ไม่จำเป็น = ความเสี่ยงเพิ่ม)',
+  );
+});
+
+await test('auth_uid ต้องมี unique — ไม่งั้น on conflict (auth_uid) จะ error', async () => {
+  // trigger handle_new_auth_user ใช้ on conflict (auth_uid) do nothing
+  // ซึ่ง Postgres จะปฏิเสธถ้าไม่มี unique/exclusion constraint ตรงกับที่ระบุ
+  assert.ok(
+    /auth_uid\s+uuid\s+unique/.test(membersDdl[1]),
+    'members.auth_uid ต้องเป็น unique — on conflict (auth_uid) พึ่ง constraint นี้',
+  );
+  const mig = stripSqlComments(fs.readFileSync(
+    path.join(ROOT, 'supabase/migration-2026-11-13-member-admin.sql'), 'utf8',
+  ));
+  assert.ok(/on conflict \(auth_uid\) do nothing/.test(mig), 'trigger ต้องมี on conflict กัน insert ซ้ำ');
 });
 
 console.log(`\nสรุป: ผ่าน ${passed} / ไม่ผ่าน ${failed}\n`);

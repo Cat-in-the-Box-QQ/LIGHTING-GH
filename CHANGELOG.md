@@ -1,5 +1,247 @@
 # CHANGELOG
 
+## 2026-11-13 หน้าจัดการทีมงาน — เพิ่มคนได้โดยไม่ต้องรัน SQL ทีละคน
+
+### ปัญหา
+
+หลังแยกสิทธิ์เป็น `admin` / `crew` แล้ว การเพิ่มทีมงานแต่ละคนต้องรัน SQL เองทุกครั้ง
+(สร้างบัญชีใน Dashboard แล้ว `insert into members ...`) ซึ่งพลาดง่ายและทำบนมือถือไม่ได้
+
+### ข้อจำกัดที่ทำให้ดีไซน์ต้องเป็นแบบนี้
+
+เบราว์เซอร์ถือแค่ **publishable key** จึงทำ 2 อย่างนี้ไม่ได้โดยเด็ดขาด
+
+| ทำไม่ได้ | เพราะ |
+|---|---|
+| สร้างบัญชี login | `auth.admin.createUser()` ต้องใช้ `service_role` ซึ่งห้ามอยู่ในโค้ดฝั่งเว็บ |
+| อ่าน `auth.users` | anon key ไม่มีสิทธิ์ select ใน schema `auth` |
+
+หน้าเว็บจึงจัดการได้แค่แถวในตาราง `members` — **ไม่ใช่จุดอ่อนของดีไซน์ แต่เป็นขีดจำกัดของ
+static site ทุกตัวที่ใช้ Supabase** จึงเชื่อมช่องว่างด้วย trigger ฝั่งฐานข้อมูล
+
+### วิธีทำงาน
+
+```
+สร้างบัญชีใน Supabase → Authentication → Users
+        ↓  (trigger on_auth_user_created ยิงอัตโนมัติ)
+แถว members โผล่เอง: role = crew, active = false, code = M001 (trigger เดิมออกรหัสให้)
+        ↓
+เปิดหน้า admin → เห็นแถบ "มี N บัญชีรอยืนยัน" → กดแก้ไข → ตั้งรหัส/สิทธิ์ → ติ๊กอนุมัติ
+```
+
+เพราะค่าเริ่มต้นคือ `active = false` **ต่อให้เปิดให้ใครสมัครเองก็ปลอดภัย** —
+สมัครได้แต่ทำอะไรไม่ได้จนกว่า admin จะอนุมัติ
+
+### 🛡️ trigger กันล็อกตัวเองออกถาวร
+
+`protect_last_admin` (BEFORE UPDATE OR DELETE บน `members`) จะ `raise exception`
+ถ้าการเปลี่ยนนั้นทำให้**ไม่มี admin ที่ active เหลือเลย**
+
+ถ้าพลาดจะเข้าหน้า admin และแก้ไขข้อมูลไม่ได้อีก แก้ได้ทาง SQL Editor เท่านั้น
+จึงต้องกันที่ฐานข้อมูล ไม่ใช่แค่เช็คฝั่งเว็บซึ่งข้ามได้ด้วย DevTools
+(ฝั่งเว็บก็ `confirm()` เตือนล่วงหน้าให้ด้วย จะได้ไม่กดแล้วเจอ error เอา)
+
+> หมายเหตุทางเทคนิค: BEFORE DELETE trigger ที่คืนค่า `null` จะ**ยกเลิก**การลบ
+> ฟังก์ชันจึงต้อง `return coalesce(new, old)` เสมอ
+
+### trigger ต้องไม่พังการสมัครสมาชิก
+
+`handle_new_auth_user` เป็น AFTER INSERT บน `auth.users` — **ถ้ามัน raise exception
+การสร้างบัญชีจะถูก rollback ทั้งก้อน = สมัครไม่ได้ทั้งระบบ** จึงคร่อม `begin…exception`
+ไว้แล้วลดระดับเป็น `raise warning` เสมอ
+
+และเพราะ Supabase รองรับบัญชีแบบเบอร์โทร (`email` เป็น `null`) ขณะที่ `full_name`
+เป็น `not null` จึงไล่ `coalesce` ผ่าน `raw_user_meta_data` → `email` → `phone` →
+ข้อความสำรอง ไม่งั้น insert จะพังและลามไปบล็อกการสมัคร
+
+### คอลัมน์ `email` ที่เพิ่มเข้ามา
+
+ตาราง `members` เดิมมีแต่ `auth_uid` ซึ่งฝั่งเว็บแปลกลับเป็นอีเมลไม่ได้
+ถ้าไม่เพิ่มคอลัมน์นี้ รายการทีมงานจะโชว์ได้แค่รหัสกับชื่อ ไม่รู้ว่าผูกกับบัญชีไหน
+
+แลกกับการเป็นสำเนาที่อาจค้างถ้าไปแก้ email ใน Authentication (เกิดยาก) —
+คุ้มกว่าการทำฟังก์ชัน `security definer` อ่าน `auth.users` ซึ่งเพิ่ม attack surface
+จึงทำให้คอลัมน์นี้**อ่านอย่างเดียวจากฝั่งเว็บ** (`toRow()` ไม่ส่งกลับ)
+
+### ไฟล์ใหม่
+
+**`supabase/migration-2026-11-13-member-admin.sql`** — 5 ขั้น
+1. เพิ่มคอลัมน์ `email`
+2. trigger `handle_new_auth_user` + `on_auth_user_created`
+3. backfill บัญชีที่มีอยู่ก่อน (trigger ยิงเฉพาะ insert ใหม่) — ใช้ `not exists` จึงข้ามแถว admin ของคุณเอง และ**ไม่ทับสิทธิ์ที่ตั้งไว้แล้ว**
+4. trigger `protect_last_admin`
+5. SELECT ตรวจผล + บล็อกทดสอบ trigger (ให้รัน `ROLLBACK` ทิ้ง)
+
+`supabase/schema.sql` ถูก mirror ให้เหมือนกันทั้งหมด ติดตั้งใหม่ได้ผลเหมือนกัน
+
+**`js/member-store.js`** — data layer เลียนแบบ `AccessoryStore` แต่ต่าง 3 จุดโดยจงใจ
+
+- **ไม่มี `create()`** (สร้างบัญชีจากเว็บไม่ได้) และ**ไม่มี `remove()`** (นำคนออก = ปิดใช้งาน ซึ่งกดคืนได้และเหลือประวัติ) — มีแต่ `setActive()`
+- `id` เป็น **uuid ไม่ใช่ bigint** จึงห้าม `Number()` เด็ดขาด (`Number('9f1c…')` ได้ `NaN` และ `NaN === NaN` เป็น `false` ทำให้ lookup พังเงียบ ๆ)
+- ตาราง `members` **ว่าง = ปกติ** จึงไม่ถอยไปโหมด local (ต่างจาก store อื่นที่ถือว่าตารางว่างคือปัญหา) ไม่งั้นจะโชว์ข้อมูลปลอมแทนที่จะโชว์ว่าว่างจริง
+
+`toRow()` ข้ามฟิลด์ที่เขียนไม่ได้เสมอ (`auth_uid`, `email`) ต่อให้มีอยู่ใน patch ก็ตาม
+และ `role` ที่ไม่รู้จักถูกตีเป็น `crew` เสมอ — fail safe ไปทางสิทธิ์น้อยที่สุด
+
+**`js/inline-member-editor.js`** — ฟอร์มใน modal เดิม (`adminItemModal`) ตาม pattern `inline-accessory-editor.js`
+อีเมลเป็น **readonly และไม่มี `name`** จึงไม่ถูกส่งกลับไปบันทึก
+
+### หน้า admin
+
+section ใหม่ "ทีมงานและสิทธิ์" ต่อจาก "จัดการข้อมูล" — **ไม่แยกหน้าใหม่ จึงไม่ต้องแก้ navbar ทั้ง 7 ไฟล์** และได้อยู่หลัง admin gate โดยอัตโนมัติ
+
+ตารางโชว์ รหัส / ชื่อ / อีเมล / สิทธิ์ / สถานะ / ปุ่ม แถวของตัวเองถูกไฮไลต์และเติม `← คุณ`
+มีแถบเตือนเมื่อมีรายการรอยืนยัน และเตือนเมื่อโหมดเป็น local / ตารางขาดคอลัมน์
+
+**ใช้ `createElement` + `textContent` ทั้งหมดสำหรับค่าจากฐานข้อมูล** ไม่ร้อย innerHTML ตรง ๆ
+เพราะชื่อและหมายเหตุเป็นข้อความที่คนอื่นพิมพ์ได้ — ถ้าร้อยตรง ๆ จะเปิดช่อง XSS
+ให้คนที่ถูกเพิ่มเข้ามาในตาราง `members` (โครง `<table>` ที่เป็น markup คงที่ร้อยได้)
+
+ปิดใช้งานตัวเองสำเร็จ → `location.reload()` ทันที เพราะสิทธิ์ admin หายไปแล้ว
+
+### เทสต์
+
+mock ถูกแก้ 1 จุด: เทียบ id ด้วย `String()` แทน `Number()` — ไม่งั้นการ `update`
+แถว `members` จะหาแถวไม่เจอเงียบ ๆ เพราะ uuid แปลงเป็น `NaN`
+
+เพิ่ม 15 ตัว: mapRow แปลงครบ · ตารางว่างยังนับเป็น Supabase · **`toRow()` ห้ามส่ง
+`auth_uid`/`email`** · update ด้วย uuid ได้จริง · setActive/setRole normalize ถูก ·
+**API ต้องไม่มี `create`/`remove`** · pending/activeAdmins/counts · findByEmail ·
+fallback เมื่อตารางเข้าไม่ได้ · missingColumns × 2
+
+และฝั่งฟอร์ม 4 ตัว: **ค่าจากผู้ใช้ต้องไม่กลายเป็น HTML** (กวาดแท็กจริงเทียบ whitelist
++ ตรวจฟันหนูในแต่ละ `<input>` ต้องเป็นคู่) · อีเมล readonly และไม่มี `name` ·
+select/checkbox สะท้อนค่าปัจจุบัน · **ชื่อช่องในฟอร์มต้องตรงกับที่ `bindMemberEditor` อ่าน**
+(กันบั๊กชนิดเดียวกับ `adminPinInput` ที่เคยทำหน้า admin พังรอบแรก)
+
+> ระหว่างตรวจพบ ❌ ปลอมครั้งหนึ่ง — regex ของสคริปต์ตรวจมีคำว่า `onerror=`
+> ซึ่งไปตรงกับ**ข้อความที่ถูก escape แล้ว**ใน attribute (`onerror=&quot;`)
+> โค้ดไม่ได้ผิด จึงแก้ตัวตรวจให้กวาดหาแท็กจริงเทียบ whitelist แทนการค้น substring
+
+### ชุดตรวจใหม่: `test/check-member-ui.mjs` — เรนเดอร์ UI จริงใน DOM ปลอม
+
+`renderMembers()` อยู่ใน IIFE ของ `js/admin.js` และผูกกับ DOM ทั้งหมด
+`node --check` ตรวจได้แค่ไวยากรณ์ จึงจับอะไรไม่ได้เลย ชุดนี้จึงสกัดฟังก์ชันออกจาก IIFE
+(นับวงเล็บปีกกา) แล้วรันใน vm ที่มี DOM shim + Supabase mock แบบ chainable
+**เป็นการรันโค้ดจริง ไม่ใช่การตรวจข้อความในไฟล์**
+
+**จับบั๊กจริงได้ 2 ตัวก่อน commit** — ทั้งคู่ไม่ error และไม่พัง แค่ทำงานผิดเงียบ ๆ:
+
+1. เรียก `bindMemberEditor(formId, id, { onSaved })` แต่พารามิเตอร์ที่ 3 ต้องเป็น**ฟังก์ชัน**
+   (ตาม `bindAccessoryEditor`) → `typeof onSaved !== 'function'` →
+   **บันทึกสำเร็จแต่หน้าเว็บไม่ทำอะไรเลย ไม่ปิด modal ไม่ refresh**
+2. ตัวเทียบเรียงลำดับเขียนกลับด้าน (`a.pending - b.pending`) → คิวรอยืนยันไปอยู่**ท้าย**ตาราง
+   แทนที่จะอยู่หัว ซึ่งขัดกับจุดประสงค์ของหน้า แก้เป็น `pendingRank()`/`roleRank()`
+   ที่อ่านออกว่าค่าน้อยขึ้นก่อน
+
+> ตัวสกัดโค้ดเองก็เคยพลาด: `indexOf('function refreshMembers(')` ตัดคำ `async` ทิ้ง
+> ทำให้ `await` ข้างใน compile ไม่ผ่าน แล้วดูเหมือนว่าโค้ด production พัง
+> บทเรียนเดียวกับรอบก่อน — **ตรวจว่าตัวตรวจถูกก่อนจะแก้โค้ดจริง**
+
+เคสที่ตรวจ: เรนเดอร์ 3 แถว · ลำดับคิว · แถวตัวเองไฮไลต์ + `← คุณ` · ปุ่มและ badge ถูกสถานะ ·
+**ทุกช่องเป็น `textContent` ไม่ใช่ `innerHTML`** · เปิด modal ได้ฟอร์มครบฟิลด์ ·
+id ปลอมไม่โยน error · ตารางว่าง · เข้าตารางไม่ได้แล้วชี้ไปไฟล์ SQL ·
+ปิดใช้งานตัวเอง → `confirm()` + `reload()` · trigger ปฏิเสธ → โชว์ข้อความไทย ไม่ reload ปุ่มไม่ค้าง
+
+### 🐛 บั๊กที่หลุดไปถึงมือผู้ใช้จริง: เดาชื่อคอลัมน์ `pg_trigger`
+
+query ตรวจผลขั้น 5.3 เวอร์ชันแรกเขียนว่า
+
+```sql
+case tgisinsert when true then 'after insert' else 'before update/delete' end
+```
+
+แล้วตอนแก้ป้ายผิด (`members_fill_code` เป็น BEFORE INSERT ไม่ใช่ AFTER) ก็ไปเขียนเป็น
+`tgisbefore` / `tgisafter` / `tgisupdate` / `tgisdelete` ซึ่ง**ไม่มีคอลัมน์เหล่านี้เลย**
+
+ผู้ใช้รันจริงแล้วได้ `ERROR: 42703: column "tgisbefore" does not exist` ที่บรรทัด 208
+และเพราะ SQL Editor รันทั้งไฟล์เป็น transaction เดียว **ขั้นที่ 1–4 ถูก rollback ไปด้วยทั้งหมด**
+
+สาเหตุ: `pg_trigger` เก็บจังหวะ (before/after, insert/update/delete) เป็น **bitmask ใน
+`tgtype` (smallint)** ไม่มีคอลัมน์ boolean แยกให้ — ผมเดาชื่อเอาโดยไม่ได้ตรวจ
+เป็นความผิดชนิดเดียวกับที่ห้ามทำเรื่องสเปกอุปกรณ์: **ห้ามเดาสิ่งที่ไม่มีข้อมูลยืนยัน**
+
+แก้เป็น `pg_get_triggerdef(oid)` ซึ่งดึงคำสั่ง `CREATE TRIGGER` ตัวจริงมาโชว์
+แม่นกว่าการถอด bitmask เอง และไม่มีทางเดาผิด
+
+> `tg_op` ที่ใช้ใน `protect_last_admin()` เป็น**ตัวแปร PL/pgSQL ของจริง**
+> ขึ้นต้นด้วย `tg` เหมือนกันแต่ไม่ใช่อันเดียวกับคอลัมน์ `pg_trigger`
+
+### ตัวกันถาวร: เทสต์ล็อกชื่อคอลัมน์ SQL
+
+ใน sandbox **ไม่มี Postgres ให้รันจริง** จึงตรวจ SQL กับเซิร์ฟเวอร์ไม่ได้เลย
+บั๊กชนิดนี้จึงหลุดไปถึงผู้ใช้ได้ เทสต์ใหม่จึงล็อกชื่อไว้เป็น allowlist:
+
+- statement ที่ query `pg_trigger` ต้องอ้างเฉพาะคอลัมน์ที่มีจริง (19 ชื่อ)
+  — ตรวจ**ราย statement** เพราะในไฟล์เดียวกันมี PL/pgSQL body ที่ใช้ `tg_op` ปนอยู่
+  (ถ้ากวาดทั้งไฟล์จะได้ false positive) และยกเว้นตัวแปร PL/pgSQL 6 ตัวไว้
+- ต้องใช้ `pg_get_triggerdef()` และ**ห้ามอ้าง `tgtype` ตรง ๆ**
+- DDL ของ `members` ต้องมีคอลัมน์ครบตามที่เว็บใช้
+- ทุก `INSERT INTO public.members (...)` ต้องใช้คอลัมน์ที่มีจริง
+- `auth_uid` ต้องเป็น `unique` — เพราะ `on conflict (auth_uid) do nothing`
+  จะ error ถ้าไม่มี constraint ตรงกับที่ระบุ
+
+**พิสูจน์แล้วว่าตัวกันจับบั๊กเดิมได้จริง** (negative test): ใส่ query เวอร์ชันพังกลับเข้าไป
+ชั่วคราว → เทสต์แดงและชี้ชื่อ `tgisbefore, tgisafter` ถูกตัว → กู้ไฟล์ดีกลับ → เขียว
+
+### ตรวจกับฐานข้อมูลจริงผ่าน Supabase connector
+
+พอรัน migration ผ่านแล้ว ได้ตรวจผลจากฐานข้อมูลจริง (`bizbhhzmrtntbszqhzyr`, Postgres 17)
+แทนการคาดเดา — ซึ่งเป็นการตรวจครั้งแรกของโปรเจกต์นี้ที่เคยเห็นข้อมูลฝั่งเซิร์ฟเวอร์จริง
+
+| รายการ | ผล |
+|---|---|
+| 5.1 รายชื่อ | 1 แถว `ADMIN01` / zombe.jpm@gmail.com / admin / active / `ผูกแล้ว` |
+| 5.2 จำนวน | `admin_active=1` · `crew_active=0` · `pending_approval=0` · `total=1` |
+| 5.3 trigger | ครบ 3 ตัว ถูกทุกจังหวะ (ดูจาก `pg_get_triggerdef`) |
+| 5.4 admin ที่ใช้งาน | 1 แถว |
+| RLS `members` | เปิดอยู่ · 2 policy ตรงกับที่หน้าเว็บต้องการ |
+| RLS `fixtures`/`accessories` | เปิดอยู่ · 5 policy แต่ละตาราง |
+| `FIELDS` ในโค้ดเว็บ | อ้าง 8 คอลัมน์ มีจริงครบ → `missingColumns()` ว่าง ไม่มีแผงแดง |
+
+policy ของ `members` ที่ตรวจได้ — ยืนยันว่าตารางทีมงานและปุ่มอนุมัติจะเขียนผ่านจริง:
+
+```
+admin write members  → ALL     qual: is_admin()                              with_check: is_admin()
+members read own     → SELECT  qual: (auth.uid() = auth_uid) OR is_admin()
+```
+
+### เจอจากฐานข้อมูลจริง: `members_fill_code` ไม่ได้ปัก `search_path`
+
+query `pg_proc` พบว่า `handle_new_auth_user` / `protect_last_admin` / `is_admin`
+เป็น `security definer` + `search_path = public, pg_temp` ครบทั้ง 3 ตัว
+แต่ `members_fill_code` (มาจาก migration 2026-10-22) มี `proconfig` เป็น **null**
+→ Supabase Security Advisor เตือนเป็น `function_search_path_mutable`
+
+**ในทางปฏิบัติปลอดภัยอยู่แล้ว** เพราะ body ใช้ `nextval('public.members_code_seq')`
+แบบระบุ schema เต็ม ส่วน `btrim`/`lpad` อยู่ใน `pg_catalog` ซึ่งถูกค้นก่อนเสมอ
+จึงไม่มีอะไรให้ hijack — แก้เพื่อปิดช่องเชิง hygiene เท่านั้น ไม่เปลี่ยนพฤติกรรม
+
+แก้ 2 ที่ เพราะแก้ `schema.sql` อย่างเดียวไม่ช่วยฐานข้อมูลที่ติดตั้งไปแล้ว:
+- `schema.sql` — เพิ่ม `set search_path` ใน CREATE (ติดตั้งใหม่ได้ของที่ถูกต้องเลย)
+- migration ตัวนี้ — เพิ่ม**ขั้นที่ 4.5** เป็น `alter function ... set search_path`
+  (ใช้ `alter` แทน `create or replace` เพื่อไม่ต้องวาง body ใหม่ จึงไม่มีทางเผลอแก้ตรรกะ)
+- เพิ่ม **5.5** query ตรวจ `prosecdef` + `proconfig` ของทั้ง 4 ฟังก์ชัน
+  (query นี้รันกับฐานข้อมูลจริงผ่านแล้ว จึงมั่นใจชื่อคอลัมน์ `pg_proc` ได้ — ไม่เดา)
+
+**จงใจไม่ทำให้ `members_fill_code` เป็น `security definer`** — trigger นี้แค่เติม `new.code`
+ไม่ควรได้สิทธิ์เกินคนที่เรียก และ `security definer` ที่ไม่จำเป็นคือความเสี่ยงเพิ่ม
+(เทสต์ล็อกไว้แล้วว่าต้องไม่มี `security definer` ในฟังก์ชันนี้)
+
+เทสต์เพิ่ม 2 ตัว: ทุก trigger function ใน `schema.sql` ต้องปัก `search_path` ·
+migration ต้องมี `alter function` สำหรับฐานข้อมูลเดิม
+**พิสูจน์ด้วย negative test แล้ว** — ถอด `search_path` ออกชั่วคราว เทสต์แดงและชี้ชื่อฟังก์ชันถูกตัว
+
+**ผล: harness 96/96** (เดิม 74) · **member UI 38/38 (ใหม่)** · DOM id 141 จุด (เดิม 136) · รูป 136 path
+
+### สิ่งที่ยังไม่ทำ (ตั้งใจ)
+
+- ยังไม่มีการลบสมาชิก (ตามข้อ 2 ที่ตกลงกัน — ใช้ปิดใช้งานแทน)
+- ยังไม่สร้างบัญชีจากเว็บ (ทำไม่ได้ตามข้อจำกัดข้างบน)
+- ยังไม่มีหน้าสำหรับ crew (รอระบบจองของ)
+
+---
+
 ## 2026-10-22 ยกจำนวน stock ไปไว้มุมขวาล่างของการ์ด ให้เห็นชัด
 
 ### ปัญหา

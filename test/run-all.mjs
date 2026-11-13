@@ -9,6 +9,7 @@ const suites = [
   ['DOM id wiring (HTML ↔ JS)', 'check-dom-ids.mjs'],
   ['Image references', 'check-images.mjs'],
   ['Data layer + AdminAuth', 'harness.mjs'],
+  ['Member admin UI (เรนเดอร์จริงใน DOM ปลอม)', 'check-member-ui.mjs'],
 ];
 
 let failed = 0;

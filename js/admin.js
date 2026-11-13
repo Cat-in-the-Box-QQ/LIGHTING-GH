@@ -197,6 +197,216 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  // ---------------- ทีมงานและสิทธิ์ ----------------
+  // ทุกค่าในตารางนี้มาจากฐานข้อมูล จึงใช้ createElement/textContent ทั้งหมด
+  // ไม่ร้อย innerHTML ตรง ๆ — ชื่อ/หมายเหตุเป็นข้อความที่คนอื่นพิมพ์ได้
+  // ถ้าร้อยตรง ๆ จะเปิดช่อง XSS ให้คนที่ถูกเพิ่มเข้ามาในตาราง members
+  //
+  // โครง <table> ที่ไม่มีข้อมูลผู้ใช้ร้อยด้วย innerHTML ได้ (เป็น markup คงที่)
+  function renderMembers() {
+    const listEl = document.getElementById('memberList');
+    const summaryEl = document.getElementById('memberSummary');
+    const pendingBox = document.getElementById('memberPendingBox');
+    const problemBox = document.getElementById('memberProblemBox');
+    if (!listEl) return;
+
+    const st = MemberStore.status();
+    // เรียงสำหรับแสดงผล: คนที่ยังไม่อนุมัติขึ้นก่อน (นี่คือคิวที่ต้องทำ)
+    // ตามด้วย admin ก่อน crew แล้วค่อยเรียงตามรหัส
+    // ทำสำเนาเพราะ getAll() คืน array ภายใน — ห้าม sort ทับของ store
+    // (store เรียงตาม code ไว้ให้ที่อื่นใช้ คงที่)
+    //
+    // ตัวเทียบต้องให้ "ค่าน้อย = ขึ้นก่อน" จึงจัดอันดับเป็นเลขแล้วลบกัน
+    // (เขียนกลับด้านจะได้ลำดับตรงข้ามโดยไม่ error — เคยพลาดมาแล้ว)
+    const pendingRank = (m) => (m.active === true ? 1 : 0);
+    const roleRank = (m) => (m.role === 'admin' ? 0 : 1);
+    const all = [...MemberStore.getAll()].sort((a, b) => (
+      pendingRank(a) - pendingRank(b)
+      || roleRank(a) - roleRank(b)
+      || String(a.code || '').localeCompare(String(b.code || ''))
+    ));
+    const myEmail = String(AdminAuth.getEmail() || '').trim().toLowerCase();
+
+    // ---- แผงเตือนปัญหา ----
+    const problems = [];
+    if (!st.isSupabase) {
+      problems.push('รายชื่อที่เห็นตอนนี้ไม่ใช่ข้อมูลจริง (โหมด local) — กด "ตรวจซ้ำ" เมื่อ Supabase กลับมาแล้ว');
+    }
+    if (st.error) problems.push(String(st.error));
+    if (st.writeError) problems.push('บันทึกล่าสุดไม่สำเร็จ: ' + String(st.writeError));
+    const missing = st.missingColumns || [];
+    if (missing.length) {
+      problems.push(`ตาราง ${st.table} ขาดคอลัมน์: ${missing.map((m) => m.column).join(', ')}`
+        + ' — รัน supabase/migration-2026-11-13-member-admin.sql แล้วกด "ตรวจซ้ำ"');
+    }
+    if (problemBox) {
+      problemBox.textContent = problems.join(' · ');
+      problemBox.style.display = problems.length ? 'block' : 'none';
+    }
+
+    // ---- สรุปจำนวน ----
+    if (summaryEl) {
+      summaryEl.textContent = st.isSupabase
+        ? `admin ใช้งาน ${st.admin} คน · crew ใช้งาน ${st.crew} คน · รอยืนยัน ${st.pending} คน · ทั้งหมด ${st.total} แถว`
+        : `ยังไม่เชื่อมต่อกับ Supabase — แสดงข้อมูลจากเครื่องนี้เท่านั้น`;
+    }
+
+    // ---- แถบเตือนรายการรอยืนยัน ----
+    const pendingList = MemberStore.pending();
+    if (pendingBox) {
+      if (pendingList.length) {
+        pendingBox.textContent = `มี ${pendingList.length} บัญชีรอยืนยัน — สร้างบัญชีใน Supabase แล้ว`
+          + ' ระบบจะเพิ่มแถวให้อัตโนมัติเป็น crew และยังไม่เปิดใช้งาน'
+          + ' กด "แก้ไข" เพื่อตั้งรหัสประจำตัว เลือกสิทธิ์ แล้วติ๊กอนุมัติ';
+        pendingBox.style.display = 'block';
+      } else {
+        pendingBox.style.display = 'none';
+      }
+    }
+
+    // ---- ตาราง ----
+    listEl.innerHTML = `
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th>รหัส</th>
+            <th>ชื่อ</th>
+            <th>อีเมล</th>
+            <th>สิทธิ์</th>
+            <th>สถานะ</th>
+            <th class="text-end">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>`;
+    const tbody = listEl.querySelector('tbody');
+
+    if (!all.length) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 6;
+      td.className = 'small text-muted py-3 text-center';
+      td.textContent = st.isSupabase
+        ? 'ยังไม่มีทีมงานในตาราง members — สร้างบัญชีที่ Supabase → Authentication → Users แล้วกด "ตรวจซ้ำ"'
+        : 'โหมด local ไม่มีรายชื่อทีมงานให้จัดการ';
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      return;
+    }
+
+    all.forEach((m) => {
+      const tr = document.createElement('tr');
+      const isSelf = !!myEmail && String(m.email || '').trim().toLowerCase() === myEmail;
+      if (isSelf) tr.className = 'table-light';
+
+      const cells = [
+        m.code || '(ไม่มีรหัส)',
+        (m.fullName || '-') + (isSelf ? '  ← คุณ' : ''),
+        m.email || (m.authUid ? '(ไม่มีอีเมล)' : '(ยังไม่ผูกบัญชี)'),
+      ];
+      cells.forEach((text) => {
+        const td = document.createElement('td');
+        td.className = 'small';
+        td.textContent = text;
+        tr.appendChild(td);
+      });
+
+      // badge สิทธิ์
+      const tdRole = document.createElement('td');
+      const roleBadge = document.createElement('span');
+      roleBadge.className = m.role === 'admin' ? 'badge bg-dark' : 'badge bg-light text-dark border';
+      roleBadge.textContent = m.role;
+      tdRole.appendChild(roleBadge);
+      tr.appendChild(tdRole);
+
+      // badge สถานะ
+      const tdActive = document.createElement('td');
+      const activeBadge = document.createElement('span');
+      activeBadge.className = m.active ? 'badge bg-success' : 'badge bg-warning text-dark';
+      activeBadge.textContent = m.active ? 'ใช้งาน' : 'รอยืนยัน';
+      tdActive.appendChild(activeBadge);
+      tr.appendChild(tdActive);
+
+      // ปุ่มจัดการ
+      const tdBtn = document.createElement('td');
+      tdBtn.className = 'text-end';
+
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'btn btn-outline-dark btn-sm';
+      editBtn.textContent = 'แก้ไข';
+      editBtn.addEventListener('click', () => openMemberModal(String(m.id)));
+      tdBtn.appendChild(editBtn);
+
+      const toggleBtn = document.createElement('button');
+      toggleBtn.type = 'button';
+      toggleBtn.className = m.active
+        ? 'btn btn-outline-danger btn-sm ms-1'
+        : 'btn btn-dark btn-sm ms-1';
+      toggleBtn.textContent = m.active ? 'ปิดใช้งาน' : 'อนุมัติ';
+      toggleBtn.addEventListener('click', async () => {
+        const turningOff = m.active === true;
+        if (turningOff) {
+          const head = isSelf
+            ? 'ปิดใช้งานบัญชีของคุณเอง?'
+            : `ปิดใช้งาน ${m.fullName || m.code || 'สมาชิกรายนี้'}?`;
+          const ok = window.confirm(
+            head
+            + '\n\nจะ login เข้าใช้สิทธิ์ใด ๆ ไม่ได้อีกจนกว่าจะกดอนุมัติคืน'
+            + '\n(ถ้าเป็น admin คนสุดท้าย ฐานข้อมูลจะปฏิเสธเพื่อไม่ให้ทุกคนถูกล็อกออก)'
+          );
+          if (!ok) return;
+        }
+        toggleBtn.disabled = true;
+        try {
+          await MemberStore.setActive(String(m.id), !turningOff);
+          await refreshMembers();
+          // ถ้าปิดใช้งานตัวเองสำเร็จ สิทธิ์ admin หายทันที ต้องโหลดหน้าใหม่
+          if (turningOff && isSelf) location.reload();
+        } catch (err) {
+          console.error('เปลี่ยนสถานะสมาชิกไม่สำเร็จ:', err);
+          // ข้อความจาก trigger protect_last_admin เป็นภาษาไทยอยู่แล้ว
+          showStatus((err && err.message) || 'เปลี่ยนสถานะไม่สำเร็จ', false);
+          toggleBtn.disabled = false;
+        }
+      });
+      tdBtn.appendChild(toggleBtn);
+
+      tr.appendChild(tdBtn);
+      tbody.appendChild(tr);
+    });
+  }
+
+  function openMemberModal(memberId) {
+    const m = MemberStore.getById(memberId);
+    if (!m) {
+      showStatus('ไม่พบสมาชิกรายนี้ — กด "ตรวจซ้ำ" แล้วลองใหม่', false);
+      return;
+    }
+    document.getElementById('adminItemModalTitle').textContent = 'แก้ไขทีมงานและสิทธิ์';
+    document.getElementById('adminItemModalBody').innerHTML = memberEditorHtml(m, 'adminMemberEditForm', {});
+    // พารามิเตอร์ที่ 3 ต้องเป็นฟังก์ชัน onSaved (ไม่ใช่อ็อบเจ็กต์) —
+    // ตาม pattern ของ bindAccessoryEditor/bindFixtureEditor
+    // ถ้าส่ง { onSaved } ไป typeof !== 'function' จะทำให้บันทึกสำเร็จแต่ไม่ทำอะไรเงียบ ๆ
+    bindMemberEditor('adminMemberEditForm', String(m.id), async ({ item }) => {
+      itemModal.hide();
+      await refreshMembers();
+      showStatus(`บันทึกสิทธิ์ของ ${item?.fullName || item?.code || 'ทีมงาน'} แล้ว`);
+    }, {
+      onCancel: () => itemModal.hide(),
+    });
+    itemModal.show();
+  }
+
+  async function refreshMembers() {
+    try {
+      await MemberStore.load();
+    } catch (err) {
+      console.warn('โหลดรายชื่อทีมงานไม่สำเร็จ:', err);
+    }
+    renderMembers();
+  }
+
   async function renderHiddenList() {
     const listEl = document.getElementById('hiddenItemsList');
     if (!listEl) return;
@@ -340,6 +550,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await refreshData();
 
+    // ทีมงานและสิทธิ์ — โหลดเฉพาะตอนปลดล็อกแล้ว เพราะแผงนี้อยู่ใน adminApp
+    // และ RLS ให้ crew อ่านได้แค่แถวของตัวเอง จึงไม่เสีย query ฟรีตอนยังไม่ login
+    await refreshMembers();
+
     const summary = VerificationStore.getSummary();
     if (summary) {
       const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value ?? '-'; };
@@ -375,6 +589,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('addFixtureBtn')?.addEventListener('click', openAddFixtureModal);
     document.getElementById('addAccessoryBtn')?.addEventListener('click', openAddAccessoryModal);
+
+    document.getElementById('refreshMembersBtn')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      try {
+        await refreshMembers();
+        showStatus('โหลดรายชื่อทีมงานใหม่แล้ว');
+      } finally {
+        btn.disabled = false;
+      }
+    });
 
     document.getElementById('adminLogoutBtn')?.addEventListener('click', async () => {
       await AdminAuth.signOut();
