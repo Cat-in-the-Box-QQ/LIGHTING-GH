@@ -39,8 +39,12 @@
 >    สร้างตาราง `members` + ฟังก์ชัน `is_admin()` แล้วสลับสิทธิ์เขียนจาก
 >    "ทุกคนที่ login" เป็น "เฉพาะ role admin"
 >    ขั้นที่ 3 เติม `v_admin_email` ไว้ให้แล้วเป็น `zombe.jpm@gmail.com` — ตรวจว่าตรงก่อนรัน
+> 3. [`migration-2026-11-13-member-admin.sql`](./migration-2026-11-13-member-admin.sql) —
+>    ทำให้**จัดการทีมงานได้จากหน้า admin** ไม่ต้องรัน SQL ทีละคน
+>    เพิ่มคอลัมน์ `email`, trigger สร้างแถว `members` ให้อัตโนมัติเมื่อมีบัญชีใหม่,
+>    backfill บัญชีเดิม และ trigger กันลดสิทธิ์ admin คนสุดท้าย
 >
-> ทั้งสองไฟล์รันซ้ำได้ปลอดภัยเหมือนกัน
+> ทั้งสามไฟล์รันซ้ำได้ปลอดภัยเหมือนกัน ต้องรันตามลำดับเพราะขั้นหลังอ้างอิงของขั้นก่อน
 
 สคริปต์รันซ้ำได้ปลอดภัย (ใช้ `IF NOT EXISTS` ทั้งหมด) และจะสร้าง:
 
@@ -48,11 +52,16 @@
 |---|---|
 | `fixtures` | `id`, `brand`, `model`, `category`, `type`, `power`, `power_raw`, `battery_wh`, `weight`, `stock_count`, `accessories` (text[]), `hidden`, `reserved`, `in_use`, `remaining`, ... |
 | `accessories` | `id`, `name`, `brand`, `category`, `stock`, `image`, `pdf_page`, `compatible_with` (bigint[]), `hidden` |
-| `members` | `id` (uuid), `auth_uid`, `code` (รหัสประจำตัว), `full_name`, `phone`, `role` (`admin`/`crew`), `active` |
+| `members` | `id` (uuid), `auth_uid`, `code` (รหัสประจำตัว), `full_name`, `email`, `phone`, `role` (`admin`/`crew`), `active`, `note` |
 
-พร้อมฟังก์ชัน `public.is_admin()` (security definer) ที่ policy ทุกตัวใช้ตัดสินสิทธิ์
-และ trigger `members_fill_code()` ที่ออกรหัสประจำตัว (`M001`, `M002`, ...) ให้อัตโนมัติ
-ถ้าไม่ได้ระบุ `code` ตอนเพิ่มสมาชิก
+พร้อมฟังก์ชันและ trigger (ทั้งหมดเป็น `security definer` + `set search_path` ยกเว้นตัวออกรหัส):
+
+| ตัว | หน้าที่ |
+|---|---|
+| `is_admin()` | policy ทุกตัวใช้ตัดสินสิทธิ์เขียนข้อมูล |
+| `members_fill_code()` | ออกรหัสประจำตัว `M001`, `M002`, … ให้อัตโนมัติถ้าไม่ได้ระบุ `code` |
+| `handle_new_auth_user()` | สร้างแถว `members` ให้เองเมื่อมีบัญชีใหม่ (`crew` + `active=false` รออนุมัติ) |
+| `protect_last_admin()` | ปฏิเสธการลดสิทธิ์/ปิดใช้งาน admin คนสุดท้าย กันล็อกออกถาวร |
 
 > **`power` vs `battery_wh`** — `power` คือวัตต์ที่อุปกรณ์ *กิน* (ใช้คำนวณโหลดและกระแสไฟ)
 > ส่วน `battery_wh` คือความจุแบตเตอรี่เป็น Wh (ใช้คำนวณว่าเลี้ยงโหลดได้นานแค่ไหน)
@@ -85,25 +94,39 @@ select m.code, m.full_name, m.role, m.active, u.email
 from public.members m left join auth.users u on u.id = m.auth_uid;
 ```
 
-**ทีมงาน (crew — จองของได้อย่างเดียว แก้ไขข้อมูลไม่ได้)**
+**ทีมงาน — ทำผ่านหน้าเว็บได้เลย ไม่ต้องรัน SQL** (ต้องรัน `migration-2026-11-13-member-admin.sql` ก่อน)
 
-1. Authentication → **Users** → **Add user** → ใส่อีเมล + รหัสผ่าน (ติ๊ก *Auto Confirm User*)
-2. รัน SQL นี้ (แก้บรรทัดที่ทำเครื่องหมาย ✏️):
+1. Supabase → **Authentication → Users → Add user** → ใส่อีเมล + รหัสผ่าน (ติ๊ก *Auto Confirm User*)
+   — *ขั้นนี้ทำในเว็บไม่ได้ เพราะ publishable key ไม่มีสิทธิ์จัดการ Authentication*
+2. เปิด `admin.html` → section **ทีมงานและสิทธิ์** → จะเห็นแถบเตือน
+   **"มี N บัญชีรอยืนยัน"** และแถวใหม่อยู่ในสถานะ `crew` + `รอยืนยัน`
+   (trigger `on_auth_user_created` สร้างให้เอง และ trigger เดิมออกรหัส `M001`, `M002`… ให้ด้วย)
+3. กด **แก้ไข** → ตั้งรหัสประจำตัว / ชื่อ / เบอร์ → เลือกสิทธิ์ → ติ๊ก **อนุมัติให้ใช้งาน** → บันทึก
+
+การนำคนออกให้กด **ปิดใช้งาน** (ไม่มีปุ่มลบ) — กดคืนได้ทันทีและยังเหลือประวัติ
+
+> **อย่าให้ทีมงานเป็น `admin`** — role `admin` แก้/ซ่อน/ลบอุปกรณ์ได้ทั้งร้าน
+> ให้เป็น `admin` เฉพาะคนที่ดูแลข้อมูลจริง
+>
+> ระบบจะ**ปฏิเสธ**การลดสิทธิ์หรือปิดใช้งาน admin คนสุดท้าย
+> (trigger `protect_last_admin`) กันไม่ให้ทุกคนถูกล็อกออกถาวร
+
+<details>
+<summary>ทางสำรอง: เพิ่มผ่าน SQL (กรณีเข้าหน้า admin ไม่ได้)</summary>
 
 ```sql
-insert into public.members (auth_uid, code, full_name, phone, role, active)
+insert into public.members (auth_uid, email, code, full_name, phone, role, active)
 select u.id,
-       'TK01',                          -- ✏️ รหัสประจำตัว (เว้น '' ได้ ระบบจะออกรหัสให้อัตโนมัติ)
-       'ชื่อ นามสกุล',                   -- ✏️ ชื่อที่แสดงบนเว็บ
+       u.email,
+       'TK01',                          -- รหัสประจำตัว (เว้น '' ได้ ระบบจะออกรหัสให้อัตโนมัติ)
+       'ชื่อ นามสกุล',                   -- ชื่อที่แสดงบนเว็บ
        null,                            -- เบอร์โทร (ไม่บังคับ)
        'crew',                          -- crew = จองได้อย่างเดียว
        true
 from auth.users u
-where lower(u.email) = lower('someone@company.com');   -- ✏️ อีเมลของทีม
+where lower(u.email) = lower('someone@company.com');   -- อีเมลของทีม
 ```
-
-> **อย่าใส่ทีมงานเป็น `admin`** — role `admin` แก้/ซ่อน/ลบอุปกรณ์ได้ทั้งร้าน
-> ให้เป็น `admin` เฉพาะคนที่ดูแลข้อมูลจริง
+</details>
 
 ### `SUPABASE_ADMIN_EMAILS` ใน `js/supabase-config.js`
 
