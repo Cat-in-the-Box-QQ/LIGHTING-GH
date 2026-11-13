@@ -740,3 +740,672 @@ footer {
     position: static !important;
   }
 }
+
+/* ==========================================================================
+   ปฏิทินจองอุปกรณ์ (booking.html)
+   --------------------------------------------------------------------------
+   โครง: รางเลื่อนแนวนอน (cal-track) → แผงเดือน (cal-pane) → ช่องวัน (cal-day)
+
+   ช่องวัน "ขนาดปกติ" แบบปฏิทินทั่วไป: สูง 34px ไม่ถมสีทั้งช่อง
+   แต่ประทับ "จุดกลมเล็ก" (cal-dot) ไว้มุมล่าง — หนึ่งจุดต่อหนึ่งคนที่จอง
+   วันไหนหลายคนจองจึงเห็นหลายจุดเรียงกัน ไม่ต้องมีตัวหนังสือในช่องเลย
+
+   สีของคนถูกส่งลงมาผ่าน CSS custom property (--pc / --pc-soft / --pc-ink)
+   และ inline style ของจุด ดังนั้น CSS จึงไม่รู้จักชื่อคน ไม่รู้จักจำนวนคน
+   และไม่ hardcode สีรายคนเลย — เพิ่มสมาชิกเท่าไหร่ก็ไม่ต้องแก้ CSS
+   ========================================================================== */
+
+.cal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ---- ป้ายบอกโหมดข้อมูล ---------------------------------------------------- */
+.cal-banner {
+  border-radius: 10px;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+}
+
+.cal-banner-demo { background: #fff8e6; border-color: #ffe08a; }
+.cal-banner-warn { background: #fdecec; border-color: #f5c2c7; }
+
+.cal-banner-title { font-weight: 700; margin-bottom: 4px; }
+.cal-banner-detail { font-size: .9rem; color: #3d3d3d; }
+.cal-banner-hint { font-size: .82rem; color: var(--muted); margin-top: 4px; }
+
+/* ---- แถบสถิติ ------------------------------------------------------------ */
+.cal-stat {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 8px 11px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  border-left: 4px solid var(--brand-accent);
+  height: 100%;
+}
+
+.cal-stat-bad { border-left-color: #dc3545; }
+.cal-stat-warn { border-left-color: #fd7e14; }
+.cal-stat-good { border-left-color: #198754; }
+
+.cal-stat-value { font-size: 1.3rem; font-weight: 800; line-height: 1.1; }
+.cal-stat-label { font-size: .82rem; font-weight: 600; }
+.cal-stat-sub { font-size: .72rem; color: var(--muted); }
+
+.cal-stat-note {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 6px 11px;
+  font-size: .83rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+/* ---- แถบเครื่องมือ -------------------------------------------------------- */
+.cal-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 7px 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+.cal-toolbar-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.cal-toolbar-title { font-weight: 800; font-size: 1rem; margin-right: auto; }
+
+.cal-jump { width: auto; min-width: 150px; }
+
+.cal-filter-note { background: #f1f3f5; border-radius: 999px; padding: 3px 10px; }
+
+.cal-tip { font-size: .78rem; }
+
+/* ---- คำอธิบายสี ---------------------------------------------------------- */
+.cal-legend {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 8px 11px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+.cal-legend-title { font-size: .78rem; font-weight: 700; color: var(--muted); margin-bottom: 5px; }
+
+.cal-legend-list { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+
+.cal-legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  background: var(--pc-soft, #f8f9fa);
+  color: var(--pc-ink, #212529);
+  border-radius: 999px;
+  padding: 2px 9px 2px 6px;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .12s ease, transform .12s ease;
+}
+
+.cal-legend-chip:hover { transform: translateY(-1px); }
+
+.cal-legend-chip.is-active {
+  border-color: var(--pc, #12151c);
+  box-shadow: 0 0 0 2px var(--pc-soft, #eee);
+}
+
+.cal-legend-chip.is-dim { opacity: .38; }
+
+/* จุดกลมในคำอธิบายสี = รูปเดียวกับจุดที่ประทับในช่องวัน */
+.cal-legend-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--pc, #6c757d);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.12);
+  flex: 0 0 auto;
+}
+
+.cal-legend-count {
+  background: rgba(0,0,0,.08);
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: .72rem;
+}
+
+.cal-legend-key {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: .74rem;
+  color: var(--muted);
+  border-top: 1px dashed var(--line);
+  padding-top: 5px;
+}
+
+.cal-key-item { display: inline-flex; align-items: center; gap: 5px; }
+
+.cal-key-swatch {
+  width: 22px;
+  height: 18px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 2px;
+  padding: 2px 3px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.cal-key-swatch i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: block;
+  background: #adb5bd;
+}
+
+/* สองจุด = วันนั้นหลายคนจอง (ใช้สีกลาง ไม่ใช่สีคนจริง เพราะนี่แค่คำอธิบายรูป) */
+.cal-key-multi i:first-child { background: #e0574a; }
+.cal-key-multi i:last-child { background: #3f7fc4; }
+
+.cal-key-full { box-shadow: inset 0 0 0 2px #dc3545; }
+.cal-key-overdue { border-style: dashed; box-shadow: inset 0 0 0 2px #dc3545; }
+.cal-key-today { box-shadow: inset 0 0 0 2px var(--brand-accent); }
+
+/* ---- ลูกศรเลื่อนข้างปฏิทิน ------------------------------------------------ */
+.cal-stage { display: flex; align-items: stretch; gap: 6px; }
+
+.cal-stage-main {
+  flex: 1 1 auto;
+  min-width: 0;          /* สำคัญ: ไม่งั้น flex จะดันรางเลื่อนให้ล้นจอแทนที่จะเลื่อน */
+}
+
+.cal-nav-arrow {
+  flex: 0 0 auto;
+  width: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  cursor: pointer;
+  font: inherit;
+  color: #495057;
+  padding: 4px 2px;
+  transition: background .12s ease, color .12s ease;
+}
+
+.cal-nav-arrow:hover { background: var(--brand-dark); color: #fff; }
+.cal-nav-arrow:hover .cal-arrow-label small { color: #ced4da; }
+
+.cal-arrow { font-size: 1.5rem; line-height: 1; font-weight: 700; }
+
+.cal-arrow-label {
+  font-size: .7rem;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.cal-arrow-label small { display: block; font-size: .62rem; font-weight: 500; color: var(--muted); }
+
+/* ---- รางเลื่อนเดือน (มุมมองหลัก) ------------------------------------------ */
+.cal-track {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 12px;
+  padding: 2px 2px 10px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  /* ต้องยอมเลื่อนแนวตั้งด้วย — ปฏิทินสูงพอที่ผู้ใช้จะปัดหน้าลงตอนนิ้วอยู่บนมัน */
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
+}
+
+.cal-track.is-dragging { cursor: grabbing; }
+.cal-track.is-dragging .cal-day { cursor: grabbing; }
+
+.cal-pane {
+  flex: 0 0 min(100%, 460px);
+  scroll-snap-align: center;
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px;
+  box-shadow: 0 1px 5px rgba(0,0,0,.06);
+}
+
+.cal-pane-head { display: flex; align-items: baseline; gap: 7px; margin-bottom: 5px; }
+
+.cal-pane-month { font-weight: 800; font-size: 1rem; }
+.cal-pane-year { font-size: .8rem; color: var(--muted); }
+
+.cal-pane-count {
+  margin-left: auto;
+  font-size: .72rem;
+  color: var(--muted);
+  background: #f1f3f5;
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.cal-dow-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  margin-bottom: 3px;
+}
+
+.cal-dow-row span { text-align: center; font-size: .72rem; font-weight: 700; color: var(--muted); }
+
+.cal-pane-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+
+/* ---- ช่องวัน: ขนาดปกติ + ประทับจุดสี ------------------------------------- */
+.cal-day {
+  position: relative;
+  min-height: 34px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px 4px 3px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  overflow: hidden;
+  transition: box-shadow .1s ease, border-color .1s ease, opacity .12s ease;
+}
+
+.cal-day:hover:not(.is-blank) {
+  border-color: #868e96;
+  box-shadow: 0 2px 6px rgba(0,0,0,.16);
+  z-index: 1;
+}
+
+.cal-day-num { font-size: .74rem; font-weight: 600; line-height: 1.25; color: #495057; }
+
+/* จุดสี = คนจอง (ประทับไว้มุมล่างซ้ายของช่อง) */
+.cal-dots {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  margin-top: auto;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.cal-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: block;
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.1);
+}
+
+/* จุดโปร่ง = ยังมีคนจองอีกแต่แสดงไม่หมด (ไม่ต้องใส่ตัวเลขในช่อง) */
+.cal-dot-more {
+  background: transparent;
+  border: 1.5px dashed rgba(0,0,0,.45);
+  box-shadow: none;
+}
+
+.cal-day.is-blank { background: transparent; border-color: transparent; cursor: default; }
+
+.cal-day.is-booked { background: #fffdf6; }
+
+/* วงแหวนบอกสถานะ — ใช้ inset shadow เพื่อไม่กินพื้นที่ในช่อง */
+.cal-day.is-full { box-shadow: inset 0 0 0 2px #dc3545; }
+.cal-day.is-overdue { box-shadow: inset 0 0 0 2px #dc3545; border-style: dashed; }
+.cal-day.is-today { box-shadow: inset 0 0 0 2px var(--brand-accent); }
+.cal-day.is-today .cal-day-num { font-weight: 800; color: #12151c; }
+.cal-day.is-selected { box-shadow: inset 0 0 0 2px var(--brand-dark); }
+.cal-day.is-today.is-selected { box-shadow: inset 0 0 0 2px var(--brand-accent), inset 0 0 0 4px var(--brand-dark); }
+.cal-day.is-dim { opacity: .28; }
+
+/* ---- มุมมองปี (ภาพรวมย่อ 12 เดือน) --------------------------------------- */
+.cal-year {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
+  gap: 8px;
+}
+
+.cal-year-hint {
+  grid-column: 1 / -1;
+  font-size: .8rem;
+  color: var(--muted);
+  background: var(--card-bg);
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 5px 9px;
+}
+
+.cal-mini {
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 5px;
+}
+
+.cal-mini-head { display: flex; align-items: baseline; gap: 4px; margin-bottom: 3px; }
+.cal-mini-month { font-weight: 800; font-size: .84rem; }
+.cal-mini-year { font-size: .7rem; color: var(--muted); }
+
+.cal-mini-open {
+  margin-left: auto;
+  background: #f1f3f5;
+  border: 0;
+  border-radius: 999px;
+  padding: 1px 6px;
+  font-size: .64rem;
+  font-weight: 700;
+  color: #495057;
+  cursor: pointer;
+}
+
+.cal-mini-open:hover { background: var(--brand-dark); color: #fff; }
+
+.cal-mini-dow {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+  margin-bottom: 2px;
+}
+
+.cal-mini-dow span { text-align: center; font-size: .56rem; color: #adb5bd; font-weight: 700; }
+
+.cal-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+/* ช่องย่อ: จุดเดียวแบ่งสีเป็นเสี้ยววงกลม (conic-gradient) เพราะที่แคบเกินกว่าจะวางหลายจุด */
+.cal-day-mini {
+  min-height: 22px;
+  padding: 1px 2px 2px;
+  border-radius: 4px;
+  align-items: center;
+}
+
+.cal-day-mini .cal-day-num { font-size: .56rem; align-self: flex-end; }
+.cal-day-mini .cal-dots { align-self: center; gap: 0; }
+.cal-day-mini .cal-dot { width: 6px; height: 6px; }
+
+.cal-day-mini.is-full,
+.cal-day-mini.is-overdue { box-shadow: inset 0 0 0 1.5px #dc3545; }
+.cal-day-mini.is-today { box-shadow: inset 0 0 0 1.5px var(--brand-accent); }
+.cal-day-mini.is-selected { box-shadow: inset 0 0 0 1.5px var(--brand-dark); }
+
+/* ---- แผงใบงาน (ใต้ปฏิทิน) ------------------------------------------------- */
+.cal-detail {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.08);
+  scroll-margin-top: 12px;
+}
+
+.cal-detail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 9px;
+  margin-bottom: 11px;
+}
+
+.cal-detail-date { font-weight: 800; font-size: 1.1rem; }
+.cal-detail-meta { font-size: .83rem; color: var(--muted); }
+.cal-detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.cal-detail-more { font-size: .82rem; color: var(--muted); margin: 8px 0; }
+
+.cal-job-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.cal-job {
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--pc, #6c757d);
+  background: var(--pc-soft, #fff);
+  border-radius: 10px;
+  padding: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cal-job.is-dim { opacity: .4; }
+.cal-job-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.cal-job-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--pc, #6c757d);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.12);
+  flex: 0 0 auto;
+}
+
+.cal-job-person { font-weight: 800; color: var(--pc-ink, #212529); }
+
+.cal-status {
+  margin-left: auto;
+  font-size: .7rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 1px 8px;
+  background: #e9ecef;
+  color: #495057;
+  white-space: nowrap;
+}
+
+.cal-status-reserved { background: #cfe2ff; color: #084298; }
+.cal-status-checked_out { background: #d1e7dd; color: #0f5132; }
+.cal-status-overdue { background: #f8d7da; color: #842029; }
+.cal-status-cancelled { background: #e9ecef; color: #6c757d; text-decoration: line-through; }
+
+.cal-job-title { font-size: .93rem; font-weight: 700; }
+.cal-job-loc { font-size: .8rem; color: var(--muted); }
+
+.cal-job-items { width: 100%; font-size: .8rem; border-collapse: collapse; margin-top: 3px; }
+.cal-job-items td { border-top: 1px dashed rgba(0,0,0,.12); padding: 2px 3px; }
+.cal-job-item-name { font-weight: 600; }
+.cal-job-item-qty { text-align: right; white-space: nowrap; }
+.cal-job-item-stock { text-align: right; color: var(--muted); white-space: nowrap; }
+
+.cal-job-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: .74rem;
+  color: var(--muted);
+  border-top: 1px solid rgba(0,0,0,.1);
+  margin-top: 5px;
+  padding-top: 3px;
+}
+
+.cal-job-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .5px; }
+
+.cal-job-note {
+  font-size: .76rem;
+  color: #664d03;
+  background: #fff3cd;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.cal-unknown {
+  font-size: .72rem;
+  color: #6c757d;
+  background: repeating-linear-gradient(45deg, #f1f3f5, #f1f3f5 3px, #e9ecef 3px, #e9ecef 6px);
+  border-radius: 3px;
+  padding: 0 4px;
+}
+
+.cal-unknown-note {
+  margin-top: 10px;
+  font-size: .82rem;
+  color: #41464b;
+  background: #f8f9fa;
+  border: 1px dashed #ced4da;
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+/* ---- ตารางรวมทั้งวัน ------------------------------------------------------ */
+.cal-total { border-top: 2px solid var(--brand-dark); margin-top: 12px; padding-top: 9px; }
+.cal-total-title { font-weight: 800; font-size: .93rem; }
+.cal-total-note { font-size: .78rem; color: var(--muted); margin-bottom: 5px; }
+.cal-total-table { font-size: .83rem; }
+.cal-total-table .row-sold-out td { background: #fff5f5; }
+.cal-total-table .row-unknown td { background: #f8f9fa; color: #6c757d; }
+.cal-total-who { white-space: nowrap; }
+
+.cal-who-dot {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  margin-right: 3px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.12);
+}
+
+.cal-tag { font-size: .7rem; font-weight: 700; border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
+.cal-tag-full { background: #f8d7da; color: #842029; }
+.cal-tag-tight { background: #fff3cd; color: #664d03; }
+.cal-tag-ok { background: #d1e7dd; color: #0f5132; }
+.cal-tag-unknown { background: #e9ecef; color: #495057; }
+
+/* ---- ภาพรวมช่วงที่ดู ------------------------------------------------------ */
+.cal-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.cal-block { margin-bottom: 4px; }
+.cal-block-title { font-weight: 800; font-size: .88rem; margin-bottom: 3px; }
+.cal-list { list-style: none; padding: 0; margin: 0; font-size: .84rem; }
+
+.cal-list li {
+  padding: 3px 0;
+  border-bottom: 1px dashed var(--line);
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+.cal-list-main { font-weight: 700; }
+.cal-list-sub { color: var(--muted); font-size: .78rem; }
+
+.cal-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: #0d6efd;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: .84rem;
+}
+
+.cal-empty-line { font-size: .84rem; color: var(--muted); padding: 5px 0; }
+
+.cal-day-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.cal-day-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--line);
+  background: #fffdf6;
+  border-radius: 8px;
+  padding: 3px 7px;
+  cursor: pointer;
+  font: inherit;
+  min-width: 70px;
+}
+
+.cal-day-chip.is-full { background: #fff5f5; border-color: #f5c2c7; }
+.cal-day-chip:hover { border-color: var(--brand-dark); }
+.cal-day-chip-date { font-size: .76rem; font-weight: 700; }
+.cal-day-chip-dots { display: flex; gap: 2px; }
+
+.cal-day-chip-dots i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+.cal-day-chip-count { font-size: .66rem; color: var(--muted); }
+
+/* ---- อื่น ๆ --------------------------------------------------------------- */
+.cal-loading {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.cal-loading-error { color: #842029; background: #fff5f5; }
+
+.cal-next-steps {
+  background: #f8f9fa;
+  border: 1px dashed #ced4da;
+  border-radius: 10px;
+  padding: 11px 13px;
+}
+
+.cal-next-title { font-weight: 800; font-size: .88rem; margin-bottom: 3px; }
+
+.cal-next-list { margin: 0; padding-left: 20px; font-size: .83rem; color: #495057; }
+
+.cal-next-list code { background: #e9ecef; border-radius: 3px; padding: 0 4px; font-size: .8rem; }
+
+/* ---- จอเล็ก -------------------------------------------------------------- */
+@media (max-width: 991.98px) {
+  .cal-toolbar-title { margin-right: 0; width: 100%; order: -1; }
+  .cal-detail-head { flex-direction: column; }
+}
+
+@media (max-width: 767.98px) {
+  .cal-pane { flex-basis: 100%; padding: 6px; }
+  .cal-pane-month { font-size: .95rem; }
+  .cal-day { min-height: 32px; padding: 1px 3px 2px; border-radius: 5px; }
+  .cal-day-num { font-size: .68rem; }
+  .cal-dot { width: 6px; height: 6px; }
+  .cal-dots { gap: 1px; }
+  .cal-year { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); }
+  .cal-job-grid { grid-template-columns: minmax(0, 1fr); }
+  .cal-detail-actions { width: 100%; }
+  .cal-nav-arrow { width: 44px; }
+  .cal-arrow { font-size: 1.25rem; }
+  .cal-arrow-label { font-size: .62rem; }
+  .cal-arrow-label small { font-size: .56rem; }
+}

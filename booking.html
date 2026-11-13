@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>ปฏิทินจองอุปกรณ์ - Lighting GH</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark mb-4">
+  <div class="container-fluid px-3 px-lg-4">
+    <a class="navbar-brand" href="index.html">💡 Lighting GH</a>
+    <div class="d-flex gap-3 flex-wrap">
+      <a class="nav-link text-light" href="index.html">Dashboard</a>
+      <a class="nav-link text-light" href="equipment.html">Equipment</a>
+      <a class="nav-link text-light" href="accessories.html">Accessories</a>
+      <a class="nav-link text-light" href="setbuilder.html">Set Builder</a>
+      <a class="nav-link text-light" href="inventory.html">Inventory</a>
+      <a class="nav-link text-light active" href="booking.html">Booking</a>
+      <a class="nav-link text-light" href="admin.html">Sign in</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid px-3 px-lg-4 pb-5">
+
+  <div class="cal-top mb-3">
+    <div>
+      <h2 class="mb-1">ปฏิทินจองอุปกรณ์</h2>
+      <p class="text-muted small mb-0">
+        ช่องสี่เหลี่ยมในตารางคือ <strong>หนึ่งวัน</strong> · สีคือ <strong>คนที่จอง</strong> (วันเดียวหลายคนจอง = ช่องแบ่งสี)
+        · เลื่อนซ้าย-ขวาเพื่อดูเดือนถัดไป · <strong>กดวันที่</strong> แล้วจะเห็นใบงานของวันนั้นข้างล่าง
+      </p>
+    </div>
+    <div class="btn-group cal-source" role="group" aria-label="เลือกแหล่งข้อมูล">
+      <button type="button" class="btn btn-sm btn-outline-dark" data-cal-source="demo">ข้อมูลตัวอย่าง</button>
+      <button type="button" class="btn btn-sm btn-outline-dark" data-cal-source="live">ข้อมูลจริง</button>
+    </div>
+  </div>
+
+  <div id="calBanner" class="mb-3" hidden></div>
+
+  <div id="calStats" class="row g-2 mb-3"></div>
+
+  <div class="cal-toolbar mb-2">
+    <div class="cal-toolbar-group">
+      <div class="btn-group btn-group-sm" role="group" aria-label="เลือกมุมมอง">
+        <button type="button" id="calViewMonth" class="btn btn-outline-dark active" title="ดูทีละเดือน เลื่อนซ้าย-ขวาได้">เดือน</button>
+        <button type="button" id="calViewYear" class="btn btn-outline-dark" title="ภาพรวมทั้งปี 12 เดือนย่อในจอเดียว">ปี (ภาพรวม)</button>
+      </div>
+    </div>
+
+    <div class="cal-toolbar-group">
+      <div class="btn-group btn-group-sm" role="group" aria-label="เลื่อนช่วงเวลา">
+        <button type="button" id="calPrev" class="btn btn-outline-dark" aria-label="ก่อนหน้า" title="เดือนก่อนหน้า (←)">‹</button>
+        <button type="button" id="calToday" class="btn btn-outline-dark" title="กลับมาเดือนนี้ (T)">วันนี้</button>
+        <button type="button" id="calNext" class="btn btn-outline-dark" aria-label="ถัดไป" title="เดือนถัดไป (→)">›</button>
+      </div>
+      <input type="date" id="calJump" class="form-control form-control-sm cal-jump" aria-label="ไปที่วันที่">
+    </div>
+
+    <div class="cal-toolbar-group cal-toolbar-title">
+      <span id="calTitle">—</span>
+    </div>
+
+    <div class="cal-toolbar-group">
+      <span id="calFilterNote" class="cal-filter-note small" hidden></span>
+    </div>
+  </div>
+
+  <div id="calLegend" class="cal-legend mb-2"></div>
+
+  <div class="cal-stage mb-2">
+    <button type="button" id="calPrevMonth" class="cal-nav-arrow" aria-label="ก่อนหน้า" title="ย้อนกลับ (←)"></button>
+
+    <div id="calGrid" class="cal-grid-wrap cal-view-month cal-stage-main">
+      <div id="calTrack" class="cal-track"></div>
+      <div id="calYearGrid" class="cal-year" hidden></div>
+      <div id="calLoading" class="cal-loading" hidden></div>
+    </div>
+
+    <button type="button" id="calNextMonth" class="cal-nav-arrow" aria-label="ถัดไป" title="ถัดไป (→)"></button>
+  </div>
+
+  <p class="text-muted small mb-3 cal-tip">
+    เลื่อนดูเดือนอื่น: กดปุ่มลูกศรข้างปฏิทิน · ลากด้วยเมาส์ · หมุนล้อ · ปัดบนจอโทรศัพท์ · หรือกด ← → บนคีย์บอร์ด
+  </p>
+
+  <div id="calDetail" class="cal-detail" hidden></div>
+
+  <div class="cal-next-steps mt-4">
+    <div class="cal-next-title">ขั้นถัดไปที่ยังไม่ได้ทำในต้นแบบนี้</div>
+    <ul class="cal-next-list">
+      <li>ฟอร์มสร้างใบจองจริง (เลือกวัน → เพิ่มอุปกรณ์/อุปกรณ์เสริม → ชื่องาน → บันทึก) พร้อมปุ่มที่ปิดไว้เมื่อของยังไม่ระบุจำนวน</li>
+      <li>อ่านข้อมูลจากฐานข้อมูลจริง — ต้องรัน SQL สร้าง <code>v_booking_day_summary</code> และ <code>item_availability_between()</code> ก่อน</li>
+      <li>เก็บสีประจำตัวคนไว้ใน <code>members.color_hue</code> (ตอนนี้ใช้ค่าที่กำหนดไว้ในข้อมูลตัวอย่าง)</li>
+      <li>แก้ "วันนี้" ของฐานข้อมูลจาก UTC เป็นเวลาไทย (<code>biz_today()</code>) ไม่งั้นช่วงตี 0–7 โมงเช้า ปฏิทินจะไฮไลต์ผิดวัน</li>
+      <li>เปิดปุ่ม "จอง" ในหน้า Sign in ให้กดได้จริง</li>
+    </ul>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/booking-store.js"></script>
+<script src="js/booking-demo.js"></script>
+<script src="js/booking-live.js"></script>
+<script src="js/booking-calendar.js"></script>
+<script>
+  (function () {
+    // รับค่าจาก URL ได้ เพื่อให้หน้าอื่นลิงก์มาเจาะวัน/มุมมองที่ต้องการได้
+    // เช่น booking.html?date=2026-11-15&view=year
+    var params = new URLSearchParams(window.location.search || '');
+    var dateParam = String(params.get('date') || '');
+    var viewParam = String(params.get('view') || '');
+    var sourceParam = String(params.get('source') || '');
+
+    var opts = { view: 'month' };
+    if (['month', 'year'].indexOf(viewParam) >= 0) opts.view = viewParam;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) opts.today = dateParam;
+
+    // ค่าเริ่มต้นคือ "ข้อมูลตัวอย่าง" เพราะฐานข้อมูลจริงยังไม่มีใบจองและยังไม่มี view ปฏิทิน
+    opts.provider = sourceParam === 'live' && window.BookingLiveProvider
+      ? window.BookingLiveProvider
+      : window.BookingDemoProvider;
+
+    if (window.BookingCalendar && typeof window.BookingCalendar.init === 'function') {
+      window.BookingCalendar.init(opts);
+    }
+  })();
+</script>
+</body>
+</html>

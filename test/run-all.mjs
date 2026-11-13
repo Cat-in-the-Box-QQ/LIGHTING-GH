@@ -10,6 +10,7 @@ const suites = [
   ['Image references', 'check-images.mjs'],
   ['Data layer + AdminAuth', 'harness.mjs'],
   ['Member admin UI (เรนเดอร์จริงใน DOM ปลอม)', 'check-member-ui.mjs'],
+  ['Booking calendar (ปฏิทินจอง — เรนเดอร์จริงใน DOM ปลอม)', 'check-booking-calendar.mjs'],
 ];
 
 let failed = 0;
