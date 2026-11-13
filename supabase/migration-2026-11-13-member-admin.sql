@@ -48,10 +48,17 @@ comment on column public.members.email is
 -- =====================================================================
 -- ขั้นที่ 2 — trigger สร้างแถว members ให้อัตโนมัติเมื่อมีบัญชีใหม่
 -- =====================================================================
--- role = 'crew' และ active = false ไว้ก่อนเสมอ
---   -> ต่อให้เปิดให้ใครสมัครเองได้ ก็จะทำอะไรไม่ได้จนกว่า admin จะอนุมัติ
---   -> admin เห็นรายการ "รอยืนยัน" ในหน้าเว็บ แล้วค่อยตั้งรหัส/สิทธิ์
+-- ⚠️ บล็อกนี้ถูกแทนที่ด้วย migration-2026-11-13b-no-approval.sql แล้ว
+--    ค่าข้างล่างถูกแก้เป็น active = true ให้ตรงกับฐานข้อมูลจริง
+--    เพื่อให้ "รันไฟล์นี้ซ้ำแล้วไม่ revert กลับเป็นแบบต้องอนุมัติเงียบ ๆ"
+--    (ไฟล์นี้เป็น create or replace จึงเขียนทับฟังก์ชันทุกครั้งที่ถูกรัน)
 --
+-- ประวัติ: เวอร์ชันที่รันครั้งแรกใช้ active = false เพื่อให้ admin มากดอนุมัติ
+--   ซึ่งจำเป็นตอนที่ยังเปิดให้ใครก็ได้สมัครเอง (disable_signup = false)
+--   ต่อมาปิด public signup แล้ว บัญชีใหม่จึงเกิดจาก admin สร้างใน Dashboard เท่านั้น
+--   ขั้นอนุมัติจึงกลายเป็นงานซ้ำซ้อน -> ถอดออก
+--
+-- role = 'crew' เสมอ -> เข้ามาได้แต่แก้ไขข้อมูลของไม่ได้จนกว่า admin จะเลื่อนสิทธิ์ให้
 -- ไม่ต้องส่ง code ไป เพราะ trigger members_fill_code (before insert on members)
 -- ที่สร้างไว้รอบก่อนจะออกรหัส M001, M002, ... ให้อัตโนมัติ สอง trigger ต่อกันพอดี
 
@@ -78,7 +85,7 @@ begin
   -- = สมัครไม่ได้ทั้งระบบ จึงต้องเก็บ error ไว้แล้วปล่อยผ่านเสมอ
   begin
     insert into public.members (auth_uid, email, full_name, role, active)
-    values (new.id, new.email, v_name, 'crew', false)
+    values (new.id, new.email, v_name, 'crew', true)
     on conflict (auth_uid) do nothing;
   exception when others then
     raise warning
