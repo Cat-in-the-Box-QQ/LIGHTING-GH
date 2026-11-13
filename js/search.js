@@ -34,6 +34,47 @@ function stockPillHtml(item) {
     + '</span>';
 }
 
+// บรรทัดยอดจองบนการ์ด: "ติดจอง 2 · เหลือ 6" หรือ "ยังไม่ระบุจำนวน — จองไม่ได้"
+//
+// ตัวเลขมาจาก BookingStore ซึ่งอ่าน view v_item_availability ของฐานข้อมูล
+// (ก้อนเดียวกับที่ trigger ใช้ตัดสินว่าจองเกินไหม) — เว็บไม่คำนวณเองเด็ดขาด
+//
+// คืนสตริงว่างเมื่อ
+//   1. BookingStore ยังไม่ถูกโหลด/อ่าน view ไม่ได้ -> การ์ดหน้าตาเหมือนเดิมทุกประการ
+//      (ระบบจองต้องไม่ทำให้หน้าที่ใช้อยู่แล้วพังตาม)
+//   2. ไม่มีของติดจองเลย -> มี .stock-pill บอกจำนวนทั้งหมดอยู่แล้ว
+//      โชว์ "เหลือ 8" ซ้ำจะทำให้การ์ดรกโดยไม่ได้ให้ข้อมูลใหม่
+//
+// itemType: 'fixture' | 'accessory' — ห้ามเดาจาก item เพราะ id ของสองตารางซ้ำกันได้
+function bookingLineHtml(itemType, itemId) {
+  if (typeof BookingStore === 'undefined' || !BookingStore.isReady()) return '';
+
+  const a = BookingStore.get(itemType, itemId);
+  if (!a) return '';
+
+  // ยังไม่กรอกจำนวน -> จองไม่ได้ ต้องบอกตรง ๆ (ตอนนี้ accessories 70 จาก 72 รายการ)
+  // ห้ามโชว์ "เหลือ 0" เพราะจะแปลว่าของหมด ซึ่งไม่จริง
+  if (a.stockUnknown) {
+    return '<span class="booking-line booking-unknown"'
+      + ' title="ยังไม่ได้กรอกจำนวนของรายการนี้ในระบบ จึงเปิดให้จองไม่ได้ — ให้ admin เติมจำนวนก่อน">'
+      + 'ยังไม่ระบุจำนวน — จองไม่ได้</span>';
+  }
+
+  if (a.booked > 0) {
+    const parts = [`มีทั้งหมด ${a.stock} ชิ้น`, `ถูกจองวันนี้ ${a.booked} ชิ้น`];
+    if (a.outCount > 0) parts.push(`จ่ายออกจากคลังแล้ว ${a.outCount} ชิ้น`);
+    parts.push(`เหลือให้จอง ${a.available} ชิ้น`);
+    parts.push('พ้นวันนี้จะกลับมานับเป็นว่างอัตโนมัติ');
+    return `<span class="booking-line booking-active" title="${escapeAttrText(parts.join(' · '))}">`
+      + `ติดจอง <strong>${a.booked}</strong>`
+      + `<span class="booking-line-sep">·</span>`
+      + `เหลือ <strong>${a.available}</strong>`
+      + '</span>';
+  }
+
+  return '';
+}
+
 function inferItemType(item) {
   const explicit = normalizeText(item?.type);
   if (explicit) return explicit;

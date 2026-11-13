@@ -10,6 +10,11 @@ window.SUPABASE_TABLES = {
   fixtures: 'fixtures',
   accessories: 'accessories',
   members: 'members',
+  bookings: 'bookings',
+  bookingItems: 'booking_items',
+  // เป็น view ไม่ใช่ตาราง — คำนวณยอด "ติดจอง / เหลือ" จาก bookings + booking_items
+  // (ดู supabase/migration-2026-11-13c-bookings.sql)
+  itemAvailability: 'v_item_availability',
 };
 
 // true = บังคับใช้โหมด local (data/*.json + localStorage) ข้าม Supabase ไปเลย

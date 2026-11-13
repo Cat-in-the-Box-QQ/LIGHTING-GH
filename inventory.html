@@ -26,7 +26,7 @@
   <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
     <div>
       <h4 class="mb-1">สถานะสต็อกอุปกรณ์</h4>
-      <p class="text-muted small mb-0">กดปุ่มด้านซ้ายของรายการเพื่อขยายดู Accessories ที่ผูกอยู่กับอุปกรณ์นั้น</p>
+      <p class="text-muted small mb-0">กดปุ่มด้านซ้ายของรายการเพื่อขยายดู Accessories ที่ผูกอยู่กับอุปกรณ์นั้น<br>Reserved / In Use / Remaining มาจากระบบจองจริง (นับเฉพาะใบจองของวันนี้ + รายการที่ค้างคืน) พ้นวันนี้จะกลับมาว่างอัตโนมัติ</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
       <input type="text" id="inventorySearch" class="form-control form-control-sm" style="min-width:240px" placeholder="ค้นหา brand / model / category...">
@@ -40,6 +40,8 @@
     </div>
   </div>
 
+  <div id="inventoryBookingStatus" class="small mb-3"></div>
+
   <div class="table-responsive">
     <table class="table bg-white rounded shadow-sm align-middle inventory-table">
       <thead>
@@ -47,10 +49,10 @@
           <th style="width:52px"></th>
           <th>แบรนด์</th>
           <th>รุ่น</th>
-          <th>Available</th>
-          <th>Reserved</th>
-          <th>In Use</th>
-          <th>Remaining</th>
+          <th>มีทั้งหมด</th>
+          <th>ติดจองวันนี้</th>
+          <th>จ่ายออกแล้ว</th>
+          <th>เหลือให้จอง</th>
         </tr>
       </thead>
       <tbody id="inventoryBody"></tbody>
@@ -64,6 +66,7 @@
 <script src="js/database.js"></script>
 <script src="js/search.js"></script>
 <script src="js/accessory-store.js"></script>
+<script src="js/booking-store.js"></script>
 <script src="js/inventory.js"></script>
 </body>
 </html>
