@@ -29,8 +29,8 @@
     <div>
       <h2 class="mb-1">ปฏิทินจองอุปกรณ์</h2>
       <p class="text-muted small mb-0">
-        ช่องสี่เหลี่ยมในตารางคือ <strong>หนึ่งวัน</strong> · สีคือ <strong>คนที่จอง</strong> (วันเดียวหลายคนจอง = ช่องแบ่งสี)
-        · เลื่อนซ้าย-ขวาเพื่อดูเดือนถัดไป · <strong>กดวันที่</strong> แล้วจะเห็นใบงานของวันนั้นข้างล่าง
+        ช่องสี่เหลี่ยมในตารางคือ <strong>หนึ่งวัน</strong> · จุดสีกลมเล็กคือ <strong>คนที่จอง</strong> (วันเดียวหลายคนจอง = หลายจุด)
+        · เลื่อนซ้าย-ขวาเพื่อดูเดือนถัดไป · <strong>กดวันที่</strong> แล้วจะเห็นใบงานของวันนั้นข้างล่าง และกดจองของวันนั้นได้
       </p>
     </div>
     <div class="btn-group cal-source" role="group" aria-label="เลือกแหล่งข้อมูล">
@@ -90,13 +90,14 @@
   <div id="calDetail" class="cal-detail" hidden></div>
 
   <div class="cal-next-steps mt-4">
-    <div class="cal-next-title">ขั้นถัดไปที่ยังไม่ได้ทำในต้นแบบนี้</div>
+    <div class="cal-next-title">หน้านี้ทำงานกับฐานข้อมูลจริงแล้ว</div>
     <ul class="cal-next-list">
-      <li>ฟอร์มสร้างใบจองจริง (เลือกวัน → เพิ่มอุปกรณ์/อุปกรณ์เสริม → ชื่องาน → บันทึก) พร้อมปุ่มที่ปิดไว้เมื่อของยังไม่ระบุจำนวน</li>
-      <li>อ่านข้อมูลจากฐานข้อมูลจริง — ต้องรัน SQL สร้าง <code>v_booking_day_summary</code> และ <code>item_availability_between()</code> ก่อน</li>
-      <li>เก็บสีประจำตัวคนไว้ใน <code>members.color_hue</code> (ตอนนี้ใช้ค่าที่กำหนดไว้ในข้อมูลตัวอย่าง)</li>
-      <li>แก้ "วันนี้" ของฐานข้อมูลจาก UTC เป็นเวลาไทย (<code>biz_today()</code>) ไม่งั้นช่วงตี 0–7 โมงเช้า ปฏิทินจะไฮไลต์ผิดวัน</li>
-      <li>เปิดปุ่ม "จอง" ในหน้า Sign in ให้กดได้จริง</li>
+      <li><strong>sign in แล้ว</strong> ปฏิทินจะเปิดโหมด "ข้อมูลจริง" ให้อัตโนมัติ — จุดสีคือ <code>members.color_hue</code> ของผู้จองแต่ละคน (ถาวร ไม่สลับเมื่อรีเฟรช)</li>
+      <li>กดวันที่ → ดูใบงานของวันนั้น → กด <strong>จองของวันนี้</strong> เพื่อเปิดฟอร์มสร้างใบจอง (เลือกอุปกรณ์ ระบุจำนวน ชื่องาน สถานที่ แล้วบันทึก)</li>
+      <li>ฟอร์มบังคับเพดานจากฐานข้อมูล: <strong>จองเกินจำนวนที่มีไม่ได้</strong> และของที่ <em>ยังไม่ระบุจำนวน</em> จะขึ้น "ยังไม่ระบุจำนวน — จองไม่ได้" (ต่างจาก "หมด")</li>
+      <li>ใบที่ค้างคืน (<code>overdue</code>) ถูกนับทับ <strong>ทุกวัน</strong> ตั้งแต่วันจอง จนกว่า admin จะเคลียร์ — ปฏิทินจึงไม่บอกว่าวันถัดไปว่างทั้งที่ของยังไม่กลับคลัง</li>
+      <li>"วันนี้" ของระบบคือเวลาไทย (<code>biz_today()</code>) ไม่ใช่ UTC — ช่วงตี 0 ถึง 7 โมงเช้าจึงไม่ไฮไลต์ผิดวัน</li>
+      <li>ยังไม่ได้ sign in = โหมด <strong>ข้อมูลตัวอย่าง</strong> (ตัวเลขถูกสร้างขึ้นในเบราว์เซอร์ ไม่บันทึกลงฐานข้อมูล) ใช้ดูหน้าตาก่อนได้</li>
     </ul>
   </div>
 
@@ -106,30 +107,57 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/supabase-client.js"></script>
+<script src="js/admin-auth.js"></script>
 <script src="js/booking-store.js"></script>
 <script src="js/booking-demo.js"></script>
 <script src="js/booking-live.js"></script>
+<script src="js/booking-form.js"></script>
 <script src="js/booking-calendar.js"></script>
 <script>
-  (function () {
-    // รับค่าจาก URL ได้ เพื่อให้หน้าอื่นลิงก์มาเจาะวัน/มุมมองที่ต้องการได้
-    // เช่น booking.html?date=2026-11-15&view=year
+  (async function () {
+    // รับค่าจาก URL ได้ เพื่อให้หน้าอื่นลิงก์มาเจาะวัน/มุมมอง/เปิดฟอร์มจองได้
+    //   booking.html?date=2026-11-15&view=year
+    //   booking.html?date=2026-11-15&book=fixture-12,accessory-3*2
     var params = new URLSearchParams(window.location.search || '');
     var dateParam = String(params.get('date') || '');
     var viewParam = String(params.get('view') || '');
     var sourceParam = String(params.get('source') || '');
+    var bookParam = String(params.get('book') || '');
+    var hasDate = /^\d{4}-\d{2}-\d{2}$/.test(dateParam);
 
     var opts = { view: 'month' };
     if (['month', 'year'].indexOf(viewParam) >= 0) opts.view = viewParam;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) opts.today = dateParam;
+    if (hasDate) opts.today = dateParam;
 
-    // ค่าเริ่มต้นคือ "ข้อมูลตัวอย่าง" เพราะฐานข้อมูลจริงยังไม่มีใบจองและยังไม่มี view ปฏิทิน
-    opts.provider = sourceParam === 'live' && window.BookingLiveProvider
-      ? window.BookingLiveProvider
-      : window.BookingDemoProvider;
+    // รอรู้สิทธิ์ก่อนเลือกแหล่งข้อมูล: ข้อมูลจริงมีชื่อผู้จองอยู่ในฐานข้อมูล
+    // จึงเปิดให้เฉพาะบัญชีที่ sign in แล้ว — คนที่ยังไม่เข้าระบบจะได้ดูข้อมูลตัวอย่าง
+    var loggedIn = false;
+    if (window.AdminAuth && typeof window.AdminAuth.ready === 'function') {
+      try {
+        await window.AdminAuth.ready();
+        loggedIn = !!window.AdminAuth.isLoggedIn();
+      } catch (e) { loggedIn = false; }
+    }
+
+    if (sourceParam === 'demo') opts.provider = window.BookingDemoProvider;
+    else if (sourceParam === 'live') opts.provider = window.BookingLiveProvider;
+    else opts.provider = loggedIn ? window.BookingLiveProvider : window.BookingDemoProvider;
+    if (!opts.provider) opts.provider = window.BookingDemoProvider;
 
     if (window.BookingCalendar && typeof window.BookingCalendar.init === 'function') {
-      window.BookingCalendar.init(opts);
+      await window.BookingCalendar.init(opts);
+    }
+
+    // ลิงก์มาจากการ์ดอุปกรณ์ / Set Builder -> เปิดฟอร์มจองต่อเลย
+    if (bookParam && window.BookingForm) {
+      var items = window.BookingForm.itemsFromParam(bookParam);
+      if (items.length) {
+        window.BookingForm.open({
+          date: hasDate ? dateParam : '',
+          items: items,
+          demoContext: !opts.provider || opts.provider.id !== 'live',
+        });
+      }
     }
   })();
 </script>

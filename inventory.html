@@ -27,9 +27,10 @@
   <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
     <div>
       <h4 class="mb-1">สถานะสต็อกอุปกรณ์</h4>
-      <p class="text-muted small mb-0">กดปุ่มด้านซ้ายของรายการเพื่อขยายดู Accessories ที่ผูกอยู่กับอุปกรณ์นั้น<br>Reserved / In Use / Remaining มาจากระบบจองจริง (นับเฉพาะใบจองของวันนี้ + รายการที่ค้างคืน) พ้นวันนี้จะกลับมาว่างอัตโนมัติ</p>
+      <p class="text-muted small mb-0">กดปุ่มด้านซ้ายของรายการเพื่อขยายดู Accessories ที่ผูกอยู่กับอุปกรณ์นั้น<br>Reserved / In Use / Remaining มาจากระบบจองจริง <strong>ของวันนี้</strong> (รวมรายการที่ค้างคืน) พ้นวันนี้จะกลับมาว่างอัตโนมัติ<br>หน้านี้จึง<strong>ไม่แสดงคิวของวันถัดไป</strong> — ดูคิวล่วงหน้าและจองวันอื่นได้ที่ปฏิทินจอง</p>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <a class="btn btn-sm btn-dark" href="booking.html" title="ปฏิทินจอง — ดูว่าวันไหนใครจองอะไรไว้ และจองล่วงหน้าได้ทั้งปี">ดูคิวล่วงหน้า</a>
       <input type="text" id="inventorySearch" class="form-control form-control-sm" style="min-width:240px" placeholder="ค้นหา brand / model / category...">
       <select id="inventoryType" class="form-select form-select-sm" style="width:180px">
         <option value="">ทุกกลุ่ม</option>

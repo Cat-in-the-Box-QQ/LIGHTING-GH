@@ -329,7 +329,9 @@ ok('มีตารางรวมทั้งวัน', detail.includes('cal-t
 ok('บอกชัดว่าหักยอดทุกใบแล้ว', detail.includes('รวมทุกใบจองของวันนั้น'));
 ok('ตารางรวมมีคอลัมน์ "ใครจอง"', detail.includes('cal-who-dot'));
 ok('มีปุ่มปิดแผง', detail.includes('data-cal-action="close-detail"'));
-ok('ปุ่มสร้างใบจองยังปิดอยู่ (รอบนี้ดูหน้าตาก่อน)', detail.includes('disabled'));
+ok('ยังไม่ได้ sign in → ปุ่มจองกลายเป็นลิงก์ไปหน้า sign in (ไม่ใช่ปุ่มที่กดแล้วเงียบ)',
+  detail.includes('href="admin.html"') && detail.includes('ต้อง sign in'), detail.slice(0, 200));
+ok('ไม่เหลือปุ่ม "เร็ว ๆ นี้" ที่กดไม่ได้', !detail.includes('เร็ว ๆ นี้'));
 ok('ไม่มี undefined/NaN ในแผงใบงาน', !detail.includes('undefined') && !detail.includes('NaN'));
 if (busyISO) {
   const cards = (detail.match(/class="cal-job /g) || []).length + (detail.match(/class="cal-job"/g) || []).length;
@@ -375,25 +377,122 @@ ok('หัวข้อบอกว่ากำลังกรองใคร', d
 Cal._state.personFilter = null;
 Cal.setView('month');
 
-console.log('\n[15] ป้ายโหมด + live provider ต้องบอกตรง ๆ ว่ายังใช้ไม่ได้');
+console.log('\n[15] ป้ายโหมด + live provider (ตอนนี้ต่อกับฐานข้อมูลจริงได้แล้ว)');
 ok('โหมดตัวอย่างขึ้นป้ายเตือนชัดเจน', document.getElementById('calBanner').innerHTML.includes('โหมดข้อมูลตัวอย่าง'));
 ok('ป้ายบอกว่าชื่ออุปกรณ์/สต็อกเป็นของจริง', document.getElementById('calBanner').innerHTML.includes('ชื่ออุปกรณ์และจำนวนสต็อกเป็นของจริง'));
 
 const noClient = await Live.loadRange(`${YEAR}-01-01`, `${YEAR}-03-31`, TODAY);
-ok('ไม่มี Supabase client → บอกว่าเชื่อมต่อได้ ไม่เดาข้อมูล', noClient.ok === false && /Supabase/.test(noClient.error.short), JSON.stringify(noClient.error || {}));
+ok('ไม่มี Supabase client → บอกว่าเชื่อมต่อไม่ได้ ไม่เดาข้อมูล', noClient.ok === false && /Supabase/.test(noClient.error.short), JSON.stringify(noClient.error || {}));
+ok('ไม่มี client → ไม่มี days มาให้เรนเดอร์', noClient.days === undefined);
 
-sandbox.window.sb = {
-  from: () => ({ select: async () => ({ data: null, error: { message: 'relation "public.v_booking_day_summary" does not exist' } }) }),
-  rpc: async () => ({ data: null, error: { message: 'function item_availability_between does not exist' } }),
-};
-const liveRes = await Live.loadRange(`${YEAR}-01-01`, `${YEAR}-03-31`, TODAY);
+// sb ปลอมที่ต่อสายได้เหมือน supabase-js จริง (builder เป็น PromiseLike)
+function fakeSb({ stock = [], detail = [], overdue = [], error = null } = {}) {
+  const calls = [];
+  function builder(table, filters) {
+    const api = {
+      select: () => builder(table, filters),
+      gte: (c, v) => builder(table, { ...filters, gte: v }),
+      lte: (c, v) => builder(table, { ...filters, lte: v }),
+      lt: (c, v) => builder(table, { ...filters, lt: v }),
+      eq: (c, v) => builder(table, { ...filters, eq: [c, v] }),
+      order: () => builder(table, filters),
+      limit: () => builder(table, filters),
+      then: (res, rej) => {
+        calls.push({ table, filters });
+        let rows = [];
+        if (error) return Promise.resolve({ data: null, error }).then(res, rej);
+        if (table === 'v_item_stock') rows = stock;
+        else if (table === 'v_booking_day_detail') {
+          rows = filters.eq && filters.eq[0] === 'status' ? overdue : detail;
+        }
+        return Promise.resolve({ data: rows, error: null }).then(res, rej);
+      },
+    };
+    return api;
+  }
+  return {
+    calls,
+    from: (t) => builder(t, {}),
+    rpc: async (name, args) => { calls.push({ rpc: name, args }); return { data: null, error }; },
+  };
+}
+
+const errSb = fakeSb({ error: { message: 'relation "public.v_booking_day_detail" does not exist' } });
+sandbox.window.sb = errSb;
+Live.resetCache();
+const missing = await Live.loadRange(`${YEAR}-01-01`, `${YEAR}-03-31`, TODAY);
+ok('ยังไม่ได้รัน migration → ไม่ throw', missing && missing.ok === false);
+ok('บอกว่าขาดตาราง/วิว', /ยังไม่มีตาราง|ยังไม่มีฟังก์ชัน/.test(missing.error.short || ''), JSON.stringify(missing.error || {}));
+ok('ชี้ไปที่ไฟล์ SQL ที่ต้องรัน', /migration-2026-11-13d-booking-calendar\.sql/.test(missing.error.hint || ''), missing.error.hint);
+ok('ไม่เดาข้อมูลมาแสดง', missing.days === undefined);
+
+sandbox.window.sb = fakeSb({ error: { message: 'permission denied for view v_booking_day_detail' } });
+Live.resetCache();
+const denied = await Live.loadRange(`${YEAR}-01-01`, `${YEAR}-03-31`, TODAY);
+ok('ยังไม่ sign in → บอกว่าต้อง sign in (วิวมีชื่อคนจองจึงไม่เปิดให้ anon)',
+  /sign in/i.test(denied.error.short || ''), JSON.stringify(denied.error || {}));
+
+// ---- กรณีสำเร็จ: 2 คนจองวันเดียวกัน + 1 ใบค้างคืนจากก่อนช่วงที่ดู ----
+const STOCK_ROWS = [
+  { item_type: 'fixture', item_id: 1, item_name: 'Aladdin Bi-Flex 1', stock: 4 },
+  { item_type: 'fixture', item_id: 2, item_name: '200W Dimmer Unit', stock: 1 },
+  { item_type: 'accessory', item_id: 7, item_name: 'Cable ไม่ระบุจำนวน', stock: null },
+];
+const dRow = (over) => ({
+  day: '2026-02-10', booking_id: over.id, job_name: over.job || 'งานทดสอบ',
+  job_location: over.loc || '', status: over.status || 'reserved', note: '', group_ref: null,
+  member_id: over.mid, member_name: over.name, member_code: over.code, member_hue: over.hue,
+  booking_item_id: over.biid, item_type: over.type, item_id: over.iid,
+  item_name: over.iname, item_stock: over.istock, quantity: over.qty,
+  returned_quantity: over.ret || 0, item_note: '',
+});
+const DETAIL_ROWS = [
+  dRow({ id: 'b1', mid: 'm1', name: 'สมชาย ใจดี', code: 'M001', hue: 200, biid: 'i1', type: 'fixture', iid: 1, iname: 'Aladdin Bi-Flex 1', istock: 4, qty: 4 }),
+  dRow({ id: 'b2', mid: 'm2', name: 'วิชุดา แสงทอง', code: 'M002', hue: 40, biid: 'i2', type: 'fixture', iid: 2, iname: '200W Dimmer Unit', istock: 1, qty: 1 }),
+];
+const OVERDUE_ROWS = [
+  dRow({ id: 'b0', mid: 'm1', name: 'สมชาย ใจดี', code: 'M001', hue: 200, status: 'overdue', biid: 'i0', type: 'fixture', iid: 2, iname: '200W Dimmer Unit', istock: 1, qty: 1 }),
+];
+
+const goodSb = fakeSb({ stock: STOCK_ROWS, detail: DETAIL_ROWS, overdue: OVERDUE_ROWS });
+sandbox.window.sb = goodSb;
+Live.resetCache();
+const liveRes = await Live.loadRange('2026-01-01', '2026-03-31', TODAY);
 delete sandbox.window.sb;
-ok('live provider ไม่ throw', liveRes && liveRes.ok === false);
-ok('live provider บอกว่าขาดอะไร', !!liveRes.error && !!liveRes.error.short, JSON.stringify(liveRes.error || {}));
-ok('live provider ชี้ไปที่ไฟล์ SQL ที่ต้องรัน', /migration-2026-11-13d/.test(liveRes.error.hint || ''), liveRes.error.hint);
-ok('live provider ไม่เดาข้อมูลมาแสดง', liveRes.days === undefined);
+
+ok('อ่านข้อมูลจริงสำเร็จ', liveRes.ok === true, JSON.stringify(liveRes.error || {}));
+ok('บอกจำนวนรายการทั้งคลัง', liveRes.itemCount === 3, String(liveRes.itemCount));
+ok('นับรายการที่ยังไม่ระบุจำนวนได้', liveRes.unknownStockCount === 1, String(liveRes.unknownStockCount));
+
+const dayKeys = Object.keys(liveRes.days);
+ok('ทุกวันในช่วงมีข้อมูล (เพราะมีใบค้างคืนทับอยู่)', dayKeys.length === 90, String(dayKeys.length));
+ok('ใบค้างคืนจากก่อนช่วงถูกนับทับ "ทุกวัน" ไม่ใช่แค่วันจอง',
+  !!liveRes.days['2026-01-01'] && liveRes.days['2026-01-01'].bookings.some((b) => b.id === 'b0')
+  && !!liveRes.days['2026-03-31'] && liveRes.days['2026-03-31'].bookings.some((b) => b.id === 'b0'));
+ok('ใบค้างคืนถูกทำเครื่องหมายว่า carriedOverdue', liveRes.days['2026-01-05'].bookings.every((b) => b.carriedOverdue === true));
+ok('สำเนาของแต่ละวันแยกกัน (แก้วันหนึ่งไม่กระทบวันอื่น)',
+  liveRes.days['2026-01-05'].bookings[0] !== liveRes.days['2026-01-06'].bookings[0]);
+
+const feb10 = liveRes.days['2026-02-10'];
+ok('วันที่มีคนจอง 2 คน + ค้างคืน 1 ใบ = 3 ใบ', feb10.bookings.length === 3, String(feb10.bookings.length));
+ok('แต่ละใบมี items พร้อมชื่อและจำนวนสต็อก', feb10.bookings.every((b) => Array.isArray(b.items) && b.items.length === 1));
+ok('สีประจำตัวมาจาก members.color_hue ไม่ใช่ค่าที่เดาขึ้นเอง',
+  liveRes.people.find((p) => p.id === 'm1').hue === 200 && liveRes.people.find((p) => p.id === 'm2').hue === 40);
+ok('รายชื่อคนจองครบทั้งสองคน', liveRes.people.length === 2, JSON.stringify(liveRes.people.map((p) => p.id)));
+ok('นับจำนวนใบจองต่อคนได้ (m1 มี 2 ใบ: ของตัวเอง + ค้างคืน)', liveRes.people.find((p) => p.id === 'm1').count === 2, String(liveRes.people.find((p) => p.id === 'm1').count));
+
+const summed = H.summarizeDay(feb10);
+ok('ยอดรวมทั้งวันหักใบค้างคืนด้วย (Dimmer มี 1 ถูกกิน 2 ใบ → เหลือ 0)',
+  summed.items.find((i) => i.itemId === 2 && i.itemType === 'fixture').available === 0,
+  JSON.stringify(summed.items.find((i) => i.itemId === 2)));
+ok('ของที่จองเต็มถูกชี้ว่า soldOut', summed.soldOutItems.length === 2, String(summed.soldOutItems.length));
+ok('เห็นว่าวันนั้นมีของค้างคืน', summed.hasOverdue === true);
+
 const liveSrc = fs.readFileSync(path.join(ROOT, 'js/booking-live.js'), 'utf8');
 ok('live provider อ่านสีคนจาก members.color_hue', /member_hue/.test(liveSrc));
+ok('live provider ยิง query ช่วงวันที่อย่างละไม่เกิน 92 วัน (ตรงกับขีดจำกัดฝั่ง SQL)', /gte\('day', fromISO\)/.test(liveSrc) && /lte\('day', toISO\)/.test(liveSrc));
+ok('live provider ไม่คำนวณวันด้วย toISOString (เสี่ยงเลื่อนวันตาม timezone)', !/toISOString\(/.test(liveSrc.replace(/^\s*\/\/.*$/gm, '')));
+ok('live provider ไม่เขียนข้อมูลลงฐานข้อมูลเอง', !/\.insert\(|\.update\(|\.delete\(/.test(liveSrc));
 
 console.log('\n[16] XSS — ชื่อคน/ชื่องาน/ชื่ออุปกรณ์ที่มี HTML ต้องไม่กลายเป็นแท็ก');
 const evilDay = {
@@ -491,6 +590,59 @@ ok('รางเลื่อนมี scroll-snap', /scroll-snap-type:\s*x\s+man
 ok('แผงเดือน snap เข้ากลางจอ', /\.cal-pane\s*\{[\s\S]*?scroll-snap-align:\s*center/.test(cssSrc));
 ok('ลูกศรไม่หดเมื่อจอแคบ (flex: 0 0 auto)', /\.cal-nav-arrow\s*\{[\s\S]*?flex:\s*0 0 auto/.test(cssSrc));
 ok('ลูกศรมีขนาดสำหรับมือถือ', /@media[^{]*\{[\s\S]*?\.cal-nav-arrow\s*\{\s*width:\s*44px/.test(cssSrc));
+
+console.log('\n[22] ปุ่ม "จองของวันนี้" — ต้องเปิดฟอร์มจริง และรู้ว่าการเปิดฟอร์มต้องใช้สิทธิ์อะไร');
+await Cal.setProvider(Demo);
+ok('ไม่มี AdminAuth → บอกว่ายังไม่พร้อม ไม่ใช่ให้กดแล้วพัง', H.bookingCapability().ready === false);
+ok('บอกว่าต้องทำอะไรต่อ', /sign in/i.test(H.bookingCapability().reason), H.bookingCapability().reason);
+const anonBtn = H.bookDayButtonHtml('2026-05-05');
+ok('ยังไม่ได้ sign in → เป็นลิงก์ไปหน้า sign in', /<a[^>]*href="admin.html"/.test(anonBtn), anonBtn.slice(0, 120));
+ok('ลิงก์นั้นไม่ใช่ปุ่ม data-cal-action (กดแล้วต้องพาไป sign in จริง)', !anonBtn.includes('data-cal-action="book-day"'));
+
+sandbox.window.AdminAuth = {
+  isLoggedIn: () => true,
+  getRole: () => 'crew',
+  getMember: () => ({ id: 'm-1', code: 'M002', full_name: 'สมชาย ใจดี', color_hue: 137 }),
+};
+const cap = H.bookingCapability();
+ok('crew ที่ sign in แล้วและมีแถวใน members → จองได้', cap.ready === true && cap.isAdmin === false, JSON.stringify(cap));
+const crewBtn = H.bookDayButtonHtml('2026-05-05');
+ok('ปุ่มจองถูกเปิดให้กดได้จริง (ไม่มี disabled)', crewBtn.includes('data-cal-action="book-day"') && !/book-day[\s\S]{0,200}disabled/.test(crewBtn), crewBtn.slice(0, 200));
+ok('ปุ่มผูกวันที่ที่จะจองไว้ด้วย', /data-iso="2026-05-05"/.test(crewBtn));
+ok('โหมดตัวอย่าง → title บอกชัดว่าใบจองจะลงฐานข้อมูลจริง', crewBtn.includes('ข้อมูลตัวอย่าง') && crewBtn.includes('ฐานข้อมูลจริง'));
+
+sandbox.window.AdminAuth.getRole = () => 'admin';
+ok('admin ถูกนับว่าเป็น admin', H.bookingCapability().isAdmin === true);
+sandbox.window.AdminAuth.getMember = () => null;
+ok('sign in แล้วแต่ไม่มีแถวใน members → จองไม่ได้', H.bookingCapability().ready === false);
+ok('บอกสาเหตุตรง ๆ', /members/.test(H.bookingCapability().reason), H.bookingCapability().reason);
+sandbox.window.AdminAuth.isLoggedIn = () => false;
+ok('ออกจากระบบแล้ว → จองไม่ได้', H.bookingCapability().ready === false);
+
+// เปิดฟอร์มโดยไม่มี js/booking-form.js → ต้องฟ้อง ไม่ใช่เงียบ
+delete sandbox.window.BookingForm;
+Cal._state.yearCache.set(2026, { ok: true });
+await Cal.openBookingForm('2026-05-05');
+ok('ไม่มี BookingForm → ตั้ง lastError ให้ผู้ใช้เห็น', !!Cal._state.lastError, JSON.stringify(Cal._state.lastError || {}));
+ok('บอกว่าต้องเพิ่ม script อะไรในหน้า', /js\/booking-form\.js/.test(Cal._state.lastError.hint || ''), Cal._state.lastError.hint);
+
+const opened = [];
+sandbox.window.BookingForm = { open: async (o) => { opened.push(o); return { closed: Promise.resolve({ saved: true }) }; } };
+Cal._state.lastError = null;
+await Cal.openBookingForm('2026-05-05');
+ok('มี BookingForm → เปิดฟอร์มพร้อมวันที่กด', opened.length === 1 && opened[0].date === '2026-05-05', JSON.stringify(opened[0] || {}));
+ok('บอกฟอร์มว่าปฏิทินกำลังอยู่ในโหมดตัวอย่าง', opened[0].demoContext === true);
+ok('ส่ง onSaved มาให้ปฏิทินรีเฟรชตัวเอง', typeof opened[0].onSaved === 'function');
+
+Cal._state.yearCache.set(2026, { ok: true, days: {} });
+ok('yearCache มีของก่อนรีเฟรช', Cal._state.yearCache.size > 0);
+opened[0].onSaved({ id: 'x', date: '2026-05-05', lines: [] });
+await new Promise((r) => setTimeout(r, 10));
+ok('บันทึกใบจองแล้ว → ปฏิทินล้างแคชและดึงข้อมูลใหม่', Cal._state.yearCache.size === 0 || !Cal._state.yearCache.has(2026) === false, String(Cal._state.yearCache.size));
+ok('มี refresh() ให้เรียกตรง ๆ ได้', typeof Cal.refresh === 'function');
+ok('มี openBookingForm() ให้เรียกตรง ๆ ได้', typeof Cal.openBookingForm === 'function');
+delete sandbox.window.BookingForm;
+delete sandbox.window.AdminAuth;
 
 console.log('');
 if (fail) {

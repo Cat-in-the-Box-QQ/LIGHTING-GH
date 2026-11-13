@@ -258,6 +258,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // เพราะจะแยกไม่ออกว่า "หมด" หรือ "ยังไม่ได้กรอก"
       const stockPill = stockPillHtml(item);
       const bookingLine = bookingLineHtml('accessory', item.id);
+      const bookLink = bookLinkHtml('accessory', item.id);
       col.innerHTML = `
         <div class="filter-panel h-100 accessory-card" role="button" data-id="${item.id}">
           <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
@@ -274,6 +275,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           ${adminUnlocked() ? `<div class="small text-danger mt-2">Admin: คลิกเพื่อแก้ไข / ซ่อน / ลบ</div>` : ''}
           ${stockPill ? `<div class="card-stock-row">${stockPill}</div>` : ''}
           ${bookingLine ? `<div class="card-booking-row">${bookingLine}</div>` : ''}
+          ${bookLink ? `<div class="card-book-row">${bookLink}</div>` : ''}
         </div>`;
       listEl.appendChild(col);
     });
@@ -281,6 +283,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     listEl.querySelectorAll('.accessory-card').forEach((card) => {
       card.addEventListener('click', () => showDetail(card.dataset.id));
     });
+
+    // ลิงก์ "จอง" ต้องไม่เปิด modal รายละเอียดของการ์ดไปด้วย
+    bindBookLinks(listEl);
 
     renderPagination(totalPages);
   }

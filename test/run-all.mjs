@@ -11,6 +11,7 @@ const suites = [
   ['Data layer + AdminAuth', 'harness.mjs'],
   ['Member admin UI (เรนเดอร์จริงใน DOM ปลอม)', 'check-member-ui.mjs'],
   ['Booking calendar (ปฏิทินจอง — เรนเดอร์จริงใน DOM ปลอม)', 'check-booking-calendar.mjs'],
+  ['Booking form (ฟอร์มสร้างใบจองจริง — เรนเดอร์จริงใน DOM ปลอม)', 'check-booking-form.mjs'],
 ];
 
 let failed = 0;

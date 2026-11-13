@@ -1409,3 +1409,452 @@ footer {
   .cal-arrow-label { font-size: .62rem; }
   .cal-arrow-label small { font-size: .56rem; }
 }
+
+
+/* ==========================================================================
+   ฟอร์มสร้างใบจอง (js/booking-form.js) — แผงลอยเหนือหน้า
+   --------------------------------------------------------------------------
+   เขียนให้ "ยืนเองได้" ไม่ต้องพึ่ง CSS ของ Bootstrap: ใน preview บางที่
+   CDN โหลดไม่ขึ้น ฟอร์มต้องยังกดได้และอ่านออก
+   สีทั้งหมดมาจากตัวแปรของเว็บ ไม่มีสีประจำตัวคนแข็ง ๆ อยู่ในไฟล์นี้
+   (สีประจำตัวคนถูกส่งเข้ามาทาง --pc / inline style เท่านั้น)
+   ========================================================================== */
+
+body.bk-open { overflow: hidden; }
+
+.bk-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1080;
+  background: rgba(18, 21, 28, .55);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 18px 12px 28px;
+  overflow: auto;
+}
+
+.bk-panel {
+  width: min(100%, 980px);
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .28);
+  overflow: hidden;
+}
+
+.bk-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--brand-dark);
+  color: #fff;
+}
+
+.bk-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bk-x {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, .35);
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.bk-x:hover { background: rgba(255, 255, 255, .16); }
+
+.bk-body { padding: 14px 16px 6px; }
+
+.bk-loading {
+  padding: 26px 8px;
+  text-align: center;
+  color: var(--muted);
+  font-size: .95rem;
+}
+
+/* ---- แถบผู้จอง ---- */
+.bk-who {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 9px 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--brand-accent);
+  border-radius: 8px;
+  background: #fffdf6;
+  font-size: .9rem;
+}
+
+.bk-who-anon {
+  justify-content: space-between;
+  border-left-color: #c92a2a;
+  background: #fff5f5;
+}
+
+.bk-who-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18);
+}
+
+.bk-who-name { font-weight: 700; }
+
+.bk-who-code,
+.bk-who-role {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #f1f3f5;
+  color: #495057;
+  font-size: .76rem;
+  font-weight: 600;
+}
+
+.bk-who-note { color: var(--muted); font-size: .8rem; flex-basis: 100%; }
+
+/* ---- ช่องกรอก ---- */
+.bk-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.bk-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.bk-field-wide { grid-column: 1 / -1; }
+
+.bk-label { font-size: .82rem; font-weight: 700; color: #343a40; }
+.bk-label em { font-style: normal; font-weight: 500; color: var(--muted); }
+
+.bk-field input,
+.bk-field textarea,
+.bk-search,
+.bk-qty {
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  padding: 6px 9px;
+  font-size: .9rem;
+  font-family: inherit;
+  background: #fff;
+  color: #212529;
+  min-height: 36px;
+}
+
+.bk-field input:focus,
+.bk-field textarea:focus,
+.bk-search:focus,
+.bk-qty:focus {
+  outline: 2px solid rgba(255, 183, 3, .55);
+  outline-offset: 1px;
+  border-color: var(--brand-accent);
+}
+
+.bk-field input:disabled, .bk-field textarea:disabled { background: #f1f3f5; color: #868e96; }
+
+.bk-hint { font-size: .78rem; color: var(--muted); }
+
+/* ---- สองคอลัมน์: ใบจอง / คลัง ---- */
+.bk-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.bk-col-cart, .bk-col-pick { min-width: 0; }
+
+.bk-sec-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .88rem;
+  font-weight: 700;
+  margin-bottom: 7px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--line);
+}
+
+.bk-badge {
+  margin-left: auto;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #f1f3f5;
+  color: #495057;
+  font-size: .74rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---- ตารางรายการในใบจอง ---- */
+.bk-cart { width: 100%; border-collapse: collapse; font-size: .87rem; }
+
+.bk-cart th, .bk-cart td {
+  padding: 6px 7px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.bk-cart thead th {
+  font-size: .74rem;
+  text-transform: none;
+  color: var(--muted);
+  font-weight: 700;
+  background: #fafbfc;
+}
+
+.bk-cart tfoot th { font-size: .84rem; background: #fafbfc; }
+
+.bk-cart-name { min-width: 0; }
+
+.bk-cart-type {
+  display: inline-block;
+  margin-right: 5px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #e7f5ff;
+  color: #1864ab;
+  font-size: .7rem;
+  font-weight: 700;
+}
+
+.bk-cart-qty { white-space: nowrap; width: 1%; text-align: center; }
+.bk-cart-sum { white-space: nowrap; width: 1%; font-weight: 700; }
+.bk-cart-del { width: 1%; }
+
+.bk-step, .bk-del, .bk-add {
+  border: 1px solid #ced4da;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+  line-height: 1;
+  color: #212529;
+}
+
+.bk-step { width: 30px; height: 30px; font-size: 1rem; }
+.bk-del { width: 28px; height: 28px; font-size: .82rem; color: #c92a2a; border-color: #ffc9c9; }
+.bk-add { width: 30px; height: 30px; font-size: 1.05rem; flex: 0 0 auto; }
+
+.bk-step:hover:not(:disabled), .bk-add:hover:not(:disabled), .bk-del:hover {
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: #212529;
+}
+
+.bk-step:disabled, .bk-add:disabled { opacity: .38; cursor: not-allowed; }
+
+.bk-qty { width: 62px; text-align: center; padding: 4px 2px; margin: 0 4px; }
+
+.bk-cart-empty {
+  padding: 14px 12px;
+  border: 1px dashed #ced4da;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: .86rem;
+  text-align: center;
+}
+
+/* ---- ป้ายจำนวนสต็อก (ใช้ร่วมกันทั้งในใบจองและในรายการคลัง) ---- */
+.bk-stock {
+  display: block;
+  margin-top: 2px;
+  font-size: .74rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: normal;
+}
+
+.bk-stock.is-ok { color: #2b8a3e; }
+.bk-stock.is-tight { color: #b07400; }
+.bk-stock.is-out { color: #c92a2a; }
+.bk-stock.is-unknown { color: #862e9c; }
+
+/* ---- ตัวเลือกรายการจากคลัง ---- */
+.bk-picker-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.bk-picker-bar .btn-group { display: flex; gap: 0; }
+
+.bk-picker-bar button {
+  border: 1px solid #ced4da;
+  background: #fff;
+  padding: 5px 10px;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #343a40;
+}
+
+.bk-picker-bar button:first-child { border-radius: 6px 0 0 6px; }
+.bk-picker-bar button:last-child { border-radius: 0 6px 6px 0; border-left: 0; }
+.bk-picker-bar button.active { background: var(--brand-dark); border-color: var(--brand-dark); color: #fff; }
+
+.bk-search { flex: 1 1 150px; min-width: 130px; }
+
+.bk-pick-list {
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.bk-pick-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 9px;
+  border-bottom: 1px solid #f1f3f5;
+  font-size: .86rem;
+}
+
+.bk-pick-row:last-child { border-bottom: 0; }
+.bk-pick-row.is-picked { background: #fffdf6; }
+.bk-pick-row.is-blocked { background: #fafafa; color: #868e96; }
+
+.bk-pick-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bk-pick-row .bk-stock { flex: 0 0 auto; max-width: 46%; margin-top: 0; text-align: right; }
+
+.bk-pick-in {
+  flex: 0 0 auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #d3f9d8;
+  color: #2b8a3e;
+  font-size: .72rem;
+  font-weight: 700;
+}
+
+.bk-pick-empty { padding: 18px 12px; text-align: center; color: var(--muted); font-size: .86rem; }
+
+/* ---- ข้อความสถานะ ---- */
+.bk-msg {
+  margin: 10px 0 4px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: .86rem;
+  border: 1px solid transparent;
+}
+
+.bk-msg-err { background: #fff5f5; border-color: #ffc9c9; color: #a61e1e; }
+.bk-msg-ok { background: #ebfbee; border-color: #b2f2bb; color: #2b8a3e; font-weight: 600; }
+.bk-msg-info { background: #f8f9fa; border-color: var(--line); color: #495057; }
+
+/* ---- แถบล่าง ---- */
+.bk-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border-top: 1px solid var(--line);
+  background: #fafbfc;
+}
+
+.bk-foot-note { flex: 1 1 auto; font-size: .8rem; color: var(--muted); min-width: 0; }
+
+.bk-foot button {
+  border-radius: 7px;
+  padding: 8px 15px;
+  font-size: .88rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #ced4da;
+  background: #fff;
+  color: #212529;
+  min-height: 40px;
+}
+
+.bk-foot button[data-bk="submit"] { background: var(--brand-dark); border-color: var(--brand-dark); color: #fff; }
+.bk-foot button[data-bk="submit"]:hover:not(:disabled) { background: #000; }
+.bk-foot button:disabled { opacity: .45; cursor: not-allowed; }
+
+@media (max-width: 767.98px) {
+  .bk-backdrop { padding: 8px 6px 16px; }
+  .bk-cols { grid-template-columns: minmax(0, 1fr); }
+  .bk-pick-list { max-height: 240px; }
+  .bk-body { padding: 12px 11px 4px; }
+  .bk-foot { flex-wrap: wrap; }
+  .bk-foot-note { flex-basis: 100%; }
+  .bk-foot button { flex: 1 1 auto; }
+  .bk-step, .bk-add { width: 38px; height: 38px; }
+  .bk-del { width: 36px; height: 36px; }
+  .bk-pick-row .bk-stock { max-width: 40%; }
+}
+
+
+/* ==========================================================================
+   ลิงก์ "จอง" / "ดูคิว" บนการ์ดอุปกรณ์และอุปกรณ์เสริม
+   --------------------------------------------------------------------------
+   พาไป booking.html?book=... ซึ่งเปิดฟอร์มจองพร้อมรายการนั้นในใบจองเลย
+   การ์ดทั้งใบเป็นปุ่มเปิดรายละเอียด ลิงก์นี้จึงต้องดูเป็นปุ่มแยกให้รู้ว่า
+   กดแล้วจะย้ายหน้า ไม่ใช่เปิด modal
+   ========================================================================== */
+
+.card-book-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 5px;
+}
+
+.book-link {
+  display: inline-block;
+  padding: 3px 12px;
+  border: 1px solid var(--brand-dark);
+  border-radius: 999px;
+  background: var(--brand-dark);
+  color: #fff;
+  font-size: .76rem;
+  font-weight: 700;
+  line-height: 1.5;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.book-link:hover,
+.book-link:focus {
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: #212529;
+  text-decoration: none;
+}
+
+/* ในการ์ดอุปกรณ์ ลิงก์นั่งอยู่ในแถวเดียวกับปุ่ม + และ stock pill */
+.card-add-row .book-link {
+  flex: 0 0 auto;
+  background: #fff;
+  color: var(--brand-dark);
+}
+
+.card-add-row .book-link:hover,
+.card-add-row .book-link:focus {
+  background: var(--brand-accent);
+  color: #212529;
+}

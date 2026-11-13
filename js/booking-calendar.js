@@ -790,6 +790,41 @@ const BookingCalendar = (() => {
       </div>`;
   }
 
+  // ---- ใครกดจองได้บ้าง (อ่านจาก AdminAuth — ไม่เดา ไม่เปิดให้กดแล้วพัง) -------
+  function bookingCapability() {
+    const A = typeof window !== 'undefined' ? window.AdminAuth : null;
+    if (!A || typeof A.isLoggedIn !== 'function') {
+      return { ready: false, isAdmin: false, reason: 'ยังโหลดระบบ sign in ไม่ได้', href: 'admin.html' };
+    }
+    let loggedIn = false;
+    let role = '';
+    let member = null;
+    try { loggedIn = !!A.isLoggedIn(); } catch (e) { loggedIn = false; }
+    try { role = String(A.getRole() || ''); } catch (e) { role = ''; }
+    try { member = A.getMember ? A.getMember() : null; } catch (e) { member = null; }
+
+    if (!loggedIn) return { ready: false, isAdmin: false, reason: 'ต้อง sign in ก่อนจองอุปกรณ์', href: 'admin.html' };
+    if (!role) return { ready: false, isAdmin: false, reason: 'ยังไม่ทราบสิทธิ์ของบัญชีนี้', href: 'admin.html' };
+    if (!member || !member.id) {
+      return { ready: false, isAdmin: role === 'admin', reason: 'ไม่พบบัญชีของคุณในตาราง members — ให้ admin เพิ่มรายชื่อก่อน', href: 'admin.html' };
+    }
+    return { ready: true, isAdmin: role === 'admin', reason: '', href: '' };
+  }
+
+  function bookDayButtonHtml(iso) {
+    const cap = bookingCapability();
+    const demoMode = !state.provider || state.provider.id !== 'live';
+    if (!cap.ready) {
+      return `<a class="btn btn-outline-dark btn-sm" href="${escapeHtml(cap.href)}"
+        title="${escapeHtml(cap.reason)}">จองของวันนี้ — ต้อง sign in</a>`;
+    }
+    const title = demoMode
+      ? 'ปฏิทินด้านบนกำลังแสดงข้อมูลตัวอย่าง แต่ใบจองนี้จะบันทึกลงฐานข้อมูลจริง'
+      : 'เปิดฟอร์มสร้างใบจองของวันนั้น';
+    return `<button type="button" class="btn btn-dark btn-sm" data-cal-action="book-day" data-iso="${escapeHtml(iso)}"
+      title="${escapeHtml(title)}">จองของวันนี้</button>`;
+  }
+
   function selectedDayHtml(s) {
     const shown = visibleBookings(s);
     return `
@@ -801,8 +836,7 @@ const BookingCalendar = (() => {
           </div>
         </div>
         <div class="cal-detail-actions">
-          <button type="button" class="btn btn-dark btn-sm" data-cal-action="book-day" data-iso="${escapeHtml(s.iso)}" disabled
-            title="ฟอร์มสร้างใบจองจะมาในรอบถัดไป — ตอนนี้กำลังตรวจหน้าตาปฏิทินก่อน">จองของวันนี้ — เร็ว ๆ นี้</button>
+          ${bookDayButtonHtml(s.iso)}
           <a class="btn btn-outline-dark btn-sm" href="inventory.html">Inventory วันนี้</a>
           <button type="button" class="btn btn-outline-secondary btn-sm" data-cal-action="close-detail">ปิด</button>
         </div>
@@ -982,6 +1016,33 @@ const BookingCalendar = (() => {
   }
 
   // ---- ผูกเหตุการณ์ --------------------------------------------------------
+  // เปิดฟอร์มสร้างใบจองจริงของวันนั้น แล้วให้ปฏิทินดึงข้อมูลใหม่เมื่อบันทึกเสร็จ
+  function openBookingForm(iso) {
+    const F = typeof window !== 'undefined' ? window.BookingForm : null;
+    if (!F || typeof F.open !== 'function') {
+      state.lastError = {
+        short: 'ยังโหลดฟอร์มจองไม่ได้',
+        detail: 'window.BookingForm ไม่มีอยู่ — js/booking-form.js ยังไม่ได้ถูกโหลดในหน้านี้',
+        hint: 'ตรวจว่า booking.html มี <script src="js/booking-form.js"> อยู่ก่อน js/booking-calendar.js',
+      };
+      renderAll();
+      return Promise.resolve(false);
+    }
+    const demoMode = !state.provider || state.provider.id !== 'live';
+    return F.open({
+      date: iso,
+      demoContext: demoMode,
+      onSaved: () => { refresh(); },
+    });
+  }
+
+  // ล้างแคชแล้วดึงข้อมูลปีนั้นใหม่ — เรียกหลังบันทึก/ยกเลิกใบจอง
+  function refresh() {
+    state.yearCache.clear();
+    state.hueById.clear();
+    return ensureData();
+  }
+
   function bindEvents() {
     let justDragged = false;
 
@@ -1004,6 +1065,7 @@ const BookingCalendar = (() => {
       else if (action === 'filter') { event.preventDefault(); setFilter(el.getAttribute('data-person')); }
       else if (action === 'clear-filter') { event.preventDefault(); clearFilter(); }
       else if (action === 'close-detail') { event.preventDefault(); closeDetail(); }
+      else if (action === 'book-day' && iso) { event.preventDefault(); openBookingForm(iso); }
     });
 
     const on = (id, type, handler, opts) => {
@@ -1116,6 +1178,8 @@ const BookingCalendar = (() => {
     selectDay,
     closeDetail,
     openMonth,
+    openBookingForm,
+    refresh,
     // เปิดให้เทสต์เรียกดูได้
     _state: state,
     _helpers: {
@@ -1124,6 +1188,7 @@ const BookingCalendar = (() => {
       hueAt, hueFromKey, hueOfPerson, colorOf, colorOfPerson, shortName, escapeHtml,
       summarizeDay, dayDotsHtml, conicStyle, personIdsOf, dayCellHtml, monthPaneHtml,
       rangeTitle, todayISO, renderStageArrows, renderYear, MAX_DOTS,
+      bookingCapability, bookDayButtonHtml,
     },
   };
 })();

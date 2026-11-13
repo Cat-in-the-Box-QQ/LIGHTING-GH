@@ -75,6 +75,43 @@ function bookingLineHtml(itemType, itemId) {
   return '';
 }
 
+// ลิงก์ "จอง" บนการ์ดอุปกรณ์/อุปกรณ์เสริม -> พาไปหน้าปฏิทินจองพร้อมรายการนี้
+// ใส่ลงใบจองให้อัตโนมัติผ่าน booking.html?book=fixture-12
+//
+// คืนสตริงว่างเมื่อ
+//   1. BookingStore ยังไม่พร้อม -> การ์ดหน้าตาเหมือนเดิม (ระบบจองต้องไม่ทำให้หน้าเดิมพัง)
+//   2. ยังไม่ระบุจำนวนในสต็อก -> จองไม่ได้อยู่แล้ว มี bookingLineHtml บอกเหตุผลไว้แล้ว
+//      ใส่ปุ่มจองไปจะหลอกให้กดแล้วเจอข้อความปฏิเสธ
+//   3. รายการถูกซ่อนไว้
+//
+// วันนี้ถูกจองเต็มแล้ว "ก็ยังใส่ลิงก์" แต่เปลี่ยนคำเป็น "ดูคิว" — เพราะจองล่วงหน้าวันอื่นได้
+// (นี่คือข้อที่หน้า Inventory เดิมตอบไม่ได้: มันนับเฉพาะใบจองของวันนี้)
+function bookLinkHtml(itemType, itemId) {
+  if (typeof BookingStore === 'undefined' || !BookingStore.isReady()) return '';
+
+  const a = BookingStore.get(itemType, itemId);
+  if (!a || a.stockUnknown || a.hidden) return '';
+
+  const type = itemType === 'accessory' ? 'accessory' : 'fixture';
+  const free = Number.isFinite(a.available) && a.available > 0;
+  const title = free
+    ? `เปิดปฏิทินจอง แล้วเพิ่มรายการนี้ลงใบจองให้เลย — วันนี้เหลือ ${a.available} ชิ้น`
+    : 'วันนี้ถูกจองเต็มแล้ว — เปิดปฏิทินจองเพื่อดูวันอื่นที่ว่าง และจองล่วงหน้าได้';
+
+  return `<a class="book-link" data-book-link href="booking.html?book=${type}-${encodeURIComponent(itemId)}"`
+    + ` title="${escapeAttrText(title)}">${free ? 'จอง' : 'ดูคิว'}</a>`;
+}
+
+// การ์ดทั้งใบถูกทำเป็นปุ่ม (role="button") เพื่อเปิดรายละเอียด
+// ลิงก์จองข้างในจึงต้องห้ามเหตุการณ์click ไม่ให้ลอยขึ้นไปถึงการ์ด
+// ไม่งั้นกด "จอง" แล้วจะเด้งทั้ง modal และย้ายหน้าพร้อมกัน
+function bindBookLinks(root) {
+  if (!root || typeof root.querySelectorAll !== 'function') return;
+  root.querySelectorAll('[data-book-link]').forEach((el) => {
+    el.addEventListener('click', (e) => { e.stopPropagation(); });
+  });
+}
+
 function inferItemType(item) {
   const explicit = normalizeText(item?.type);
   if (explicit) return explicit;

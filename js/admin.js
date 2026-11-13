@@ -361,17 +361,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // ปุ่มจอง — อยู่ท้ายชื่อของตัวเองตามที่ต้องการ
-      // ยังเป็นปุ่มปิดอยู่เพราะหน้าจอง (booking.html) ยังไม่ถูกสร้าง
-      // ระบบจองจะเปิดปุ่มนี้ให้เองใน PR ถัดไป — ห้ามให้กดได้ก่อนมีหน้ารองรับ
+      // พาไปหน้าปฏิทินจอง (booking.html) ซึ่งเป็นที่เดียวที่ใช้สร้างใบจอง
+      // ฝั่งโน้นจะเปิดโหมดข้อมูลจริงให้อัตโนมัติเพราะบัญชีนี้ sign in อยู่แล้ว
       const tdBook = document.createElement('td');
       tdBook.className = 'text-end';
       if (isSelf) {
-        const bookBtn = document.createElement('button');
-        bookBtn.type = 'button';
-        bookBtn.className = 'btn btn-outline-secondary btn-sm';
-        bookBtn.disabled = true;
-        bookBtn.textContent = 'จอง — เร็ว ๆ นี้';
-        bookBtn.title = 'ระบบจองอุปกรณ์กำลังจะถูกเพิ่ม — ปุ่มนี้จะกดได้เมื่อหน้าจองพร้อมใช้งาน';
+        const bookBtn = document.createElement('a');
+        bookBtn.className = 'btn btn-outline-dark btn-sm';
+        bookBtn.href = 'booking.html?source=live';
+        bookBtn.textContent = 'จอง';
+        bookBtn.title = 'ไปที่ปฏิทินจอง — กดวันที่ แล้วกด "จองของวันนี้" เพื่อสร้างใบจองในชื่อของคุณ';
         tdBook.appendChild(bookBtn);
       } else {
         // แถวของคนอื่นไม่ใช่ของที่จะกดจองแทน
