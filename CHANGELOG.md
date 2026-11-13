@@ -34,7 +34,7 @@
 
 1. สร้าง `members` + sequence + trigger ออกรหัส + ฟังก์ชัน `is_admin()`
 2. RLS ของ `members` (อ่านแถวตัวเองได้ / เขียนได้เฉพาะ admin)
-3. **เพิ่มตัวคุณเองเป็น admin** ← ต้องแก้ `v_admin_email` ก่อนรัน
+3. **เพิ่มตัวคุณเองเป็น admin** ← เติม `v_admin_email` ไว้ให้แล้ว (`zombe.jpm@gmail.com`) ตรวจว่าตรงก่อนรัน
 4. ตรวจว่ามี admin ที่ active จริงอย่างน้อย 1 คน
 5. สลับ policy เขียน `fixtures`/`accessories` จาก "ทุกคนที่ login" → "เฉพาะ admin"
 6. SELECT ตรวจผล
@@ -45,8 +45,10 @@
 
 ### กันล็อกตัวเองออก
 
-สคริปต์ SQL ทั้งสองไฟล์ (`schema.sql` และ migration) จงใจ `raise exception`
-ถ้ายังไม่ได้แก้ `v_admin_email` — Supabase SQL Editor รันทั้งไฟล์ใน transaction เดียว
+สคริปต์ SQL ทั้งสองไฟล์ (`schema.sql` และ migration) เติม `v_admin_email`
+ไว้ให้แล้วเป็น `zombe.jpm@gmail.com` และจงใจ `raise exception` ถ้าค่านี้ยังเป็น
+placeholder หรือไม่มีบัญชีนั้นอยู่ใน Supabase Authentication —
+Supabase SQL Editor รันทั้งไฟล์ใน transaction เดียว
 ทุกอย่างจึงถูก rollback ไม่มีอะไรค้างครึ่งทาง แก้แล้วรันใหม่ได้ (idempotent ทั้งไฟล์)
 
 และขั้นที่ 4 จะหยุดสคริปต์ไว้ **ก่อน** สลับ policy ถ้าตาราง `members`
@@ -109,7 +111,7 @@ mock ใน `test/harness.mjs` ถูกทำให้ซื่อตรงก�
 ### ลำดับที่ต้องทำจริง
 
 1. Supabase → Authentication → Users → สร้างบัญชีของคุณ (ถ้ายังไม่มี)
-2. SQL Editor → วาง `migration-2026-10-22-members.sql` → **แก้ `v_admin_email`** → Run
+2. SQL Editor → วาง `migration-2026-10-22-members.sql` → **ตรวจ `v_admin_email`** → Run
 3. ตรวจ SELECT ท้ายไฟล์ว่ามี admin 1 แถว
 4. ค่อย deploy เว็บขึ้น Vercel
 

@@ -228,14 +228,15 @@ create policy "admin write accessories"
   with check (public.is_admin());
 
 -- ============================ เพิ่ม admin คนแรก ============================
--- ⚠️ ต้องแก้ v_admin_email ก่อนรัน ไม่งั้นสคริปต์จะ raise exception
---    และถูก rollback ทั้งไฟล์ (Supabase SQL Editor รันใน transaction เดียว)
---    จงใจทำแบบนี้เพราะถ้าเผลอรันโดยไม่มี admin คุณจะเขียนข้อมูลไม่ได้อีกเลย
+-- อีเมล admin ถูกเติมไว้ให้แล้ว -> zombe.jpm@gmail.com
+-- ตรวจว่าตรงกับบัญชีใน Authentication -> Users (ถ้าไม่ใช่ ให้แก้ก่อนรัน)
 --
--- ต้องสร้างบัญชีใน Authentication -> Users -> Add user ก่อน (ติ๊ก Auto Confirm User)
+-- ถ้าปล่อยเป็น 'PUT_YOUR_EMAIL_HERE' สคริปต์จะ raise exception
+-- และถูก rollback ทั้งไฟล์ (Supabase SQL Editor รันใน transaction เดียว)
+-- จงใจทำแบบนี้เพราะถ้ารันโดยไม่มี admin คุณจะเขียนข้อมูลไม่ได้อีกเลย
 do $$
 declare
-  v_admin_email text := 'PUT_YOUR_EMAIL_HERE';   -- แก้ตรงนี้ เช่น 'boss@company.com'
+  v_admin_email text := 'zombe.jpm@gmail.com';   -- ตรวจว่าตรงกับบัญชีใน Authentication -> Users
   v_uid         uuid;
   v_name        text;
 begin
