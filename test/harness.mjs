@@ -269,7 +269,8 @@ function makeContext({ supabaseMode = 'ok', seed = null, supabaseLibPresent = tr
     + ' window.shortTagText = shortTagText;'
     + ' window.shortBadgeHtml = shortBadgeHtml;'
     + ' window.tagDetailHtml = tagDetailHtml; window.escapeAttrText = escapeAttrText;'
-    + ' window.badgesHtmlFromCommaList = badgesHtmlFromCommaList;',
+    + ' window.badgesHtmlFromCommaList = badgesHtmlFromCommaList;'
+    + ' window.getStockCount = getStockCount; window.stockPillHtml = stockPillHtml;',
     ctx,
     { filename: 'test-export.js' }
   );
@@ -1069,6 +1070,103 @@ await test('ตัวกรอง IP จับคู่ด้วยหัว tag
     'เลือก IP65 ต้องได้ทั้งตัวที่มีคำขยายและตัวที่ไม่มี');
   assert.deepStrictEqual(sandbox.filterFixtures(rows, { ip: 'IP54' }).map((f) => f.id), [3]);
   assert.strictEqual(sandbox.filterFixtures(rows, {}).length, 3, 'ไม่กรองต้องได้ครบ');
+});
+
+console.log('\n[ จำนวน stock มุมขวาล่างของการ์ด ]');
+
+await test('stockPillHtml โชว์ตัวเลข และเก็บข้อความ stock ดิบไว้ใน title', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const html = sandbox.stockPillHtml({ stock: '28 Pieces (7 sets of 4)', stockCount: 28 });
+  assert.ok(html.includes('class="stock-pill"'), html);
+  assert.ok(html.includes('<strong>28</strong>'), 'ต้องโชว์ตัวเลขเด่น ๆ: ' + html);
+  assert.ok(html.includes('ชิ้น'), 'ต้องมีหน่วยกำกับให้อ่านรู้เรื่อง');
+  assert.ok(html.includes('7 sets of 4'), 'ส่วนขยายต้องไม่หาย — เก็บไว้ใน title ให้ hover อ่าน');
+});
+
+await test('stockPillHtml ใช้ stockCount ก่อน parse ข้อความ (ข้อมูลจาก Supabase)', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const html = sandbox.stockPillHtml({ stock: '99 Pieces', stockCount: 4 });
+  assert.ok(html.includes('<strong>4</strong>'), 'stockCount คือค่าที่แก้ผ่านหน้า Admin ต้องชนะ: ' + html);
+  assert.ok(!html.includes('<strong>99</strong>'));
+});
+
+await test('stockPillHtml คืนค่าว่างเมื่อไม่รู้จำนวน (ห้ามเดา 0 หลอก ๆ)', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const cases = [
+    ['stock null', { stock: null }],
+    ['stock ว่าง', { stock: '' }],
+    ['ไม่มีฟิลด์เลย', {}],
+    ['null/undefined', null],
+    ['ข้อความที่ parse ไม่ได้', { stock: 'ไม่ระบุ' }],
+    ['0 ชิ้น', { stock: '0 Pieces' }],
+    ['stockCount เป็น 0', { stockCount: 0 }],
+  ];
+  for (const [name, item] of cases) {
+    assert.strictEqual(sandbox.stockPillHtml(item), '', `${name} ต้องไม่แสดง pill`);
+  }
+});
+
+await test('stockPillHtml ต้อง escape ข้อความ stock ก่อนใส่ใน title', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const html = sandbox.stockPillHtml({ stock: '4 Pieces "พิเศษ" <b>', stockCount: 4 });
+  assert.ok(!html.includes('"พิเศษ"'), 'ฟันหนูดิบจะทำ attribute พัง: ' + html);
+  assert.ok(html.includes('&quot;พิเศษ&quot;'), 'ต้อง escape เป็น entity');
+  assert.ok(!html.includes('<b>'), 'ต้องไม่ให้ HTML จากช่อง Admin หลุดเข้ามา');
+});
+
+await test('stockPillHtml ถูกเรียกใช้จริงในการ์ดทั้ง 2 ชนิด (ไม่ใช่เขียนแล้วทิ้งไว้)', async () => {
+  // กันบั๊กแบบที่เคยเจอ: ประกาศตัวแปร/ฟังก์ชันไว้แต่ไม่เสียบเข้า template จึงไม่แสดงผลเลย
+  const equip = fs.readFileSync(path.join(ROOT, 'equipment.html'), 'utf8');
+  const acc = fs.readFileSync(path.join(ROOT, 'js/accessories.js'), 'utf8');
+  assert.ok(equip.includes('stockPillHtml(item)'), 'การ์ดใน equipment.html ต้องเรียกใช้');
+  assert.ok(acc.includes('stockPillHtml(item)'), 'การ์ดใน js/accessories.js ต้องเรียกใช้');
+  assert.strictEqual(equip.split('stockPillHtml(').length - 1, 2,
+    'equipment.html มีการ์ด 2 ชนิด (fixture + accessory) ต้องเรียกทั้งคู่');
+});
+
+await test('การ์ด fixture เลิกแสดง "· Stock" กลางการ์ด (ไม่ซ้ำกับมุมขวาล่าง)', async () => {
+  const equip = fs.readFileSync(path.join(ROOT, 'equipment.html'), 'utf8');
+  assert.ok(!equip.includes('· Stock ${stockCount}'), 'ต้องเอาตัวเลขกลางการ์ดออกแล้ว');
+  assert.ok(equip.includes('<div><strong>${typeLabel}</strong></div>'), 'บรรทัดกลางต้องเหลือแค่ประเภท');
+  // หน้ารายละเอียดยังต้องโชว์ Stock ครบ (ตั้งใจให้เต็มที่ไม่ได้ย่อ)
+  assert.ok(equip.includes('<span>Stock</span>'), 'spec-row ในหน้ารายละเอียดต้องยังอยู่');
+});
+
+await test('CSS มี .stock-pill และดันไปชิดขวาด้วย margin-left:auto', async () => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/style.css'), 'utf8');
+  const block = css.slice(css.indexOf('.stock-pill {'));
+  assert.ok(block.startsWith('.stock-pill {'), 'ต้องมีคลาส .stock-pill');
+  const rule = block.slice(0, block.indexOf('}'));
+  assert.ok(/margin-left:\s*auto/.test(rule), 'ต้องมี margin-left:auto ไม่งั้นไม่ไปมุมขวาล่าง: ' + rule);
+  assert.ok(/var\(--brand-accent\)/.test(rule), 'ควรใช้สี accent ของแบรนด์เพื่อให้เด่น');
+  assert.ok(css.includes('.card-stock-row'), 'การ์ดอุปกรณ์เสริมไม่มี .card-add-row ต้องมีแถวของตัวเอง');
+});
+
+await test('ข้อมูลจริง: fixtures ทั้ง 64 ใบต้องได้ pill และตัวเลขตรง stockCount', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  let shown = 0;
+  for (const f of localFixtures) {
+    const html = sandbox.stockPillHtml(f);
+    assert.notStrictEqual(html, '', `fixture id ${f.id} (${f.model}) ต้องมี pill`);
+    assert.ok(html.includes(`<strong>${f.stockCount}</strong>`),
+      `id ${f.id}: คาดหวัง ${f.stockCount} แต่ได้ ${html}`);
+    shown++;
+  }
+  assert.strictEqual(shown, localFixtures.length);
+});
+
+await test('ข้อมูลจริง: อุปกรณ์เสริมที่ไม่มี stock ต้องไม่แสดง pill (70 จาก 72 รายการ)', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const withStock = localAccessories.filter((a) => a.stock && String(a.stock).trim());
+  const without = localAccessories.filter((a) => !(a.stock && String(a.stock).trim()));
+  assert.ok(withStock.length >= 1, 'ต้องมีบางรายการที่มี stock ไม่งั้นเทสต์นี้ไม่มีความหมาย');
+  for (const a of withStock) {
+    assert.notStrictEqual(sandbox.stockPillHtml(a), '', `${a.name} มี stock ต้องได้ pill`);
+  }
+  for (const a of without) {
+    assert.strictEqual(sandbox.stockPillHtml(a), '', `${a.name} ไม่มี stock ต้องซ่อน pill`);
+  }
+  assert.strictEqual(without.length, localAccessories.length - withStock.length);
 });
 
 console.log(`\nสรุป: ผ่าน ${passed} / ไม่ผ่าน ${failed}\n`);

@@ -12,6 +12,28 @@ function getStockCount(item) {
   return match ? Number(match[1]) : 0;
 }
 
+// จำนวน stock แบบตัวเลขเด่น ๆ สำหรับมุมขวาล่างของการ์ด
+//   getStockCount() ให้ "ตัวเลข" — ฟังก์ชันนี้ให้ "HTML พร้อมเสียบเข้าแถว flex"
+//
+// คืนสตริงว่างเมื่อไม่รู้จำนวน (null / 0 / parse ไม่ได้) ตามกฎเดิมของโปรเจกต์คือ
+// "ไม่มั่วสเปก" — จึงไม่แสดงเลข 0 หลอก ๆ เพราะของจริงคือ "ยังไม่ได้กรอก" ไม่ใช่ "หมด"
+// การซ่อนทำให้แยกออกทันทีว่าการ์ดใบไหนยังขาดข้อมูล
+//
+// ข้อความ stock ดิบ (เช่น "28 Pieces (7 sets of 4)") ถูกเก็บไว้ใน title ให้ hover อ่านได้
+// จึงไม่เสียข้อมูลส่วนขยายไปเฉย ๆ — หลักเดียวกับ shortBadgeHtml ของ tag
+function stockPillHtml(item) {
+  const count = getStockCount(item);
+  if (!Number.isFinite(count) || count <= 0) return '';
+
+  const raw = String(item?.stock || '').trim();
+  const title = raw && raw !== String(count) ? raw : `จำนวนที่มี ${count} ชิ้น`;
+
+  return `<span class="stock-pill" title="${escapeAttrText(title)}">`
+    + `<strong>${count}</strong>`
+    + `<span class="stock-pill-unit">ชิ้น</span>`
+    + '</span>';
+}
+
 function inferItemType(item) {
   const explicit = normalizeText(item?.type);
   if (explicit) return explicit;

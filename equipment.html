@@ -552,7 +552,6 @@ function render() {
   }
 
   pageItems.forEach((item) => {
-    const stockCount = getStockCount(item);
     const typeLabel = itemTypeLabel(item);
     const colorLabel = item.color || (isBiColorFixture(item) ? 'Bi-Color' : (isRgbFixture(item) ? 'RGB' : '-'));
     const colorBadgeClass = colorTagClass(item);
@@ -565,6 +564,10 @@ function render() {
         .filter(Boolean)
         .map((fixture) => `${fixture.brand} ${fixture.model}`);
       const crmxBadge = hasCrmx(item) ? `<span class="badge bg-warning text-dark">CRMX</span>` : '';
+      // จำนวนที่มีไปโชว์เด่น ๆ ที่มุมขวาล่างแทนบรรทัดกลางการ์ด
+      // ถ้าไม่รู้จำนวน (stock ว่าง — ตอนนี้ 70 จาก 72 รายการ) ให้บอกตรง ๆ ว่ายังไม่ระบุ
+      // ดีกว่าปล่อยว่างเพราะจะแยกไม่ออกว่า "หมด" หรือ "ยังไม่ได้กรอก"
+      const stockPill = stockPillHtml(item);
       col.innerHTML = `
         <div class="filter-panel h-100 accessory-card" role="button" data-key="${item._key}">
           <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
@@ -580,8 +583,9 @@ function render() {
             ${crmxBadge}
             ${item.wireless ? `<span class="badge bg-secondary">Wireless</span>` : ''}
           </div>
-          <div class="small mb-2">${item.stock || 'ไม่ระบุ stock'}</div>
+          ${stockPill ? '' : `<div class="small text-muted mb-2">ไม่ระบุ stock</div>`}
           <div class="small"><strong>ใช้กับ:</strong> ${compatible.length ? compatible.join(', ') : 'ยังไม่ระบุ'}</div>
+          ${stockPill ? `<div class="card-stock-row">${stockPill}</div>` : ''}
         </div>`;
     } else {
       const crmxBadge = hasCrmx(item) ? `<span class="badge bg-warning text-dark">CRMX</span>` : '';
@@ -601,7 +605,7 @@ function render() {
               ${badgesHtmlFromCommaList(item.category || '-', 'bg-dark', { short: true })}
             </div>
             <div class="small mb-2">
-              <div><strong>${typeLabel}</strong> · Stock ${stockCount}</div>
+              <div><strong>${typeLabel}</strong></div>
               <div>${powerCardText(item)} · ${item.weight != null ? `${item.weight} kg` : '-'}</div>
             </div>
             <div class="d-flex flex-wrap gap-1 mb-2">
@@ -614,6 +618,7 @@ function render() {
               ${isSetAddableItem(item) ? `<input type="number" min="1" value="1" class="form-control form-control-sm add-qty-input" data-key="${item._key}">` : ''}
               ${isSetAddableItem(item) ? `<button class="btn btn-dark btn-sm add-to-set-btn" data-key="${item._key}">+</button>` : ''}
               ${isSetAddableItem(item) && hasSetOption(item) ? `<button class="btn btn-outline-dark btn-sm add-set-btn" data-key="${item._key}">+ ชุด</button>` : ''}
+              ${stockPillHtml(item)}
             </div>
           </div>
         </div>`;
