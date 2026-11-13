@@ -361,17 +361,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // ปุ่มจอง — อยู่ท้ายชื่อของตัวเองตามที่ต้องการ
-      // ยังเป็นปุ่มปิดอยู่เพราะหน้าจอง (booking.html) ยังไม่ถูกสร้าง
-      // ระบบจองจะเปิดปุ่มนี้ให้เองใน PR ถัดไป — ห้ามให้กดได้ก่อนมีหน้ารองรับ
+      // พาไปหน้าปฏิทินจอง (booking.html) ซึ่งเป็นที่เดียวที่ใช้สร้างใบจอง
+      // ฝั่งโน้นจะเปิดโหมดข้อมูลจริงให้อัตโนมัติเพราะบัญชีนี้ sign in อยู่แล้ว
       const tdBook = document.createElement('td');
       tdBook.className = 'text-end';
       if (isSelf) {
-        const bookBtn = document.createElement('button');
-        bookBtn.type = 'button';
-        bookBtn.className = 'btn btn-outline-secondary btn-sm';
-        bookBtn.disabled = true;
-        bookBtn.textContent = 'จอง — เร็ว ๆ นี้';
-        bookBtn.title = 'ระบบจองอุปกรณ์กำลังจะถูกเพิ่ม — ปุ่มนี้จะกดได้เมื่อหน้าจองพร้อมใช้งาน';
+        const bookBtn = document.createElement('a');
+        bookBtn.className = 'btn btn-outline-dark btn-sm';
+        bookBtn.href = 'booking.html?source=live';
+        bookBtn.textContent = 'จอง';
+        bookBtn.title = 'ไปที่ปฏิทินจอง — กดวันที่ แล้วกด "จองของวันนี้" เพื่อสร้างใบจองในชื่อของคุณ';
         tdBook.appendChild(bookBtn);
       } else {
         // แถวของคนอื่นไม่ใช่ของที่จะกดจองแทน
@@ -592,6 +591,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     setVisible('verifyPanel', isAdminViewer);
     setVisible('tipsPanel', isAdminViewer);
     setVisible('dataPanel', isAdminViewer);
+    // แผงจัดการใบจองเป็นงานเขียนล้วน ๆ (รับของ / ปักค้างคืน / ยกเลิก) ของ admin เท่านั้น
+    setVisible('bookingAdminPanel', isAdminViewer);
     // ในแผงทีมงาน: วิธีเพิ่มคน + ปุ่มตรวจซ้ำ เป็นของ admin
     setVisible('memberAdminHint', isAdminViewer);
     setVisible('refreshMembersBtn', isAdminViewer);
@@ -617,7 +618,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (hintEl) {
       hintEl.textContent = isAdminViewer
         ? ' · ตอนนี้ปุ่ม "แก้ไข / ซ่อน / ลบ" จะปรากฏในหน้า Detail ของอุปกรณ์และ Accessories'
-        : ' · สิทธิ์ crew เห็นเฉพาะบัญชีของตัวเอง (ปุ่มจองอุปกรณ์จะกดได้เร็ว ๆ นี้)';
+        : ' · สิทธิ์ crew เห็นเฉพาะบัญชีของตัวเอง (ปุ่ม จอง จะพาไปหน้าปฏิทินจอง)';
     }
 
     // โชว์สิทธิ์ + รหัสประจำตัวจากตาราง members
@@ -653,6 +654,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // (แผงพวกนี้ถูกซ่อนไว้ใน applyRoleVisibility แล้ว)
     if (isAdminViewer) {
       await refreshData();
+
+      // แผงจัดการใบจอง — โหลดเฉพาะ admin เพราะทุกปุ่มในแผงนี้เป็นงานเขียน
+      // (crew อ่านใบจองของคนอื่นไม่เห็นอยู่แล้ว จึงโหลดไปก็เจอแต่ error)
+      // ถ้ายังไม่ได้รัน migration แผงจะฟ้องตรง ๆ ว่าต้องรันไฟล์ไหน ไม่เงียบ
+      if (window.BookingAdmin && typeof window.BookingAdmin.init === 'function') {
+        try {
+          await window.BookingAdmin.init();
+        } catch (e) {
+          // แผงจองพังต้องไม่ลากหน้า admin ทั้งหน้าพังตาม
+          console.error('[booking-admin] init failed', e);
+        }
+      }
 
       const summary = VerificationStore.getSummary();
       if (summary) {

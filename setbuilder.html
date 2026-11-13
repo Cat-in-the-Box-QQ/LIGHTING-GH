@@ -17,6 +17,7 @@
       <a class="nav-link text-light" href="accessories.html">Accessories</a>
       <a class="nav-link text-light active" href="setbuilder.html">Set Builder</a>
       <a class="nav-link text-light" href="inventory.html">Inventory</a>
+      <a class="nav-link text-light" href="booking.html">Booking</a>
       <a class="nav-link text-light" href="admin.html">Sign in</a>
     </div>
   </div>
@@ -72,10 +73,11 @@
         <div class="spec-row"><span>กระแสไฟที่ต้องใช้</span><span id="sumCurrent">0 A</span></div>
         <hr>
         <div class="d-grid gap-2">
-          <button id="savePdfBtn" class="btn btn-dark w-100">บันทึก / พิมพ์ PDF</button>
+          <button id="bookSetBtn" class="btn btn-dark w-100">จองชุดนี้</button>
+          <button id="savePdfBtn" class="btn btn-outline-dark w-100">บันทึก / พิมพ์ PDF</button>
           <button id="clearSetBtn" class="btn btn-outline-danger w-100">ล้างชุดทั้งหมด</button>
         </div>
-        <div class="small text-muted mt-3">กดปุ่มนี้แล้วเลือก Save as PDF ในหน้าพิมพ์ได้ทันที</div>
+        <div class="small text-muted mt-3">"จองชุดนี้" จะแตกชุดเป็นรายชิ้นแล้วพาไปหน้าปฏิทินจอง — ระบบไม่มี "ชุด" เป็นก้อนที่มีสต็อกของตัวเอง จึงต้องจองเป็นชิ้น ๆ เสมอ<br>ปุ่มพิมพ์ PDF: กดแล้วเลือก Save as PDF ในหน้าพิมพ์ได้ทันที</div>
       </div>
     </div>
   </div>
@@ -488,6 +490,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('savePdfBtn').addEventListener('click', () => {
     window.print();
+  });
+
+  // "จองชุดนี้" — แตกชุดเป็นรายชิ้น แล้วส่งไปเปิดฟอร์มจองที่หน้าปฏิทิน
+  // ชุดในหน้านี้เก็บ id เป็น "12" (fixture) / "a3" (accessory) ซึ่งเป็น id จริงในฐานข้อมูล
+  // จึงแปลงเป็น booking.html?book=fixture-12*2,accessory-3*4 ได้ตรง ๆ
+  // ห้ามสร้าง entity "ชุด" ที่มีสต็อกของตัวเองเด็ดขาด (ตกลงกันไว้แล้วว่าต้องแตกเป็นชิ้น)
+  document.getElementById('bookSetBtn').addEventListener('click', () => {
+    if (!setItems.length) {
+      flashBuilderStatus('ยังไม่มีอุปกรณ์ในชุด — เพิ่มของก่อนแล้วค่อยกดจอง', false);
+      return;
+    }
+
+    const tokens = [];
+    let skipped = 0;
+    setItems.forEach((it) => {
+      const key = String(it.id || '');
+      const qty = Math.max(Number(it.qty) || 1, 1);
+      const acc = /^a(\d+)$/.exec(key);
+      const fix = /^(\d+)$/.exec(key);
+      if (acc) tokens.push(`accessory-${acc[1]}*${qty}`);
+      else if (fix) tokens.push(`fixture-${fix[1]}*${qty}`);
+      else skipped += 1;   // id ที่แปลไม่ออกจะไม่เดา — ข้ามแล้วบอกผู้ใช้
+    });
+
+    if (!tokens.length) {
+      flashBuilderStatus('แปลรายการในชุดเป็นรหัสอุปกรณ์ไม่ได้ — ลองล้างชุดแล้วเพิ่มใหม่', false);
+      return;
+    }
+    if (skipped) flashBuilderStatus(`มี ${skipped} รายการที่แปลไม่ได้ จึงไม่ได้ส่งไปหน้าจอง`, false);
+
+    window.location.href = `booking.html?book=${encodeURIComponent(tokens.join(','))}`;
   });
 
   const params = new URLSearchParams(location.search);

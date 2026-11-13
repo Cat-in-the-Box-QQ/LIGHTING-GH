@@ -361,7 +361,7 @@ chk('ปุ่มกลับมาใช้งานได้อีก (ไม�
 chk('ไม่ reload และไม่มี error หลุดไปหาผู้ใช้', errSpy.length === 1, 'console.error ถูกเรียก ' + errSpy.length + ' ครั้ง (คาด 1 = log ไว้ตรวจ)');
 
 // ---------- เคส 8: ปุ่มจอง ----------
-console.log('\n[8] ปุ่มจองท้ายแถวตัวเอง — ต้องปิดอยู่จนกว่าหน้าจองจะพร้อม');
+console.log('\n[8] ปุ่มจองท้ายแถวตัวเอง — ต้องพาไปหน้าปฏิทินจองได้จริง');
 clearDom();
 const sbBook = build({ rows: ROWS });
 await sbBook.refreshMembers();
@@ -370,11 +370,13 @@ const selfRow = rowOf(tbBook, 'ADMIN01');
 const bookBtn = cells(selfRow).at(-2).children[0];
 chk('แถวตัวเองมีปุ่มจอง', !!bookBtn && /จอง/.test(bookBtn.textContent), bookBtn?.textContent);
 chk(
-  'ปุ่มจองปิดอยู่ (หน้า booking.html ยังไม่มี — ห้ามให้กดแล้วเจอ 404)',
-  bookBtn?.disabled === true && /เร็ว ๆ นี้/.test(bookBtn?.textContent || ''),
-  `disabled=${bookBtn?.disabled} text=${bookBtn?.textContent}`,
+  'ปุ่มจองกดได้แล้ว และเป็นลิงก์ไปหน้า booking.html (ไม่ใช่ปุ่ม disabled ค้างไว้)',
+  bookBtn?.disabled !== true && String(bookBtn?.href || '').includes('booking.html'),
+  `disabled=${bookBtn?.disabled} href=${bookBtn?.href} tag=${bookBtn?.tagName}`,
 );
-chk('ปุ่มจองมี title บอกว่าทำไมกดไม่ได้', (bookBtn?.title || '').length > 0, bookBtn?.title);
+chk('ลิงก์สั่งให้เปิดโหมดข้อมูลจริง เพราะบัญชีนี้ sign in อยู่แล้ว', String(bookBtn?.href || '').includes('source=live'), bookBtn?.href);
+chk('ไม่บอกว่า "เร็ว ๆ นี้" อีกแล้ว', !/เร็ว ๆ นี้/.test(bookBtn?.textContent || ''), bookBtn?.textContent);
+chk('ปุ่มจองมี title บอกว่าจะเจอกฎอะไรที่หน้าจอง', /ปฏิทินจอง|จองของวันนี้/.test(bookBtn?.title || ''), bookBtn?.title);
 chk(
   'แถวคนอื่นไม่มีปุ่มจองให้กดแทน',
   cells(rowOf(tbBook, 'TK01')).at(-2).children.length === 0

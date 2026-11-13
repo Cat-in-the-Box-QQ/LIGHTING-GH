@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>ปฏิทินจองอุปกรณ์ - Lighting GH</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark mb-4">
+  <div class="container-fluid px-3 px-lg-4">
+    <a class="navbar-brand" href="index.html">💡 Lighting GH</a>
+    <div class="d-flex gap-3 flex-wrap">
+      <a class="nav-link text-light" href="index.html">Dashboard</a>
+      <a class="nav-link text-light" href="equipment.html">Equipment</a>
+      <a class="nav-link text-light" href="accessories.html">Accessories</a>
+      <a class="nav-link text-light" href="setbuilder.html">Set Builder</a>
+      <a class="nav-link text-light" href="inventory.html">Inventory</a>
+      <a class="nav-link text-light active" href="booking.html">Booking</a>
+      <a class="nav-link text-light" href="admin.html">Sign in</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid px-3 px-lg-4 pb-5">
+
+  <div class="cal-top mb-3">
+    <div>
+      <h2 class="mb-1">ปฏิทินจองอุปกรณ์</h2>
+      <p class="text-muted small mb-0">
+        ช่องสี่เหลี่ยมในตารางคือ <strong>หนึ่งวัน</strong> · จุดสีกลมเล็กคือ <strong>คนที่จอง</strong> (วันเดียวหลายคนจอง = หลายจุด)
+        · เลื่อนซ้าย-ขวาเพื่อดูเดือนถัดไป · <strong>กดวันที่</strong> แล้วจะเห็นใบงานของวันนั้นข้างล่าง และกดจองของวันนั้นได้
+      </p>
+    </div>
+    <div class="btn-group cal-source" role="group" aria-label="เลือกแหล่งข้อมูล">
+      <button type="button" class="btn btn-sm btn-outline-dark" data-cal-source="demo">ข้อมูลตัวอย่าง</button>
+      <button type="button" class="btn btn-sm btn-outline-dark" data-cal-source="live">ข้อมูลจริง</button>
+    </div>
+  </div>
+
+  <div id="calBanner" class="mb-3" hidden></div>
+
+  <div id="calStats" class="row g-2 mb-3"></div>
+
+  <div class="cal-toolbar mb-2">
+    <div class="cal-toolbar-group">
+      <div class="btn-group btn-group-sm" role="group" aria-label="เลือกมุมมอง">
+        <button type="button" id="calViewMonth" class="btn btn-outline-dark active" title="ดูทีละเดือน เลื่อนซ้าย-ขวาได้">เดือน</button>
+        <button type="button" id="calViewYear" class="btn btn-outline-dark" title="ภาพรวมทั้งปี 12 เดือนย่อในจอเดียว">ปี (ภาพรวม)</button>
+      </div>
+    </div>
+
+    <div class="cal-toolbar-group">
+      <div class="btn-group btn-group-sm" role="group" aria-label="เลื่อนช่วงเวลา">
+        <button type="button" id="calPrev" class="btn btn-outline-dark" aria-label="ก่อนหน้า" title="เดือนก่อนหน้า (←)">‹</button>
+        <button type="button" id="calToday" class="btn btn-outline-dark" title="กลับมาเดือนนี้ (T)">วันนี้</button>
+        <button type="button" id="calNext" class="btn btn-outline-dark" aria-label="ถัดไป" title="เดือนถัดไป (→)">›</button>
+      </div>
+      <input type="date" id="calJump" class="form-control form-control-sm cal-jump" aria-label="ไปที่วันที่">
+    </div>
+
+    <div class="cal-toolbar-group cal-toolbar-title">
+      <span id="calTitle">—</span>
+    </div>
+
+    <div class="cal-toolbar-group">
+      <span id="calFilterNote" class="cal-filter-note small" hidden></span>
+    </div>
+  </div>
+
+  <div id="calLegend" class="cal-legend mb-2"></div>
+
+  <div class="cal-stage mb-2">
+    <button type="button" id="calPrevMonth" class="cal-nav-arrow" aria-label="ก่อนหน้า" title="ย้อนกลับ (←)"></button>
+
+    <div id="calGrid" class="cal-grid-wrap cal-view-month cal-stage-main">
+      <div id="calTrack" class="cal-track"></div>
+      <div id="calYearGrid" class="cal-year" hidden></div>
+      <div id="calLoading" class="cal-loading" hidden></div>
+    </div>
+
+    <button type="button" id="calNextMonth" class="cal-nav-arrow" aria-label="ถัดไป" title="ถัดไป (→)"></button>
+  </div>
+
+  <p class="text-muted small mb-3 cal-tip">
+    เลื่อนดูเดือนอื่น: กดปุ่มลูกศรข้างปฏิทิน · ลากด้วยเมาส์ · หมุนล้อ · ปัดบนจอโทรศัพท์ · หรือกด ← → บนคีย์บอร์ด
+  </p>
+
+  <div id="calDetail" class="cal-detail" hidden></div>
+
+  <div class="cal-next-steps mt-4">
+    <div class="cal-next-title">หน้านี้ทำงานกับฐานข้อมูลจริงแล้ว</div>
+    <ul class="cal-next-list">
+      <li><strong>sign in แล้ว</strong> ปฏิทินจะเปิดโหมด "ข้อมูลจริง" ให้อัตโนมัติ — จุดสีคือ <code>members.color_hue</code> ของผู้จองแต่ละคน (ถาวร ไม่สลับเมื่อรีเฟรช)</li>
+      <li>กดวันที่ → ดูใบงานของวันนั้น → กด <strong>จองของวันนี้</strong> เพื่อเปิดฟอร์มสร้างใบจอง (เลือกอุปกรณ์ ระบุจำนวน ชื่องาน สถานที่ แล้วบันทึก)</li>
+      <li>ฟอร์มบังคับเพดานจากฐานข้อมูล: <strong>จองเกินจำนวนที่มีไม่ได้</strong> และของที่ <em>ยังไม่ระบุจำนวน</em> จะขึ้น "ยังไม่ระบุจำนวน — จองไม่ได้" (ต่างจาก "หมด")</li>
+      <li>ใบที่ค้างคืน (<code>overdue</code>) ถูกนับทับ <strong>ทุกวัน</strong> ตั้งแต่วันจอง จนกว่า admin จะเคลียร์ — ปฏิทินจึงไม่บอกว่าวันถัดไปว่างทั้งที่ของยังไม่กลับคลัง</li>
+      <li>"วันนี้" ของระบบคือเวลาไทย (<code>biz_today()</code>) ไม่ใช่ UTC — ช่วงตี 0 ถึง 7 โมงเช้าจึงไม่ไฮไลต์ผิดวัน</li>
+      <li>ยังไม่ได้ sign in = โหมด <strong>ข้อมูลตัวอย่าง</strong> (ตัวเลขถูกสร้างขึ้นในเบราว์เซอร์ ไม่บันทึกลงฐานข้อมูล) ใช้ดูหน้าตาก่อนได้</li>
+    </ul>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/admin-auth.js"></script>
+<script src="js/booking-store.js"></script>
+<script src="js/booking-demo.js"></script>
+<script src="js/booking-live.js"></script>
+<script src="js/booking-form.js"></script>
+<script src="js/booking-calendar.js"></script>
+<script>
+  (async function () {
+    // รับค่าจาก URL ได้ เพื่อให้หน้าอื่นลิงก์มาเจาะวัน/มุมมอง/เปิดฟอร์มจองได้
+    //   booking.html?date=2026-11-15&view=year
+    //   booking.html?date=2026-11-15&book=fixture-12,accessory-3*2
+    var params = new URLSearchParams(window.location.search || '');
+    var dateParam = String(params.get('date') || '');
+    var viewParam = String(params.get('view') || '');
+    var sourceParam = String(params.get('source') || '');
+    var bookParam = String(params.get('book') || '');
+    var hasDate = /^\d{4}-\d{2}-\d{2}$/.test(dateParam);
+
+    var opts = { view: 'month' };
+    if (['month', 'year'].indexOf(viewParam) >= 0) opts.view = viewParam;
+    if (hasDate) opts.today = dateParam;
+
+    // รอรู้สิทธิ์ก่อนเลือกแหล่งข้อมูล: ข้อมูลจริงมีชื่อผู้จองอยู่ในฐานข้อมูล
+    // จึงเปิดให้เฉพาะบัญชีที่ sign in แล้ว — คนที่ยังไม่เข้าระบบจะได้ดูข้อมูลตัวอย่าง
+    var loggedIn = false;
+    if (window.AdminAuth && typeof window.AdminAuth.ready === 'function') {
+      try {
+        await window.AdminAuth.ready();
+        loggedIn = !!window.AdminAuth.isLoggedIn();
+      } catch (e) { loggedIn = false; }
+    }
+
+    if (sourceParam === 'demo') opts.provider = window.BookingDemoProvider;
+    else if (sourceParam === 'live') opts.provider = window.BookingLiveProvider;
+    else opts.provider = loggedIn ? window.BookingLiveProvider : window.BookingDemoProvider;
+    if (!opts.provider) opts.provider = window.BookingDemoProvider;
+
+    if (window.BookingCalendar && typeof window.BookingCalendar.init === 'function') {
+      await window.BookingCalendar.init(opts);
+    }
+
+    // ลิงก์มาจากการ์ดอุปกรณ์ / Set Builder -> เปิดฟอร์มจองต่อเลย
+    if (bookParam && window.BookingForm) {
+      var items = window.BookingForm.itemsFromParam(bookParam);
+      if (items.length) {
+        window.BookingForm.open({
+          date: hasDate ? dateParam : '',
+          items: items,
+          demoContext: !opts.provider || opts.provider.id !== 'live',
+        });
+      }
+    }
+  })();
+</script>
+</body>
+</html>

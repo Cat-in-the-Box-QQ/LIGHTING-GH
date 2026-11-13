@@ -17,6 +17,7 @@
       <a class="nav-link text-light" href="accessories.html">Accessories</a>
       <a class="nav-link text-light" href="setbuilder.html">Set Builder</a>
       <a class="nav-link text-light" href="inventory.html">Inventory</a>
+      <a class="nav-link text-light" href="booking.html">Booking</a>
       <a class="nav-link text-light" href="admin.html">Sign in</a>
     </div>
   </div>
@@ -570,6 +571,7 @@ function render() {
       // ดีกว่าปล่อยว่างเพราะจะแยกไม่ออกว่า "หมด" หรือ "ยังไม่ได้กรอก"
       const stockPill = stockPillHtml(item);
       const bookingLine = bookingLineHtml('accessory', item.id);
+      const bookLink = bookLinkHtml('accessory', item.id);
       col.innerHTML = `
         <div class="filter-panel h-100 accessory-card" role="button" data-key="${item._key}">
           <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
@@ -589,6 +591,7 @@ function render() {
           <div class="small"><strong>ใช้กับ:</strong> ${compatible.length ? compatible.join(', ') : 'ยังไม่ระบุ'}</div>
           ${stockPill ? `<div class="card-stock-row">${stockPill}</div>` : ''}
           ${bookingLine ? `<div class="card-booking-row">${bookingLine}</div>` : ''}
+          ${bookLink ? `<div class="card-book-row">${bookLink}</div>` : ''}
         </div>`;
     } else {
       const crmxBadge = hasCrmx(item) ? `<span class="badge bg-warning text-dark">CRMX</span>` : '';
@@ -622,6 +625,7 @@ function render() {
               ${isSetAddableItem(item) ? `<button class="btn btn-dark btn-sm add-to-set-btn" data-key="${item._key}">+</button>` : ''}
               ${isSetAddableItem(item) && hasSetOption(item) ? `<button class="btn btn-outline-dark btn-sm add-set-btn" data-key="${item._key}">+ ชุด</button>` : ''}
               ${bookingLineHtml('fixture', item.id)}
+              ${bookLinkHtml('fixture', item.id)}
               ${stockPillHtml(item)}
             </div>
           </div>
@@ -630,6 +634,9 @@ function render() {
 
     grid.appendChild(col);
   });
+
+  // ลิงก์ "จอง" บนการ์ดต้องไม่เปิด modal รายละเอียดของการ์ดไปด้วย
+  bindBookLinks(grid);
 
   grid.querySelectorAll('.add-to-set-btn').forEach((btn) => {
     btn.addEventListener('click', (e) => {
