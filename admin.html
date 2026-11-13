@@ -126,6 +126,34 @@
       </ol>
     </div>
 
+    <div class="filter-panel mb-3" id="bookingAdminPanel">
+      <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-2">
+        <div>
+          <h5 class="mb-1">จัดการใบจอง</h5>
+          <div class="small text-muted">
+            รับของออกจากคลัง · ปักค้างคืน · บันทึกว่าคืนครบ · ยกเลิก · แก้ใบจอง
+            — งานเหล่านี้เดิมทำได้ผ่าน SQL Editor เท่านั้น
+          </div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a class="btn btn-outline-dark btn-sm" href="booking.html" title="ปฏิทินจอง — ดูว่าวันไหนใครจองอะไรไว้">เปิดปฏิทินจอง</a>
+          <button id="refreshBookingsBtn" class="btn btn-outline-dark btn-sm" type="button" data-bkad="refresh">ตรวจซ้ำ</button>
+        </div>
+      </div>
+
+      <div id="bookingAdminSummary" class="small text-muted mb-2">กำลังเตรียมแผงจัดการใบจอง…</div>
+      <div id="bookingAdminBody"></div>
+
+      <div class="small text-muted mt-3">
+        <strong>ทำไมต้องมีคิว "ต้องตรวจของคืน":</strong> ระบบคืนของอัตโนมัติเมื่อพ้นวันจอง
+        แต่ถ้าของ<strong>ไม่กลับมาจริง</strong> ระบบไม่มีทางรู้เองได้ — admin ต้องปักเป็น
+        <strong>ค้างคืน</strong> เพื่อกันคนอื่นจองซ้ำ ใบที่ค้างคืนจะกินสต็อกทุกวัน
+        จนกว่าจะกด <strong>คืนครบแล้ว</strong> (ซึ่งเติมจำนวนที่คืนทุกรายการและปลดสถานะค้างคืนในคราวเดียว)
+        <br>การซ่อนแผงนี้จาก crew ไม่ใช่กำแพงความปลอดภัย — กำแพงจริงคือ RLS และ trigger
+        ฝั่งฐานข้อมูล (crew อ่านใบจองของคนอื่นไม่เห็น แก้จำนวนที่คืนไม่ได้ และบันทึกการคืนไม่ผ่าน)
+      </div>
+    </div>
+
     <div class="filter-panel" id="dataPanel">
       <h5 class="mb-3">จัดการข้อมูล</h5>
 
@@ -240,6 +268,9 @@
 <script src="js/member-store.js"></script>
 <script src="js/verification-store.js"></script>
 <script src="js/admin-auth.js"></script>
+<script src="js/booking-store.js"></script>
+<script src="js/booking-live.js"></script>
+<script src="js/booking-admin.js"></script>
 <script src="js/inline-fixture-editor.js"></script>
 <script src="js/inline-accessory-editor.js"></script>
 <script src="js/inline-member-editor.js"></script>

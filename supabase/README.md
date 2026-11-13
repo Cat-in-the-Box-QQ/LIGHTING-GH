@@ -59,8 +59,13 @@
 >    เพิ่ม `biz_today()`, `v_item_stock`, `members.color_hue` + trigger เติมสี,
 >    `item_availability_between()`, `booking_day_flags_between()`,
 >    `v_booking_day_summary`, `v_booking_day_detail`, `create_booking()`
+> 7. [`migration-2026-11-13e-booking-admin.sql`](./migration-2026-11-13e-booking-admin.sql) —
+>    **งานฝั่ง admin**: `settle_booking()` บันทึกว่าของกลับคลังครบ
+>    (เติม `returned_quantity` ทุกรายการ + ปลดสถานะ `overdue` ใน transaction เดียว)
+>    และ `v_booking_stale` เวอร์ชันใหม่ที่**ซ่อนใบที่คืนครบแล้ว** ไม่งั้นคิวจะค้างตลอดไป
+>    พร้อมเพิ่มคอลัมน์ `job_location` / `member_hue` / `qty_outstanding` ต่อท้าย
 >
-> ทั้งหกไฟล์รันซ้ำได้ปลอดภัยเหมือนกัน ต้องรันตามลำดับเพราะขั้นหลังอ้างอิงของขั้นก่อน
+> ทั้งเจ็ดไฟล์รันซ้ำได้ปลอดภัยเหมือนกัน ต้องรันตามลำดับเพราะขั้นหลังอ้างอิงของขั้นก่อน
 >
 > **รันไปแล้วบนโปรเจกต์จริง:** ข้อ 1–5 รันครบและตรวจซ้ำด้วย `SELECT` แล้ว
 > (`handle_new_auth_user()` ตอนนี้ insert `active = true` · ตารางจอง + trigger + view ติดครบ
@@ -82,7 +87,7 @@
 | view | หน้าที่ | ใครอ่านได้ |
 |---|---|---|
 | `v_item_availability` | `stock` / `booked` / `available` / `out_count` / `stock_unknown` ต่อหนึ่งรายการ | ทุกคน (รวม `anon`) — เป็นยอดรวม ไม่มีชื่อคนจอง |
-| `v_booking_stale` | ใบจองที่เลยวันแล้วยังไม่ถูกปักว่าค้างคืน = ของน่าจะยังไม่ได้กลับคลัง | เฉพาะ `admin` (กรองด้วย `is_admin()` ใน where) |
+| `v_booking_stale` | **คิวที่ admin ต้องดูทุกวัน**: ใบจองที่เลยวันแล้วยังไม่ถูกปักว่าค้างคืน = ของน่าจะยังไม่ได้กลับคลัง · ใบที่คืนครบแล้ว (`qty_outstanding = 0`) จะออกจากคิวเอง | เฉพาะ `admin` (กรองด้วย `is_admin()` ใน where) |
 | `v_item_stock` | แหล่ง "ชื่อ + จำนวนสต็อก" ก้อนเดียวของทั้งระบบ (`stock = null` = ยังไม่ระบุจำนวน) | ทุกคน (รวม `anon`) — ไม่มีข้อมูลการจอง |
 | `v_booking_day_summary` | ต่อหนึ่งวัน + หนึ่งคน: ชื่อ รหัส **สีประจำตัว (`member_hue`)** จำนวนใบ และจำนวนชิ้น | เฉพาะ `authenticated` (มีชื่อคนจอง จึงไม่เปิดให้ `anon`) |
 | `v_booking_day_detail` | รายใบ รายรายการ ของแต่ละวัน — เว็บกรองด้วย `.eq('day', 'YYYY-MM-DD')` | เฉพาะ `authenticated` |
@@ -113,6 +118,7 @@
 | `item_availability_between(from,to)` | ยอดคงเหลือรายชิ้น**รายวัน** (จำกัด ≤ 92 วัน) — ปฏิทินใช้ · `security definer` เพราะคืนแค่ยอดรวมเหมือน `v_item_availability` |
 | `booking_day_flags_between(from,to)` | ธงรายวัน: จำนวนใบ / ค้างคืน / รายการที่จอง / รายการที่หมด |
 | `create_booking(งาน, ที่, วัน, หมายเหตุ, รายการ)` | สร้างใบจอง + รายการใน transaction เดียว จึง rollback ทั้งก้อนถ้ารายการไหนถูกปฏิเสธ · **invoker rights** เพื่อให้ RLS บังคับว่า crew จองในชื่อตัวเองเท่านั้น |
+| `settle_booking(ใบจอง)` | admin บันทึกว่าของกลับคลังครบ: เติม `returned_quantity = quantity` ทุกรายการ แล้วปลด `overdue` → `checked_out` (พ้นวันแล้วจึงไม่กินสต็อกต่อ) · **invoker rights** · ปฏิเสธใบที่ยกเลิกแล้ว และรันซ้ำได้ไม่พัง |
 
 > ### ⚠️ ทำไม `booking_check_stock()` ต้องเป็น `security definer`
 >

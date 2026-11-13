@@ -591,6 +591,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     setVisible('verifyPanel', isAdminViewer);
     setVisible('tipsPanel', isAdminViewer);
     setVisible('dataPanel', isAdminViewer);
+    // แผงจัดการใบจองเป็นงานเขียนล้วน ๆ (รับของ / ปักค้างคืน / ยกเลิก) ของ admin เท่านั้น
+    setVisible('bookingAdminPanel', isAdminViewer);
     // ในแผงทีมงาน: วิธีเพิ่มคน + ปุ่มตรวจซ้ำ เป็นของ admin
     setVisible('memberAdminHint', isAdminViewer);
     setVisible('refreshMembersBtn', isAdminViewer);
@@ -616,7 +618,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (hintEl) {
       hintEl.textContent = isAdminViewer
         ? ' · ตอนนี้ปุ่ม "แก้ไข / ซ่อน / ลบ" จะปรากฏในหน้า Detail ของอุปกรณ์และ Accessories'
-        : ' · สิทธิ์ crew เห็นเฉพาะบัญชีของตัวเอง (ปุ่มจองอุปกรณ์จะกดได้เร็ว ๆ นี้)';
+        : ' · สิทธิ์ crew เห็นเฉพาะบัญชีของตัวเอง (ปุ่ม จอง จะพาไปหน้าปฏิทินจอง)';
     }
 
     // โชว์สิทธิ์ + รหัสประจำตัวจากตาราง members
@@ -652,6 +654,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // (แผงพวกนี้ถูกซ่อนไว้ใน applyRoleVisibility แล้ว)
     if (isAdminViewer) {
       await refreshData();
+
+      // แผงจัดการใบจอง — โหลดเฉพาะ admin เพราะทุกปุ่มในแผงนี้เป็นงานเขียน
+      // (crew อ่านใบจองของคนอื่นไม่เห็นอยู่แล้ว จึงโหลดไปก็เจอแต่ error)
+      // ถ้ายังไม่ได้รัน migration แผงจะฟ้องตรง ๆ ว่าต้องรันไฟล์ไหน ไม่เงียบ
+      if (window.BookingAdmin && typeof window.BookingAdmin.init === 'function') {
+        try {
+          await window.BookingAdmin.init();
+        } catch (e) {
+          // แผงจองพังต้องไม่ลากหน้า admin ทั้งหน้าพังตาม
+          console.error('[booking-admin] init failed', e);
+        }
+      }
 
       const summary = VerificationStore.getSummary();
       if (summary) {

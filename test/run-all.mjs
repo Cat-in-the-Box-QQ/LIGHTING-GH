@@ -12,6 +12,7 @@ const suites = [
   ['Member admin UI (เรนเดอร์จริงใน DOM ปลอม)', 'check-member-ui.mjs'],
   ['Booking calendar (ปฏิทินจอง — เรนเดอร์จริงใน DOM ปลอม)', 'check-booking-calendar.mjs'],
   ['Booking form (ฟอร์มสร้างใบจองจริง — เรนเดอร์จริงใน DOM ปลอม)', 'check-booking-form.mjs'],
+  ['Booking admin (แผงจัดการใบจองของ admin — เรนเดอร์จริงใน DOM ปลอม)', 'check-booking-admin.mjs'],
 ];
 
 let failed = 0;
