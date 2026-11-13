@@ -6,13 +6,38 @@
 
 ---
 
+## ⚠️ อ่านก่อน — ลำดับการตั้งค่าเปลี่ยนแล้ว
+
+สิทธิ์แก้ไขข้อมูล **ไม่ได้ผูกกับ "login ผ่าน" อีกต่อไป** แต่ผูกกับ `role = 'admin'`
+ในตาราง `public.members`
+
+ถ้ารัน SQL โดยยังไม่กำหนด admin **คุณจะเข้าหน้า admin ไม่ได้** จึงต้องทำตามลำดับนี้:
+
+1. สร้างบัญชีใน **Authentication → Users → Add user** (ติ๊ก *Auto Confirm User*)
+2. แก้ `v_admin_email` ในไฟล์ SQL เป็นอีเมลของบัญชีนั้น
+3. ค่อยกด **Run**
+
+ถ้าลืมขั้นที่ 2 สคริปต์จะ `raise exception` และถูก rollback ทั้งไฟล์ — ไม่มีอะไรค้างครึ่งทาง
+แก้แล้วรันใหม่ได้ทันที (สคริปต์เป็น idempotent)
+
+---
+
 ## ขั้นที่ 1 — สร้างตาราง + RLS
 
-เปิด Supabase Dashboard → **SQL Editor** → วางเนื้อหาทั้งหมดของ [`schema.sql`](./schema.sql) → **Run**
+เปิด Supabase Dashboard → **SQL Editor** → วางเนื้อหาทั้งหมดของ [`schema.sql`](./schema.sql)
+→ **แก้ `v_admin_email` ในบล็อก "เพิ่ม admin คนแรก"** → **Run**
 
-> **ถ้าสร้างตารางไปก่อนหน้าแล้ว** ให้รัน [`migration-2026-10-21.sql`](./migration-2026-10-21.sql) เพิ่ม
-> ไฟล์นี้จะเพิ่มคอลัมน์ `battery_wh`, แก้ path รูป 30 รายการที่ชี้ไปไฟล์ไม่มีอยู่จริง
-> และเติมความจุแบตเตอรี่จากสเปกที่มีหลักฐาน — รันซ้ำได้ปลอดภัยเหมือนกัน
+> **ถ้าสร้างตารางไปก่อนหน้าแล้ว** ให้รันไฟล์ migration เพิ่มตามลำดับ
+>
+> 1. [`migration-2026-10-21.sql`](./migration-2026-10-21.sql) — เพิ่มคอลัมน์ `battery_wh`,
+>    แก้ path รูป 30 รายการที่ชี้ไปไฟล์ไม่มีอยู่จริง
+>    และเติมความจุแบตเตอรี่จากสเปกที่มีหลักฐาน
+> 2. [`migration-2026-10-22-members.sql`](./migration-2026-10-22-members.sql) — **ตัวนี้สำคัญ**
+>    สร้างตาราง `members` + ฟังก์ชัน `is_admin()` แล้วสลับสิทธิ์เขียนจาก
+>    "ทุกคนที่ login" เป็น "เฉพาะ role admin"
+>    ต้องแก้ `v_admin_email` ในขั้นที่ 3 ของไฟล์ก่อนรัน
+>
+> ทั้งสองไฟล์รันซ้ำได้ปลอดภัยเหมือนกัน
 
 สคริปต์รันซ้ำได้ปลอดภัย (ใช้ `IF NOT EXISTS` ทั้งหมด) และจะสร้าง:
 
@@ -20,6 +45,11 @@
 |---|---|
 | `fixtures` | `id`, `brand`, `model`, `category`, `type`, `power`, `power_raw`, `battery_wh`, `weight`, `stock_count`, `accessories` (text[]), `hidden`, `reserved`, `in_use`, `remaining`, ... |
 | `accessories` | `id`, `name`, `brand`, `category`, `stock`, `image`, `pdf_page`, `compatible_with` (bigint[]), `hidden` |
+| `members` | `id` (uuid), `auth_uid`, `code` (รหัสประจำตัว), `full_name`, `phone`, `role` (`admin`/`crew`), `active` |
+
+พร้อมฟังก์ชัน `public.is_admin()` (security definer) ที่ policy ทุกตัวใช้ตัดสินสิทธิ์
+และ trigger `members_fill_code()` ที่ออกรหัสประจำตัว (`M001`, `M002`, ...) ให้อัตโนมัติ
+ถ้าไม่ได้ระบุ `code` ตอนเพิ่มสมาชิก
 
 > **`power` vs `battery_wh`** — `power` คือวัตต์ที่อุปกรณ์ *กิน* (ใช้คำนวณโหลดและกระแสไฟ)
 > ส่วน `battery_wh` คือความจุแบตเตอรี่เป็น Wh (ใช้คำนวณว่าเลี้ยงโหลดได้นานแค่ไหน)
@@ -29,24 +59,62 @@
 > **ไม่มั่วสเปก** ให้กรอกผ่านหน้า Admin เอง
 
 พร้อม policy:
-- **อ่าน** ได้ทุกคน (รวมผู้เยี่ยมชมที่ยังไม่ login)
-- **เขียน** ได้เฉพาะ role `authenticated` (ต้อง login ผ่านหน้า admin ก่อน)
+- **อ่าน** `fixtures` / `accessories` ได้ทุกคน (รวมผู้เยี่ยมชมที่ยังไม่ login)
+- **เขียน** `fixtures` / `accessories` ได้เฉพาะ `members.role = 'admin'`
+- **อ่าน** `members` ได้เฉพาะแถวของตัวเอง (admin อ่านได้ทุกคน)
+- **เขียน** `members` ได้เฉพาะ admin
 
-> ถ้าไม่สร้าง policy สำหรับ `authenticated` ไว้ RLS จะบล็อกการบันทึกทั้งหมด
+> ถ้าไม่สร้าง policy เขียนไว้ RLS จะบล็อกการบันทึกทั้งหมด
 > และหน้าเว็บจะขึ้น "บันทึกไม่สำเร็จ: RLS ใน Supabase ไม่อนุญาตให้เขียนข้อมูล"
+
+> **นี่คือตัวตัดสินสิทธิ์จริง** — โค้ดฝั่งเว็บ (`js/admin-auth.js`) คุมแค่ว่าจะแสดงปุ่มแก้ไขหรือไม่
+> ต่อให้ใครแก้ JavaScript ในเบราว์เซอร์ให้ `isUnlocked()` คืน `true` ก็ยังบันทึกไม่ผ่าน RLS อยู่ดี
 
 ---
 
-## ขั้นที่ 2 — สร้างบัญชี Admin
+## ขั้นที่ 2 — สร้างบัญชี + กำหนดสิทธิ์
 
-Supabase Dashboard → **Authentication** → **Users** → **Add user** → ใส่อีเมล + รหัสผ่าน
-(ติ๊ก *Auto Confirm User* จะได้ไม่ต้องกดยืนยันอีเมล)
+**ตัวคุณเอง (admin)** — ทำในขั้นที่ 1 ไปแล้วผ่านบล็อก "เพิ่ม admin คนแรก"
 
-ถ้าต้องการจำกัดว่าอีเมลไหนเข้าโหมด Admin ได้บ้าง แก้ที่ `js/supabase-config.js`:
+ตรวจว่าสำเร็จ: รัน
+```sql
+select m.code, m.full_name, m.role, m.active, u.email
+from public.members m left join auth.users u on u.id = m.auth_uid;
+```
+
+**ทีมงาน (crew — จองของได้อย่างเดียว แก้ไขข้อมูลไม่ได้)**
+
+1. Authentication → **Users** → **Add user** → ใส่อีเมล + รหัสผ่าน (ติ๊ก *Auto Confirm User*)
+2. รัน SQL นี้ (แก้บรรทัดที่ทำเครื่องหมาย ✏️):
+
+```sql
+insert into public.members (auth_uid, code, full_name, phone, role, active)
+select u.id,
+       'TK01',                          -- ✏️ รหัสประจำตัว (เว้น '' ได้ ระบบจะออกรหัสให้อัตโนมัติ)
+       'ชื่อ นามสกุล',                   -- ✏️ ชื่อที่แสดงบนเว็บ
+       null,                            -- เบอร์โทร (ไม่บังคับ)
+       'crew',                          -- crew = จองได้อย่างเดียว
+       true
+from auth.users u
+where lower(u.email) = lower('someone@company.com');   -- ✏️ อีเมลของทีม
+```
+
+> **อย่าใส่ทีมงานเป็น `admin`** — role `admin` แก้/ซ่อน/ลบอุปกรณ์ได้ทั้งร้าน
+> ให้เป็น `admin` เฉพาะคนที่ดูแลข้อมูลจริง
+
+### `SUPABASE_ADMIN_EMAILS` ใน `js/supabase-config.js`
 
 ```js
-window.SUPABASE_ADMIN_EMAILS = ['boss@company.com'];  // [] = ยอมทุกบัญชีที่ login ผ่าน
+window.SUPABASE_ADMIN_EMAILS = [];   // ปกติเว้นว่างไว้แบบนี้
 ```
+
+ตอนนี้รายการนี้**ไม่ได้ใช้ตัดสินสิทธิ์**แล้ว เป็นแค่ทางออกฉุกเฉินช่วงเปลี่ยนผ่าน:
+จะมีผลเฉพาะเมื่อเว็บ**อ่านตาราง `members` ไม่ได้เลย** (เช่น deploy โค้ดใหม่ไปแล้ว
+แต่ยังไม่ได้รัน SQL) ช่วยไม่ให้เจ้าของเว็บเข้าหน้า admin ไม่ได้ในช่วงรอยต่อ
+ถ้าอ่านตาราง `members` ได้ คำตอบจากตารางเท่านั้นที่เป็นจริง
+
+> ⚠️ **ของเดิม `[]` แปลว่า "ยอมทุกบัญชีที่ login ผ่าน"** ซึ่งเป็นอันตราย
+> ตอนนี้ `[]` แปลว่า "ไม่เปิดทางออกฉุกเฉิน" ซึ่งถูกต้องแล้ว
 
 ---
 
@@ -88,10 +156,10 @@ window.SUPABASE_ADMIN_EMAILS = ['boss@company.com'];  // [] = ยอมทุก
 |---|---|---|
 | `SUPABASE_URL` | `https://bizbhhzmrtntbszqhzyr.supabase.co` | URL ของ project |
 | `SUPABASE_ANON_KEY` | `sb_publishable_...` | publishable key (ใช้กับเบราว์เซอร์ได้ปลอดภัย) |
-| `SUPABASE_TABLES` | `{fixtures, accessories}` | ชื่อตาราง ถ้าเปลี่ยนชื่อตารางแก้ที่นี่ |
+| `SUPABASE_TABLES` | `{fixtures, accessories, members}` | ชื่อตาราง ถ้าเปลี่ยนชื่อตารางแก้ที่นี่ |
 | `SUPABASE_DISABLED` | `false` | `true` = บังคับใช้โหมด local ข้าม Supabase |
 | `SUPABASE_ALLOW_LOCAL_FALLBACK` | `true` | `true` = ถ้า Supabase พังให้ถอยกลับมาใช้ local อัตโนมัติ |
-| `SUPABASE_ADMIN_EMAILS` | `[]` | รายชื่ออีเมลที่เข้าโหมด Admin ได้ (`[]` = ไม่จำกัด) |
+| `SUPABASE_ADMIN_EMAILS` | `[]` | ทางออกฉุกเฉิน ใช้**เฉพาะ**ตอนอ่านตาราง `members` ไม่ได้ — ตัวตัดสินสิทธิ์จริงคือ `members.role` |
 
 ---
 
@@ -102,6 +170,17 @@ window.SUPABASE_ADMIN_EMAILS = ['boss@company.com'];  // [] = ยอมทุก
 - ห้ามใส่ `sb_secret_...` (secret key) ลงในโค้ดฝั่งเว็บเด็ดขาด เพราะใครก็อ่านเห็นได้
 - ระบบเดิมมี PIN `1234` ฝังอยู่ในโค้ด ซึ่งใครก็เปิด DevTools อ่านได้ **ถูกถอดออกแล้ว**
   ตอนนี้การเข้าโหมด Admin ต้อง login ผ่าน Supabase Auth เท่านั้น
+- **"login ผ่าน" ไม่เท่ากับ "เป็น admin"** — สิทธิ์ผูกกับ `members.role` ทั้งใน RLS และฝั่งเว็บ
+  ของเดิม policy เขียนเปิดให้ role `authenticated` ทั้งหมด และ `SUPABASE_ADMIN_EMAILS = []`
+  แปลว่า "ยอมทุกบัญชี" ถ้าปล่อยไว้แบบนี้ พอสร้างบัญชีให้ทีมงานใช้ระบบจองของ
+  ทุกคนจะแก้/ซ่อน/ลบอุปกรณ์ได้ทั้งร้าน
+- ถ้าอยากตรวจว่าตอนนี้ใครเขียนข้อมูลได้บ้าง รัน:
+  ```sql
+  select m.code, m.full_name, m.role, m.active, u.email
+  from public.members m left join auth.users u on u.id = m.auth_uid
+  where m.role = 'admin' and m.active = true;
+  ```
+  รายชื่อนี้คือคน**ทั้งหมด**ที่แก้ไขข้อมูลได้ ถ้าว่างเปล่า = ไม่มีใครแก้ได้เลย
 
 ---
 
@@ -111,8 +190,11 @@ window.SUPABASE_ADMIN_EMAILS = ['boss@company.com'];  // [] = ยอมทุก
 node test/run-all.mjs
 ```
 
-จะตรวจ 2 เรื่อง:
+จะตรวจ 3 เรื่อง:
 1. **DOM id wiring** — id ที่ JS เรียกผ่าน `getElementById()` มีอยู่จริงในหน้านั้นหรือไม่
    (นี่คือตัวที่จับบั๊กที่ทำให้หน้า admin พัง)
-2. **Data layer + AdminAuth** — จำลอง Supabase ใน Node แล้วทดสอบทั้งโหมด Supabase,
-   การถอยกลับมาใช้ local เมื่อตารางหาย/เน็ตหลุด/ตารางว่าง, และการ login
+2. **Image references** — path รูปทุกใบใน `data/*.json` ชี้ไปไฟล์ที่มีอยู่จริง,
+   ชื่อไฟล์ตรงตัวพิมพ์เล็ก/ใหญ่ (Vercel รันบน Linux) และขนาดไม่เกินที่มือถือถอดรหัสไหว
+3. **Data layer + AdminAuth** — จำลอง Supabase ใน Node แล้วทดสอบทั้งโหมด Supabase,
+   การถอยกลับมาใช้ local เมื่อตารางหาย/เน็ตหลุด/ตารางว่าง, การ login
+   และการตัดสินสิทธิ์จากตาราง `members` (admin / crew / ไม่มีแถว / ตารางหาย / ถูกปิดใช้งาน)

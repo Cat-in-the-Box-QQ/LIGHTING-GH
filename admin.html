@@ -63,8 +63,9 @@
         <div>
           <h4 class="mb-1">Admin Mode เปิดใช้งานแล้ว</h4>
           <div class="small text-muted">
-            บัญชี: <strong id="adminUserEmail">-</strong> · ตอนนี้ปุ่ม “แก้ไข / ซ่อน / ลบ” จะปรากฏในหน้า Detail ของอุปกรณ์และ Accessories
+            บัญชี: <strong id="adminUserEmail">-</strong> <span id="adminUserRole"></span> · ตอนนี้ปุ่ม “แก้ไข / ซ่อน / ลบ” จะปรากฏในหน้า Detail ของอุปกรณ์และ Accessories
           </div>
+          <div id="adminRoleWarning" class="small text-warning mt-1" style="display:none;"></div>
         </div>
         <button id="adminLogoutBtn" class="btn btn-outline-danger btn-sm" type="button">ออกจากระบบ Admin</button>
       </div>

@@ -1,5 +1,123 @@
 # CHANGELOG
 
+## 2026-10-22 แยกสิทธิ์ Admin ออกจาก "คนที่ login ได้"
+
+### ปัญหา
+
+ระบบเดิมให้สิทธิ์แก้ไขข้อมูลกับ **ทุกคนที่ login ผ่าน Supabase Auth** ซ้ำกัน 2 ชั้น
+
+| ชั้น | ของเดิม | ผล |
+|---|---|---|
+| RLS ใน Supabase | policy `auth write fixtures` → `to authenticated using (true)` | บัญชีไหนก็ insert/update/delete ได้ |
+| `js/admin-auth.js` | `SUPABASE_ADMIN_EMAILS = []` → `emailAllowed()` คืน `true` ทุกอีเมล (`if (!allow.length) return true`) | login ผ่าน = ได้โหมด admin ทันที |
+
+วันนี้ยังไม่เกิดปัญหาเพราะมีเจ้าของเว็บ login อยู่คนเดียว
+**แต่จะเป็นปัญหาทันทีที่สร้างบัญชีให้ทีมงาน** เพื่อใช้ระบบจองของ —
+ทีมงานทุกคนจะกดแก้ไข/ซ่อน/ลบอุปกรณ์ได้ทั้งร้าน
+
+### วิธีแก้
+
+เพิ่มตาราง `public.members` เก็บ `role` แล้วผูกสิทธิ์เขียนไว้ที่ `role = 'admin'`
+
+| role | ทำอะไรได้ |
+|---|---|
+| `admin` | แก้ไข/ซ่อน/ลบ fixtures + accessories, จัดการรายชื่อทีมงาน |
+| `crew` | login ได้ (ไว้ใช้ระบบจองของ) แต่**ไม่ใช่** admin — ไม่เห็นปุ่มแก้ไข |
+
+`code` คือรหัสประจำตัวที่แสดงบนเว็บ (เช่น `TK01`) — **เป็นแค่ป้ายชื่อสำหรับคนอ่าน ไม่ใช่รหัสผ่าน**
+ถ้าไม่ระบุตอนเพิ่มสมาชิก trigger `members_fill_code()` จะออกรหัสให้อัตโนมัติ (`M001`, `M002`, ...)
+
+### ไฟล์ใหม่
+
+**`supabase/migration-2026-10-22-members.sql`** — สำหรับฐานข้อมูลที่มีอยู่แล้ว
+รัน**ต่อจาก** `migration-2026-10-21.sql` แบ่งเป็น 6 ขั้น
+
+1. สร้าง `members` + sequence + trigger ออกรหัส + ฟังก์ชัน `is_admin()`
+2. RLS ของ `members` (อ่านแถวตัวเองได้ / เขียนได้เฉพาะ admin)
+3. **เพิ่มตัวคุณเองเป็น admin** ← ต้องแก้ `v_admin_email` ก่อนรัน
+4. ตรวจว่ามี admin ที่ active จริงอย่างน้อย 1 คน
+5. สลับ policy เขียน `fixtures`/`accessories` จาก "ทุกคนที่ login" → "เฉพาะ admin"
+6. SELECT ตรวจผล
+
+`is_admin()` ต้องเป็น `security definer` + `set search_path` เพราะ policy ของ
+`fixtures` ต้องอ่านตาราง `members` เพื่อตัดสินใจ ถ้าอ่านตรง ๆ จะชน RLS ของ
+`members` เอง (policy ซ้อน policy) จนได้คำตอบผิด
+
+### กันล็อกตัวเองออก
+
+สคริปต์ SQL ทั้งสองไฟล์ (`schema.sql` และ migration) จงใจ `raise exception`
+ถ้ายังไม่ได้แก้ `v_admin_email` — Supabase SQL Editor รันทั้งไฟล์ใน transaction เดียว
+ทุกอย่างจึงถูก rollback ไม่มีอะไรค้างครึ่งทาง แก้แล้วรันใหม่ได้ (idempotent ทั้งไฟล์)
+
+และขั้นที่ 4 จะหยุดสคริปต์ไว้ **ก่อน** สลับ policy ถ้าตาราง `members`
+ไม่มี admin ที่ active เลย เพราะถ้าปล่อยผ่านจะไม่มีใครเขียนข้อมูลได้อีก
+
+ฝั่งเว็บก็มีทางออกฉุกเฉินช่วงเปลี่ยนผ่าน: ถ้า**อ่านตาราง `members` ไม่ได้เลย**
+(เช่น deploy โค้ดใหม่ไปแล้วแต่ยังไม่ได้รัน SQL) และอีเมลถูกระบุไว้ใน
+`SUPABASE_ADMIN_EMAILS` ชัดเจน จะถือเป็น admin ชั่วคราว พร้อมเตือนในหน้า admin
+ว่ายังไม่ได้รัน migration — ถ้าอ่านตารางได้ คำตอบจากตารางเท่านั้นที่เป็นจริง
+
+### การทำงานฝั่งเว็บ (`js/admin-auth.js`)
+
+- `applySession()` เปลี่ยนเป็น **async** เพราะต้อง query ตาราง `members` ก่อนตัดสินสิทธิ์
+- ถ้ายังไม่ได้ login จะ**ไม่ query เลย** (ผู้เยี่ยมชม 6 หน้าไม่เสียเวลาโหลดเพิ่ม)
+- state ใหม่: `loggedIn`, `role`, `member`, `roleError` แยกจาก `unlocked`
+- API ใหม่: `isLoggedIn()`, `getRole()`, `getMember()`, `getMemberCode()`,
+  `getMemberName()`, `getRoleError()`
+- `isUnlocked()` **ยังแปลว่า "โหมด admin" เหมือนเดิม** จึงไม่กระทบ
+  `js/accessories.js`, `js/inline-fixture-editor.js`, `js/admin.js` ที่เรียกอยู่
+- **crew ที่ login ไม่ผ่านสิทธิ์ admin จะไม่ถูก `signOut()`** — ของเดิม signOut ทิ้ง
+  ตอนนี้เก็บ session ไว้ เพราะระบบจองของต้องใช้
+- query ใช้ `try/await` **ไม่ใส่ `.catch()` ต่อท้าย builder** — supabase-js
+  เป็น PromiseLike ที่มีแค่ `.then()` (บั๊กนี้เคยทำให้ทั้งเว็บถอยไปโหมด local มาแล้ว)
+
+### หน้า admin
+
+- แสดง badge **สิทธิ์ + รหัสประจำตัว** ข้างอีเมล (`adminUserRole`)
+- แสดงคำเตือนสีเหลือง (`adminRoleWarning`) เมื่อสิทธิ์มาจากทางออกฉุกเฉิน
+- ใช้ `textContent`/`createElement` ทั้งหมด ไม่ร้อย innerHTML ตรง ๆ
+  เพราะค่ามาจากฐานข้อมูล
+
+### พฤติกรรมที่เปลี่ยน (ต้องรู้)
+
+`SUPABASE_ADMIN_EMAILS` **ไม่ได้ใช้ตัดสินสิทธิ์อีกแล้ว**
+
+| ค่าที่ตั้ง | ของเดิม | ตอนนี้ |
+|---|---|---|
+| `[]` | ยอมทุกบัญชีที่ login ผ่าน | ไม่เปิดทางออกฉุกเฉิน (ปลอดภัย) |
+| `['a@b.com']` | จำกัดเฉพาะอีเมลในรายการ | ไม่มีผล — ตาราง `members` ตัดสิน |
+
+### เทสต์
+
+mock ใน `test/harness.mjs` ถูกทำให้ซื่อตรงกับของจริงขึ้น 3 จุด
+(ไม่งั้นเทสต์ใหม่จะผ่านแบบหลอก ๆ)
+
+- auth user มี `id` (uid) — ของจริงมี แต่ mock ไม่มี ทำให้ query `members` ไม่ได้
+- มีตาราง `members` และยอมให้ seed เองได้
+- select **กรองตาม `.eq()`** และ **คืน object เดียวเมื่อ `.maybeSingle()`** —
+  ของเดิมคืนทั้งตารางเป็น array ถ้าไม่แก้ เทสต์ "crew ต้องไม่กลายเป็น admin
+  เพราะเห็นแถว admin ของคนอื่น" จะผ่านผิด ๆ
+
+เพิ่มเทสต์ 7 ตัว ครอบ: allowlist ไม่ตัดสินสิทธิ์ / crew login ได้แต่ไม่ใช่ admin /
+ไม่มีแถวใน `members` / `active = false` / ตารางหายแล้ว fail closed /
+ตารางหายแต่มี allowlist / query ต้องกรองด้วย `auth_uid` ของตัวเอง
+
+ลบเทสต์ `SUPABASE_ADMIN_EMAILS จำกัดบัญชีได้` ทิ้ง เพราะมัน encode พฤติกรรมเก่าที่เพิ่งแก้
+
+**ผล: harness 62/62** (เดิม 56) · DOM id 136 จุด (เดิม 134) · รูป 136 path
+
+### ลำดับที่ต้องทำจริง
+
+1. Supabase → Authentication → Users → สร้างบัญชีของคุณ (ถ้ายังไม่มี)
+2. SQL Editor → วาง `migration-2026-10-22-members.sql` → **แก้ `v_admin_email`** → Run
+3. ตรวจ SELECT ท้ายไฟล์ว่ามี admin 1 แถว
+4. ค่อย deploy เว็บขึ้น Vercel
+
+ถ้าสลับข้อ 2 กับ 4 จะเข้าหน้า admin ไม่ได้ชั่วคราว
+(จนกว่าอีเมลของคุณจะอยู่ใน `SUPABASE_ADMIN_EMAILS`)
+
+---
+
 ## 2026-10-22 ย่อ tag บนการ์ด — แสดงเฉพาะส่วนนอกวงเล็บ
 
 ### ปัญหา
