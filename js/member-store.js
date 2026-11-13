@@ -222,8 +222,11 @@ const MemberStore = (() => {
     return members.find((m) => String(m.email || '').trim().toLowerCase() === target) || null;
   }
 
-  // แถวที่ trigger สร้างไว้รอการอนุมัติ (ยังไม่ active)
-  function pending() {
+  // แถวที่ถูกปิดใช้งานไว้ (active = false)
+  // เดิมชื่อ pending() เพราะ trigger สร้างแถวมา "รออนุมัติ" — เลิกใช้แล้วตั้งแต่
+  // migration-2026-11-13b-no-approval.sql (แถวใหม่ active = true ใช้งานได้ทันที)
+  // ตอนนี้ active=false เกิดจากการที่ admin กดปิดใช้งานเท่านั้น จึงเปลี่ยนชื่อให้ตรงความหมาย
+  function inactive() {
     return members.filter((m) => m.active !== true);
   }
 
@@ -236,7 +239,7 @@ const MemberStore = (() => {
       total: members.length,
       admin: members.filter((m) => m.active && m.role === 'admin').length,
       crew: members.filter((m) => m.active && m.role === 'crew').length,
-      pending: members.filter((m) => !m.active).length,
+      inactive: members.filter((m) => !m.active).length,
     };
   }
 
@@ -307,7 +310,7 @@ const MemberStore = (() => {
     getAll,
     getById,
     findByEmail,
-    pending,
+    inactive,
     activeAdmins,
     counts,
     missingColumns,
