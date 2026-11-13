@@ -147,9 +147,12 @@ comment on column public.members.role     is 'admin = แก้ไขข้อ�
 comment on column public.members.email    is 'สำเนาอีเมลจาก auth.users — trigger handle_new_auth_user เติมให้ แก้ของจริงที่ Supabase → Authentication';
 
 -- ถ้าไม่ระบุ code ตอนเพิ่มสมาชิก ระบบออกรหัสให้อัตโนมัติ (M001, M002, ...)
+-- search_path ต้องปักไว้เสมอ แม้ body จะอ้าง public.members_code_seq แบบเต็มแล้วก็ตาม
+-- (ไม่งั้น Supabase Security Advisor จะเตือน function_search_path_mutable)
 create or replace function public.members_fill_code()
 returns trigger
 language plpgsql
+set search_path = public, pg_temp
 as $$
 begin
   if new.code is null or btrim(new.code) = '' then

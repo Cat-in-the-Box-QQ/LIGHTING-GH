@@ -14,11 +14,13 @@
 --     สร้างบัญชีใน Dashboard  ->  แถว members โผล่เองอัตโนมัติ (crew, รออนุมัติ)
 --     ->  admin เปิดหน้าเว็บมาตั้งรหัส/สิทธิ์/กดอนุมัติ  (ไม่ต้องแตะ SQL อีก)
 --
--- ทำ 4 อย่าง:
+-- ทำ 5 อย่าง:
 --   1. เพิ่มคอลัมน์ email (สำเนาจาก auth.users ไว้โชว์ในรายการทีมงาน)
 --   2. trigger สร้างแถว members ให้อัตโนมัติเมื่อมีบัญชีใหม่
 --   3. backfill บัญชีที่มีอยู่ก่อนแล้ว (trigger ยิงเฉพาะ insert ใหม่)
 --   4. trigger กันไม่ให้ลดสิทธิ์/ปิดใช้งาน admin คนสุดท้าย
+--   4.5 ปัก search_path ให้ members_fill_code (ปิดเตือน Security Advisor)
+--   5. query ตรวจผลหลังรัน
 --
 -- รันซ้ำได้ปลอดภัยทั้งหมด (if not exists / or replace / drop trigger if exists)
 -- Supabase SQL Editor รันทั้งไฟล์ใน transaction เดียว
@@ -181,6 +183,26 @@ create trigger protect_last_admin
 
 
 -- =====================================================================
+-- ขั้นที่ 4.5 — ปัก search_path ให้ members_fill_code
+-- =====================================================================
+-- ตรวจเจอจากฐานข้อมูลจริง: อีก 3 ฟังก์ชันปัก search_path ไว้ครบ แต่
+-- members_fill_code (มาจาก migration-2026-10-22) เป็น null
+-- จึงถูก Supabase Security Advisor เตือนเป็น function_search_path_mutable
+--
+-- ในทางปฏิบัติปลอดภัยอยู่แล้ว เพราะ body ใช้ nextval('public.members_code_seq')
+-- แบบระบุ schema เต็ม ส่วน btrim/lpad อยู่ใน pg_catalog ซึ่งถูกค้นก่อนเสมอ
+-- จึงไม่มีอะไรให้ hijack — แก้เพื่อปิดช่องเชิง hygiene เท่านั้น ไม่เปลี่ยนพฤติกรรม
+--
+-- จงใจ "ไม่" ทำให้เป็น security definer: trigger นี้แค่เติม new.code
+-- ไม่ควรได้สิทธิ์เกินคนที่เรียก และ security definer ที่ไม่จำเป็นคือความเสี่ยงเพิ่ม
+--
+-- ใช้ alter function แทน create or replace เพื่อไม่ต้องวาง body ใหม่ทั้งก้อน
+-- (ไม่แตะตรรกะข้างใน จึงไม่มีทางเผลอแก้พฤติกรรม)
+
+alter function public.members_fill_code() set search_path = public, pg_temp;
+
+
+-- =====================================================================
 -- ขั้นที่ 5 — ตรวจผลหลังรัน
 -- =====================================================================
 
@@ -221,6 +243,20 @@ order by tgname;
 select m.code, m.full_name, m.email
 from public.members m
 where m.role = 'admin' and m.active = true;
+
+-- 5.5 ต้องได้ 4 แถว และ search_path ต้องเป็น {search_path=public, pg_temp} ทุกแถว
+--     ถ้าแถวไหนเป็น null แปลว่ายังไม่ได้ปัก (ขั้นที่ 4.5 ยังไม่ผ่าน)
+--     security_definer ต้องเป็น true ยกเว้น members_fill_code ที่จงใจเป็น false
+--     (trigger เติม new.code ไม่ควรได้สิทธิ์เกินคนที่เรียก)
+--     query นี้รันตรวจกับฐานข้อมูลจริงแล้วผ่าน จึงมั่นใจชื่อคอลัมน์ pg_proc ได้
+select p.proname,
+       p.prosecdef as security_definer,
+       p.proconfig as search_path
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname in ('handle_new_auth_user', 'protect_last_admin', 'is_admin', 'members_fill_code')
+order by p.proname;
 
 
 -- =====================================================================

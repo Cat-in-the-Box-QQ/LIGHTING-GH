@@ -184,7 +184,55 @@ case tgisinsert when true then 'after insert' else 'before update/delete' end
 **พิสูจน์แล้วว่าตัวกันจับบั๊กเดิมได้จริง** (negative test): ใส่ query เวอร์ชันพังกลับเข้าไป
 ชั่วคราว → เทสต์แดงและชี้ชื่อ `tgisbefore, tgisafter` ถูกตัว → กู้ไฟล์ดีกลับ → เขียว
 
-**ผล: harness 94/94** (เดิม 74) · **member UI 38/38 (ใหม่)** · DOM id 141 จุด (เดิม 136) · รูป 136 path
+### ตรวจกับฐานข้อมูลจริงผ่าน Supabase connector
+
+พอรัน migration ผ่านแล้ว ได้ตรวจผลจากฐานข้อมูลจริง (`bizbhhzmrtntbszqhzyr`, Postgres 17)
+แทนการคาดเดา — ซึ่งเป็นการตรวจครั้งแรกของโปรเจกต์นี้ที่เคยเห็นข้อมูลฝั่งเซิร์ฟเวอร์จริง
+
+| รายการ | ผล |
+|---|---|
+| 5.1 รายชื่อ | 1 แถว `ADMIN01` / zombe.jpm@gmail.com / admin / active / `ผูกแล้ว` |
+| 5.2 จำนวน | `admin_active=1` · `crew_active=0` · `pending_approval=0` · `total=1` |
+| 5.3 trigger | ครบ 3 ตัว ถูกทุกจังหวะ (ดูจาก `pg_get_triggerdef`) |
+| 5.4 admin ที่ใช้งาน | 1 แถว |
+| RLS `members` | เปิดอยู่ · 2 policy ตรงกับที่หน้าเว็บต้องการ |
+| RLS `fixtures`/`accessories` | เปิดอยู่ · 5 policy แต่ละตาราง |
+| `FIELDS` ในโค้ดเว็บ | อ้าง 8 คอลัมน์ มีจริงครบ → `missingColumns()` ว่าง ไม่มีแผงแดง |
+
+policy ของ `members` ที่ตรวจได้ — ยืนยันว่าตารางทีมงานและปุ่มอนุมัติจะเขียนผ่านจริง:
+
+```
+admin write members  → ALL     qual: is_admin()                              with_check: is_admin()
+members read own     → SELECT  qual: (auth.uid() = auth_uid) OR is_admin()
+```
+
+### เจอจากฐานข้อมูลจริง: `members_fill_code` ไม่ได้ปัก `search_path`
+
+query `pg_proc` พบว่า `handle_new_auth_user` / `protect_last_admin` / `is_admin`
+เป็น `security definer` + `search_path = public, pg_temp` ครบทั้ง 3 ตัว
+แต่ `members_fill_code` (มาจาก migration 2026-10-22) มี `proconfig` เป็น **null**
+→ Supabase Security Advisor เตือนเป็น `function_search_path_mutable`
+
+**ในทางปฏิบัติปลอดภัยอยู่แล้ว** เพราะ body ใช้ `nextval('public.members_code_seq')`
+แบบระบุ schema เต็ม ส่วน `btrim`/`lpad` อยู่ใน `pg_catalog` ซึ่งถูกค้นก่อนเสมอ
+จึงไม่มีอะไรให้ hijack — แก้เพื่อปิดช่องเชิง hygiene เท่านั้น ไม่เปลี่ยนพฤติกรรม
+
+แก้ 2 ที่ เพราะแก้ `schema.sql` อย่างเดียวไม่ช่วยฐานข้อมูลที่ติดตั้งไปแล้ว:
+- `schema.sql` — เพิ่ม `set search_path` ใน CREATE (ติดตั้งใหม่ได้ของที่ถูกต้องเลย)
+- migration ตัวนี้ — เพิ่ม**ขั้นที่ 4.5** เป็น `alter function ... set search_path`
+  (ใช้ `alter` แทน `create or replace` เพื่อไม่ต้องวาง body ใหม่ จึงไม่มีทางเผลอแก้ตรรกะ)
+- เพิ่ม **5.5** query ตรวจ `prosecdef` + `proconfig` ของทั้ง 4 ฟังก์ชัน
+  (query นี้รันกับฐานข้อมูลจริงผ่านแล้ว จึงมั่นใจชื่อคอลัมน์ `pg_proc` ได้ — ไม่เดา)
+
+**จงใจไม่ทำให้ `members_fill_code` เป็น `security definer`** — trigger นี้แค่เติม `new.code`
+ไม่ควรได้สิทธิ์เกินคนที่เรียก และ `security definer` ที่ไม่จำเป็นคือความเสี่ยงเพิ่ม
+(เทสต์ล็อกไว้แล้วว่าต้องไม่มี `security definer` ในฟังก์ชันนี้)
+
+เทสต์เพิ่ม 2 ตัว: ทุก trigger function ใน `schema.sql` ต้องปัก `search_path` ·
+migration ต้องมี `alter function` สำหรับฐานข้อมูลเดิม
+**พิสูจน์ด้วย negative test แล้ว** — ถอด `search_path` ออกชั่วคราว เทสต์แดงและชี้ชื่อฟังก์ชันถูกตัว
+
+**ผล: harness 96/96** (เดิม 74) · **member UI 38/38 (ใหม่)** · DOM id 141 จุด (เดิม 136) · รูป 136 path
 
 ### สิ่งที่ยังไม่ทำ (ตั้งใจ)
 

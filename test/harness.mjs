@@ -1494,6 +1494,46 @@ await test('ทุก INSERT INTO public.members ใช้คอลัมน์�
   }
 });
 
+await test('ทุก trigger function ใน schema.sql ต้องปัก search_path', async () => {
+  // ตรวจเจอจากฐานข้อมูลจริงว่า members_fill_code มี proconfig เป็น null
+  // ทั้งที่อีก 3 ฟังก์ชันปักไว้ครบ — Supabase Security Advisor จะเตือนเป็น
+  // function_search_path_mutable จึงล็อกไว้ไม่ให้ฟังก์ชันใหม่หลุดเกณฑ์อีก
+  const src = stripSqlComments(fs.readFileSync(path.join(ROOT, 'supabase/schema.sql'), 'utf8'));
+  const blocks = [...src.matchAll(
+    /create or replace function public\.([a-z_]+)\s*\(([\s\S]*?)\n\$\$;/g,
+  )];
+  assert.ok(blocks.length >= 4, `ควรเจอฟังก์ชันอย่างน้อย 4 ตัว แต่เจอ ${blocks.length}`);
+  for (const m of blocks) {
+    const [, name, header] = m;
+    assert.ok(
+      /set search_path\s*=\s*public,\s*pg_temp/.test(header),
+      `public.${name}() ไม่ได้ปัก search_path = public, pg_temp`
+      + '\n  header: ' + header.replace(/\s+/g, ' ').trim(),
+    );
+  }
+});
+
+await test('migration 2026-11-13 ต้องมี alter function ปัก search_path ให้ของเดิม', async () => {
+  // ฐานข้อมูลของผู้ใช้รัน migration-2026-10-22 ไปแล้ว จึงแก้ schema.sql อย่างเดียวไม่พอ
+  // ต้องมีคำสั่ง alter สำหรับฐานข้อมูลที่ติดตั้งไปแล้วด้วย
+  const mig = stripSqlComments(fs.readFileSync(
+    path.join(ROOT, 'supabase/migration-2026-11-13-member-admin.sql'), 'utf8',
+  ));
+  assert.ok(
+    /alter function public\.members_fill_code\(\)\s+set search_path\s*=\s*public,\s*pg_temp/i.test(mig),
+    'ต้องมี alter function ... set search_path สำหรับฐานข้อมูลที่ติดตั้งไปแล้ว',
+  );
+  // จงใจไม่ทำให้เป็น security definer — trigger เติม new.code ไม่ควรได้สิทธิ์เกินคนเรียก
+  const fillCode = /create or replace function public\.members_fill_code\(([\s\S]*?)\n\$\$;/.exec(
+    fs.readFileSync(path.join(ROOT, 'supabase/schema.sql'), 'utf8'),
+  );
+  assert.ok(fillCode, 'หา members_fill_code ใน schema.sql ไม่เจอ');
+  assert.ok(
+    !/security definer/i.test(fillCode[1]),
+    'members_fill_code ต้องไม่เป็น security definer (ไม่จำเป็น = ความเสี่ยงเพิ่ม)',
+  );
+});
+
 await test('auth_uid ต้องมี unique — ไม่งั้น on conflict (auth_uid) จะ error', async () => {
   // trigger handle_new_auth_user ใช้ on conflict (auth_uid) do nothing
   // ซึ่ง Postgres จะปฏิเสธถ้าไม่มี unique/exclusion constraint ตรงกับที่ระบุ
