@@ -42,15 +42,36 @@ function makeFetch() {
 }
 
 // ---------------- mock Supabase ----------------
-// mode: 'ok' | 'no-table' | 'network' | 'empty' | 'rls-block-write'
+// mode: 'ok' | 'no-table' | 'no-members' | 'network' | 'empty' | 'rls-block-write'
 function makeMockSupabase(mode, seed) {
+  // uid จำลอง — deterministic จากอีเมล เพื่อให้เทสต์ผูกแถว members กับบัญชีได้
+  const uidFor = (email) => 'uid-' + String(email || '').toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+  const defaultMembers = [{
+    id: 'm-admin',
+    auth_uid: uidFor('admin@test.com'),
+    code: 'ADMIN01',
+    full_name: 'ผู้ดูแลระบบ ทดสอบ',
+    phone: null,
+    role: 'admin',
+    active: true,
+  }];
+
   const tables = {
     fixtures: seed?.fixtures ? seed.fixtures.map((r) => ({ ...r })) : [],
     accessories: seed?.accessories ? seed.accessories.map((r) => ({ ...r })) : [],
+    // ค่าเริ่มต้น = สภาวะ "รัน migration แล้ว" (มี admin 1 คน)
+    // ถ้าเทสต์อยากได้สภาวะอื่น ให้ส่ง seed.members มาเอง ([] = ยังไม่ได้รัน migration)
+    members: (seed?.members || defaultMembers).map((r) => ({ ...r })),
   };
   const calls = [];
   let authed = !!seed?.authed;
-  let authUser = seed?.authed ? { email: 'admin@test.com' } : null;
+  let authUser = seed?.authed ? { id: uidFor('admin@test.com'), email: 'admin@test.com' } : null;
+
+  // session.user ของ supabase-js จริงต้องมี id เสมอ — flag นี้มีไว้เทสต์ว่า
+  // ถ้า id หายไป (library เพี้ยน/เวอร์ชันเก่า) เว็บต้องไม่เดาสิทธิ์มั่ว
+  const noUserId = !!seed?.noUserId;
+  const sessionUser = (email) => (noUserId ? { email } : { id: uidFor(email), email });
 
   function errorFor(table, kind) {
     if (kind === 'no-table') return { message: `relation "public.${table}" does not exist`, code: '42P01' };
@@ -69,12 +90,25 @@ function makeMockSupabase(mode, seed) {
 
       if (!tables[table]) return { data: null, error: errorFor(table, 'no-table') };
       if (mode === 'no-table' && table === 'fixtures') return { data: null, error: errorFor(table, 'no-table') };
+      if (mode === 'no-members' && table === 'members') return { data: null, error: errorFor(table, 'no-table') };
       if (mode === 'network') return { data: null, error: errorFor(table, 'network') };
 
       if (kind === 'select') {
         if (mode === 'empty' && table === 'fixtures') return { data: [], error: null };
         let rows = tables[table];
+        // ต้องกรองตาม .eq() ด้วย — ไม่งั้นเทสต์ที่ query แถวของตัวเองจากตาราง members
+        // จะได้ทุกแถวกลับมา แล้วสรุปผิดว่าบัญชีนี้เป็น admin
+        for (const [k, v] of state.filters) {
+          rows = rows.filter((r) => String(r[k]) === String(v));
+        }
         if (state.limit) rows = rows.slice(0, state.limit);
+        // ของจริง .single() / .maybeSingle() คืน object เดียวหรือ null ไม่ใช่ array
+        if (state.single) {
+          if (rows.length > 1) {
+            return { data: null, error: { message: 'JSON object requested, multiple (or no) rows returned' } };
+          }
+          return { data: rows.length ? { ...rows[0] } : null, error: null };
+        }
         return { data: rows.map((r) => ({ ...r })), error: null };
       }
 
@@ -148,14 +182,17 @@ function makeMockSupabase(mode, seed) {
     },
     auth: {
       getSession: async () => (authed
-        ? { data: { session: { user: { email: authUser?.email || 'admin@test.com' } } }, error: null }
+        ? { data: { session: { user: sessionUser(authUser?.email || 'admin@test.com') } }, error: null }
         : { data: { session: null }, error: null }),
       signInWithPassword: async ({ email, password }) => {
         if (mode === 'network') return { data: null, error: { message: 'Failed to fetch' } };
-        if (email === 'admin@test.com' && password === 'secret123') {
+        // mock ยอมทุกบัญชี *@test.com ที่ใช้รหัส 'secret123'
+        // เพื่อให้เทสต์สร้างทีมงาน (crew) หลายคนที่อีเมลต่างกัน แล้วผูกกับแถว members ได้
+        const clean = String(email || '').trim().toLowerCase();
+        if (clean.endsWith('@test.com') && password === 'secret123') {
           authed = true;
-          authUser = { email };
-          return { data: { session: { user: { email } } }, error: null };
+          authUser = { id: uidFor(clean), email: clean };
+          return { data: { session: { user: sessionUser(clean) } }, error: null };
         }
         return { data: null, error: { message: 'Invalid login credentials' } };
       },
@@ -232,7 +269,8 @@ function makeContext({ supabaseMode = 'ok', seed = null, supabaseLibPresent = tr
     + ' window.shortTagText = shortTagText;'
     + ' window.shortBadgeHtml = shortBadgeHtml;'
     + ' window.tagDetailHtml = tagDetailHtml; window.escapeAttrText = escapeAttrText;'
-    + ' window.badgesHtmlFromCommaList = badgesHtmlFromCommaList;',
+    + ' window.badgesHtmlFromCommaList = badgesHtmlFromCommaList;'
+    + ' window.getStockCount = getStockCount; window.stockPillHtml = stockPillHtml;',
     ctx,
     { filename: 'test-export.js' }
   );
@@ -479,14 +517,152 @@ await test('signOut -> กลับมาล็อก', async () => {
   assert.strictEqual(sandbox.AdminAuth.isUnlocked(), false);
 });
 
-await test('SUPABASE_ADMIN_EMAILS จำกัดบัญชีได้', async () => {
-  const { sandbox } = makeContext({ supabaseMode: 'ok', seed: { fixtures: [sbRowFromFixture(localFixtures[0])], accessories: [] } });
+// uid จำลองต้องตรงกับสูตรใน mock: 'uid-' + email ที่แทนอักขระพิเศษด้วย _
+const uidFor = (email) => 'uid-' + String(email).toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+console.log('\n=== สิทธิ์ตามตาราง members (ไม่ใช่แค่ login ผ่าน) ===');
+
+await test('SUPABASE_ADMIN_EMAILS ไม่ใช้ตัดสินสิทธิ์อีกแล้ว — ตาราง members ต่างหากที่ตัดสิน', async () => {
+  // ของเดิม: allowlist ไม่ว่าง = บัญชีนอกรายชื่อเข้าไม่ได้
+  // ตอนนี้: allowlist เป็นแค่ทางออกฉุกเฉินตอนอ่านตาราง members ไม่ได้
+  // ถ้าอ่านได้ คำตอบจากตารางเท่านั้นที่เป็นจริง
+  const { sandbox } = makeContext({ supabaseMode: 'ok', seed: { fixtures: [], accessories: [] } });
   sandbox.SUPABASE_ADMIN_EMAILS = ['boss@company.com'];
   await sandbox.AdminAuth.ready;
   const res = await sandbox.AdminAuth.signIn('admin@test.com', 'secret123');
-  assert.strictEqual(res.ok, false, 'email นอก allowlist ต้องเข้าไม่ได้');
-  assert.ok(res.error.includes('ไม่อยู่ในรายชื่อ admin'), `ได้: ${res.error}`);
+  assert.strictEqual(res.ok, true, 'มีแถว role=admin ใน members ต้องเข้าได้ แม้ไม่อยู่ใน allowlist');
+  assert.strictEqual(sandbox.AdminAuth.getRole(), 'admin');
+  assert.strictEqual(sandbox.AdminAuth.isUnlocked(), true);
+});
+
+await test('crew: login ผ่าน แต่ต้องไม่ได้โหมด admin', async () => {
+  const { sandbox } = makeContext({
+    supabaseMode: 'ok',
+    seed: {
+      fixtures: [], accessories: [],
+      members: [{ id: 'm-crew', auth_uid: uidFor('crew@test.com'), code: 'TK01', full_name: 'ช่างไฟ ทดสอบ', role: 'crew', active: true }],
+    },
+  });
+  await sandbox.AdminAuth.ready;
+  const res = await sandbox.AdminAuth.signIn('crew@test.com', 'secret123');
+  assert.strictEqual(res.ok, false, 'crew ต้องไม่ถูกปลดล็อกเป็น admin');
   assert.strictEqual(sandbox.AdminAuth.isUnlocked(), false);
+  // แต่ยัง login ค้างไว้ — ระบบจองต้องใช้ session นี้
+  assert.strictEqual(sandbox.AdminAuth.isLoggedIn(), true, 'crew ต้องยัง login อยู่');
+  assert.strictEqual(sandbox.AdminAuth.getRole(), 'crew');
+  assert.strictEqual(sandbox.AdminAuth.getMemberCode(), 'TK01');
+  assert.ok(res.error.includes('crew'), `ข้อความต้องบอกสิทธิ์จริง: ${res.error}`);
+});
+
+await test('login ผ่านแต่ไม่มีแถวใน members -> ไม่ได้ admin + session ยังอยู่', async () => {
+  const { sandbox } = makeContext({ supabaseMode: 'ok', seed: { fixtures: [], accessories: [], members: [] } });
+  await sandbox.AdminAuth.ready;
+  const res = await sandbox.AdminAuth.signIn('stranger@test.com', 'secret123');
+  assert.strictEqual(res.ok, false);
+  assert.strictEqual(sandbox.AdminAuth.isUnlocked(), false);
+  assert.strictEqual(sandbox.AdminAuth.isLoggedIn(), true, 'ต้องไม่ signOut ทิ้ง — เผื่อใช้จองของ');
+  assert.ok(res.error.includes('ไม่พบบัญชี'), `ได้: ${res.error}`);
+  assert.ok(res.error.includes('members'), `ต้องบอกชื่อตาราง: ${res.error}`);
+});
+
+await test('สมาชิกที่ถูกปิด (active=false) ต้องไม่ได้สิทธิ์แม้ role เป็น admin', async () => {
+  const { sandbox } = makeContext({
+    supabaseMode: 'ok',
+    seed: {
+      fixtures: [], accessories: [],
+      members: [{ id: 'm-off', auth_uid: uidFor('off@test.com'), code: 'XX99', full_name: 'ปิดใช้งาน', role: 'admin', active: false }],
+    },
+  });
+  await sandbox.AdminAuth.ready;
+  const res = await sandbox.AdminAuth.signIn('off@test.com', 'secret123');
+  assert.strictEqual(res.ok, false);
+  assert.strictEqual(sandbox.AdminAuth.isUnlocked(), false);
+  assert.ok(res.error.includes('ปิดใช้งาน'), `ได้: ${res.error}`);
+});
+
+await test('ตาราง members หาย + allowlist ว่าง -> ปิดตาย (fail closed) พร้อมบอกวิธีแก้', async () => {
+  const { sandbox } = makeContext({ supabaseMode: 'no-members', seed: { fixtures: [], accessories: [] } });
+  await sandbox.AdminAuth.ready;
+  const res = await sandbox.AdminAuth.signIn('admin@test.com', 'secret123');
+  assert.strictEqual(res.ok, false, 'อ่านสิทธิ์ไม่ได้ต้องไม่เดาว่าเป็น admin');
+  assert.strictEqual(sandbox.AdminAuth.isUnlocked(), false);
+  assert.ok(res.error.includes('migration-2026-10-22-members.sql'), `ต้องชี้ไปไฟล์ SQL: ${res.error}`);
+});
+
+await test('ตาราง members หาย + อีเมลอยู่ใน allowlist -> เข้าได้ชั่วคราว (ทางออกช่วงเปลี่ยนผ่าน)', async () => {
+  const { sandbox } = makeContext({ supabaseMode: 'no-members', seed: { fixtures: [], accessories: [] } });
+  sandbox.SUPABASE_ADMIN_EMAILS = ['admin@test.com'];
+  await sandbox.AdminAuth.ready;
+  const res = await sandbox.AdminAuth.signIn('admin@test.com', 'secret123');
+  assert.strictEqual(res.ok, true);
+  assert.strictEqual(sandbox.AdminAuth.getRole(), 'admin');
+  assert.ok(sandbox.AdminAuth.getRoleError().includes('ชั่วคราว'), `ต้องบอกว่าเป็นทางออกชั่วคราว: ${sandbox.AdminAuth.getRoleError()}`);
+  assert.strictEqual(sandbox.AdminAuth.getLastError(), null, 'login สำเร็จต้องไม่ค้างข้อความ error');
+  assert.ok(sandbox.AdminAuth.status().roleError, 'status() ต้องเปิดเผยสถานะชั่วคราวให้หน้าเว็บโชว์ได้');
+});
+
+await test('อ่านตาราง members ได้แต่ไม่มีแถว -> allowlist ต้องพลิกคำตัดสินไม่ได้', async () => {
+  // แยกให้ออกระหว่าง "อ่านไม่ได้" (ใช้ทางออกฉุกเฉินได้) กับ "อ่านได้แต่ไม่มีสิทธิ์" (ปฏิเสธสถานเดียว)
+  const { sandbox } = makeContext({ supabaseMode: 'ok', seed: { fixtures: [], accessories: [], members: [] } });
+  sandbox.SUPABASE_ADMIN_EMAILS = ['admin@test.com'];
+  await sandbox.AdminAuth.ready;
+  const res = await sandbox.AdminAuth.signIn('admin@test.com', 'secret123');
+  assert.strictEqual(res.ok, false, 'ตารางอ่านได้และบอกว่าไม่มีแถว = ไม่มีสิทธิ์จริง');
+  assert.strictEqual(sandbox.AdminAuth.isUnlocked(), false);
+  assert.ok(res.error.includes('ไม่พบบัญชี'), `ได้: ${res.error}`);
+});
+
+await test('session ไม่มี user id -> ไม่ยิง query ทิ้ง และไม่เดาสิทธิ์มั่ว', async () => {
+  const { sandbox, mockSb } = makeContext({
+    supabaseMode: 'ok',
+    seed: { fixtures: [], accessories: [], noUserId: true },
+  });
+  await sandbox.AdminAuth.ready;
+  const res = await sandbox.AdminAuth.signIn('admin@test.com', 'secret123');
+  assert.strictEqual(res.ok, false, 'ไม่มี uid ต้องไม่ถือเป็น admin');
+  assert.strictEqual(sandbox.AdminAuth.isUnlocked(), false);
+  assert.strictEqual(
+    mockSb._calls.filter((c) => c.table === 'members').length, 0,
+    'ไม่มี uid จะกรองแถวไม่ได้ ต้องไม่ยิง query ที่ให้คำตอบผิด'
+  );
+  assert.ok(sandbox.AdminAuth.getRoleError().includes('user id'), `ต้องบอกสาเหตุจริง: ${sandbox.AdminAuth.getRoleError()}`);
+});
+
+await test('session ไม่มี user id + allowlist -> ยังใช้ทางออกฉุกเฉินได้', async () => {
+  const { sandbox } = makeContext({
+    supabaseMode: 'ok',
+    seed: { fixtures: [], accessories: [], noUserId: true },
+  });
+  sandbox.SUPABASE_ADMIN_EMAILS = ['admin@test.com'];
+  await sandbox.AdminAuth.ready;
+  const res = await sandbox.AdminAuth.signIn('admin@test.com', 'secret123');
+  assert.strictEqual(res.ok, true);
+  assert.strictEqual(sandbox.AdminAuth.getRole(), 'admin');
+});
+
+await test('query หาแถวของตัวเองต้องกรองด้วย auth_uid (ไม่เหมาแถวคนอื่น)', async () => {
+  // ถ้า mock/โค้ดไม่กรอง .eq() จะเห็นแถว admin ของคนอื่นแล้วสรุปว่าตัวเองเป็น admin
+  const { sandbox, mockSb } = makeContext({
+    supabaseMode: 'ok',
+    seed: {
+      fixtures: [], accessories: [],
+      members: [
+        { id: 'm-admin', auth_uid: uidFor('admin@test.com'), code: 'ADMIN01', full_name: 'แอดมิน', role: 'admin', active: true },
+        { id: 'm-crew', auth_uid: uidFor('crew@test.com'), code: 'TK01', full_name: 'ช่างไฟ', role: 'crew', active: true },
+      ],
+    },
+  });
+  await sandbox.AdminAuth.ready;
+  const res = await sandbox.AdminAuth.signIn('crew@test.com', 'secret123');
+  assert.strictEqual(res.ok, false, 'มีแถว admin ของคนอื่นอยู่ในตาราง แต่ต้องไม่เอามาเป็นของตัวเอง');
+  assert.strictEqual(sandbox.AdminAuth.getMemberCode(), 'TK01');
+  const memberCalls = mockSb._calls.filter((c) => c.table === 'members');
+  assert.ok(memberCalls.length >= 1, 'ต้องมีการ query ตาราง members');
+  assert.deepStrictEqual(
+    memberCalls[memberCalls.length - 1].filters,
+    [['auth_uid', uidFor('crew@test.com')]],
+    'ต้องกรองด้วย auth_uid ของตัวเองเท่านั้น'
+  );
 });
 
 await test('เน็ตหลุดตอน login -> ได้ข้อความอธิบาย ไม่ใช่ crash', async () => {
@@ -894,6 +1070,103 @@ await test('ตัวกรอง IP จับคู่ด้วยหัว tag
     'เลือก IP65 ต้องได้ทั้งตัวที่มีคำขยายและตัวที่ไม่มี');
   assert.deepStrictEqual(sandbox.filterFixtures(rows, { ip: 'IP54' }).map((f) => f.id), [3]);
   assert.strictEqual(sandbox.filterFixtures(rows, {}).length, 3, 'ไม่กรองต้องได้ครบ');
+});
+
+console.log('\n[ จำนวน stock มุมขวาล่างของการ์ด ]');
+
+await test('stockPillHtml โชว์ตัวเลข และเก็บข้อความ stock ดิบไว้ใน title', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const html = sandbox.stockPillHtml({ stock: '28 Pieces (7 sets of 4)', stockCount: 28 });
+  assert.ok(html.includes('class="stock-pill"'), html);
+  assert.ok(html.includes('<strong>28</strong>'), 'ต้องโชว์ตัวเลขเด่น ๆ: ' + html);
+  assert.ok(html.includes('ชิ้น'), 'ต้องมีหน่วยกำกับให้อ่านรู้เรื่อง');
+  assert.ok(html.includes('7 sets of 4'), 'ส่วนขยายต้องไม่หาย — เก็บไว้ใน title ให้ hover อ่าน');
+});
+
+await test('stockPillHtml ใช้ stockCount ก่อน parse ข้อความ (ข้อมูลจาก Supabase)', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const html = sandbox.stockPillHtml({ stock: '99 Pieces', stockCount: 4 });
+  assert.ok(html.includes('<strong>4</strong>'), 'stockCount คือค่าที่แก้ผ่านหน้า Admin ต้องชนะ: ' + html);
+  assert.ok(!html.includes('<strong>99</strong>'));
+});
+
+await test('stockPillHtml คืนค่าว่างเมื่อไม่รู้จำนวน (ห้ามเดา 0 หลอก ๆ)', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const cases = [
+    ['stock null', { stock: null }],
+    ['stock ว่าง', { stock: '' }],
+    ['ไม่มีฟิลด์เลย', {}],
+    ['null/undefined', null],
+    ['ข้อความที่ parse ไม่ได้', { stock: 'ไม่ระบุ' }],
+    ['0 ชิ้น', { stock: '0 Pieces' }],
+    ['stockCount เป็น 0', { stockCount: 0 }],
+  ];
+  for (const [name, item] of cases) {
+    assert.strictEqual(sandbox.stockPillHtml(item), '', `${name} ต้องไม่แสดง pill`);
+  }
+});
+
+await test('stockPillHtml ต้อง escape ข้อความ stock ก่อนใส่ใน title', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const html = sandbox.stockPillHtml({ stock: '4 Pieces "พิเศษ" <b>', stockCount: 4 });
+  assert.ok(!html.includes('"พิเศษ"'), 'ฟันหนูดิบจะทำ attribute พัง: ' + html);
+  assert.ok(html.includes('&quot;พิเศษ&quot;'), 'ต้อง escape เป็น entity');
+  assert.ok(!html.includes('<b>'), 'ต้องไม่ให้ HTML จากช่อง Admin หลุดเข้ามา');
+});
+
+await test('stockPillHtml ถูกเรียกใช้จริงในการ์ดทั้ง 2 ชนิด (ไม่ใช่เขียนแล้วทิ้งไว้)', async () => {
+  // กันบั๊กแบบที่เคยเจอ: ประกาศตัวแปร/ฟังก์ชันไว้แต่ไม่เสียบเข้า template จึงไม่แสดงผลเลย
+  const equip = fs.readFileSync(path.join(ROOT, 'equipment.html'), 'utf8');
+  const acc = fs.readFileSync(path.join(ROOT, 'js/accessories.js'), 'utf8');
+  assert.ok(equip.includes('stockPillHtml(item)'), 'การ์ดใน equipment.html ต้องเรียกใช้');
+  assert.ok(acc.includes('stockPillHtml(item)'), 'การ์ดใน js/accessories.js ต้องเรียกใช้');
+  assert.strictEqual(equip.split('stockPillHtml(').length - 1, 2,
+    'equipment.html มีการ์ด 2 ชนิด (fixture + accessory) ต้องเรียกทั้งคู่');
+});
+
+await test('การ์ด fixture เลิกแสดง "· Stock" กลางการ์ด (ไม่ซ้ำกับมุมขวาล่าง)', async () => {
+  const equip = fs.readFileSync(path.join(ROOT, 'equipment.html'), 'utf8');
+  assert.ok(!equip.includes('· Stock ${stockCount}'), 'ต้องเอาตัวเลขกลางการ์ดออกแล้ว');
+  assert.ok(equip.includes('<div><strong>${typeLabel}</strong></div>'), 'บรรทัดกลางต้องเหลือแค่ประเภท');
+  // หน้ารายละเอียดยังต้องโชว์ Stock ครบ (ตั้งใจให้เต็มที่ไม่ได้ย่อ)
+  assert.ok(equip.includes('<span>Stock</span>'), 'spec-row ในหน้ารายละเอียดต้องยังอยู่');
+});
+
+await test('CSS มี .stock-pill และดันไปชิดขวาด้วย margin-left:auto', async () => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/style.css'), 'utf8');
+  const block = css.slice(css.indexOf('.stock-pill {'));
+  assert.ok(block.startsWith('.stock-pill {'), 'ต้องมีคลาส .stock-pill');
+  const rule = block.slice(0, block.indexOf('}'));
+  assert.ok(/margin-left:\s*auto/.test(rule), 'ต้องมี margin-left:auto ไม่งั้นไม่ไปมุมขวาล่าง: ' + rule);
+  assert.ok(/var\(--brand-accent\)/.test(rule), 'ควรใช้สี accent ของแบรนด์เพื่อให้เด่น');
+  assert.ok(css.includes('.card-stock-row'), 'การ์ดอุปกรณ์เสริมไม่มี .card-add-row ต้องมีแถวของตัวเอง');
+});
+
+await test('ข้อมูลจริง: fixtures ทั้ง 64 ใบต้องได้ pill และตัวเลขตรง stockCount', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  let shown = 0;
+  for (const f of localFixtures) {
+    const html = sandbox.stockPillHtml(f);
+    assert.notStrictEqual(html, '', `fixture id ${f.id} (${f.model}) ต้องมี pill`);
+    assert.ok(html.includes(`<strong>${f.stockCount}</strong>`),
+      `id ${f.id}: คาดหวัง ${f.stockCount} แต่ได้ ${html}`);
+    shown++;
+  }
+  assert.strictEqual(shown, localFixtures.length);
+});
+
+await test('ข้อมูลจริง: อุปกรณ์เสริมที่ไม่มี stock ต้องไม่แสดง pill (70 จาก 72 รายการ)', async () => {
+  const { sandbox } = makeContext({ supabaseLibPresent: false });
+  const withStock = localAccessories.filter((a) => a.stock && String(a.stock).trim());
+  const without = localAccessories.filter((a) => !(a.stock && String(a.stock).trim()));
+  assert.ok(withStock.length >= 1, 'ต้องมีบางรายการที่มี stock ไม่งั้นเทสต์นี้ไม่มีความหมาย');
+  for (const a of withStock) {
+    assert.notStrictEqual(sandbox.stockPillHtml(a), '', `${a.name} มี stock ต้องได้ pill`);
+  }
+  for (const a of without) {
+    assert.strictEqual(sandbox.stockPillHtml(a), '', `${a.name} ไม่มี stock ต้องซ่อน pill`);
+  }
+  assert.strictEqual(without.length, localAccessories.length - withStock.length);
 });
 
 console.log(`\nสรุป: ผ่าน ${passed} / ไม่ผ่าน ${failed}\n`);

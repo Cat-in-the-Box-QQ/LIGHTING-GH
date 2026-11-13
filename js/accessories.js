@@ -252,6 +252,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       const compatible = fixtureNames(item.compatibleWith || []);
       const col = document.createElement('div');
       col.className = 'col-6 col-lg-4';
+      // จำนวนที่มีไปโชว์เด่น ๆ ที่มุมขวาล่างแทนบรรทัดกลางการ์ด
+      // ถ้าไม่รู้จำนวน (stock ว่าง) ให้บอกตรง ๆ ว่ายังไม่ระบุ — ดีกว่าปล่อยว่าง
+      // เพราะจะแยกไม่ออกว่า "หมด" หรือ "ยังไม่ได้กรอก"
+      const stockPill = stockPillHtml(item);
       col.innerHTML = `
         <div class="filter-panel h-100 accessory-card" role="button" data-id="${item.id}">
           <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
@@ -263,9 +267,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           </div>
           <div class="small text-muted mb-1">${item.brand || '-'}</div>
           <div class="d-flex flex-wrap gap-1 mb-2">${item.category ? badgesHtmlFromCommaList(item.category, 'bg-dark', { short: true }) : ''}</div>
-          <div class="small mb-2">${item.stock || 'ไม่ระบุ stock'}</div>
+          ${stockPill ? '' : `<div class="small text-muted mb-2">ไม่ระบุ stock</div>`}
           <div class="small"><strong>ใช้กับ:</strong> ${compatible.length ? compatible.join(', ') : 'ยังไม่ระบุ'}</div>
           ${adminUnlocked() ? `<div class="small text-danger mt-2">Admin: คลิกเพื่อแก้ไข / ซ่อน / ลบ</div>` : ''}
+          ${stockPill ? `<div class="card-stock-row">${stockPill}</div>` : ''}
         </div>`;
       listEl.appendChild(col);
     });

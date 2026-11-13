@@ -3,6 +3,12 @@
 -- วิธีใช้: เปิด Supabase Dashboard -> SQL Editor -> วางไฟล์นี้ทั้งไฟล์ -> Run
 -- รันซ้ำได้ปลอดภัย (ใช้ IF NOT EXISTS ทั้งหมด)
 --
+-- ⚠️ ติดตั้งครั้งแรกต้องทำ 2 ขั้นนี้ก่อนรัน ไม่งั้นสคริปต์จะหยุดตัวเอง:
+--    1. สร้างบัญชีใน Authentication -> Users -> Add user (ติ๊ก Auto Confirm User)
+--    2. แก้ v_admin_email ในบล็อก "เพิ่ม admin คนแรก" ท้ายไฟล์เป็นอีเมลของบัญชีนั้น
+--    เหตุผล: สิทธิ์เขียนข้อมูลผูกกับ role = 'admin' ในตาราง members
+--            ถ้ารันโดยไม่มี admin จะไม่มีใครแก้ไขข้อมูลได้เลย
+--
 -- หมายเหตุเรื่อง RLS:
 --   เว็บนี้เป็น static site ที่เรียก Supabase ตรงจากเบราว์เซอร์ ด้วย anon/publishable key
 --   ถ้า "ไม่" สร้าง policy ด้านล่างไว้ RLS จะบล็อกหมด ทำให้เว็บอ่านข้อมูลได้ 0 แถว
@@ -114,9 +120,69 @@ alter table public.accessories add column if not exists updated_at      timestam
 
 create index if not exists accessories_name_idx on public.accessories (name);
 
+-- ============================ members ============================
+-- รายชื่อทีมงาน + role
+-- จำเป็นเพราะ RLS เดิมให้สิทธิ์เขียนกับ "ทุกคนที่ login" ซึ่งพอสร้างบัญชีให้
+-- ทีมงานใช้ระบบจองของ ทุกคนจะได้สิทธิ์แก้/ลบอุปกรณ์ทั้งร้านไปด้วย
+create sequence if not exists public.members_code_seq;
+
+create table if not exists public.members (
+  id          uuid primary key default gen_random_uuid(),
+  auth_uid    uuid unique references auth.users (id) on delete set null,
+  code        text unique not null,
+  full_name   text not null,
+  phone       text,
+  role        text not null default 'crew' check (role in ('admin', 'crew')),
+  active      boolean not null default true,
+  note        text,
+  created_at  timestamptz not null default now()
+);
+
+comment on table  public.members          is 'รายชื่อทีมงาน — code คือรหัสประจำตัวที่แสดงบนเว็บ, auth_uid ผูกกับบัญชี Supabase Auth';
+comment on column public.members.code     is 'รหัสประจำตัว เช่น TK01 — เป็นแค่ป้ายชื่อสำหรับคนอ่าน ไม่ใช่รหัสผ่าน';
+comment on column public.members.role     is 'admin = แก้ไขข้อมูลของได้ / crew = จองของได้อย่างเดียว';
+
+-- ถ้าไม่ระบุ code ตอนเพิ่มสมาชิก ระบบออกรหัสให้อัตโนมัติ (M001, M002, ...)
+create or replace function public.members_fill_code()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.code is null or btrim(new.code) = '' then
+    new.code := 'M' || lpad(nextval('public.members_code_seq')::text, 3, '0');
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists members_fill_code on public.members;
+create trigger members_fill_code
+  before insert on public.members
+  for each row execute function public.members_fill_code();
+
+-- เช็คว่าคนที่เรียกอยู่เป็น admin หรือเปล่า
+-- security definer จำเป็น เพราะ policy ของ fixtures ต้องอ่าน members เพื่อตัดสินใจ
+-- ถ้าอ่านตรง ๆ จะชน RLS ของ members เอง (policy ซ้อน policy) จนได้คำตอบผิด
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1
+    from public.members m
+    where m.auth_uid = auth.uid()
+      and m.role = 'admin'
+      and m.active = true
+  );
+$$;
+
 -- ============================ Row Level Security ============================
 alter table public.fixtures    enable row level security;
 alter table public.accessories enable row level security;
+alter table public.members     enable row level security;
 
 -- อ่านได้ทุกคน (รวมผู้เยี่ยมชมที่ยังไม่ login)
 drop policy if exists "public read fixtures" on public.fixtures;
@@ -129,24 +195,87 @@ create policy "public read accessories"
   on public.accessories for select
   using (true);
 
--- เขียนได้เฉพาะผู้ที่ login ผ่าน Supabase Auth แล้ว
--- (หน้า admin บังคับ login ด้วย email + password ก่อนจึงจะเห็นปุ่มแก้ไข/ซ่อน/ลบ)
+-- members: อ่านแถวของตัวเองได้ (เว็บต้องรู้ว่าเป็น admin หรือ crew) / admin อ่านได้ทุกคน
+drop policy if exists "members read own" on public.members;
+create policy "members read own"
+  on public.members for select
+  to authenticated
+  using (auth.uid() = auth_uid or public.is_admin());
+
+drop policy if exists "admin write members" on public.members;
+create policy "admin write members"
+  on public.members for all
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+-- เขียน fixtures / accessories ได้เฉพาะ role = 'admin'
+-- (policy ชื่อเดิม "auth write ..." ที่ให้สิทธิ์ทุกคนที่ login ถูกลบทิ้งตรงนี้)
 drop policy if exists "auth write fixtures" on public.fixtures;
-create policy "auth write fixtures"
+drop policy if exists "admin write fixtures" on public.fixtures;
+create policy "admin write fixtures"
   on public.fixtures for all
   to authenticated
-  using (true)
-  with check (true);
+  using (public.is_admin())
+  with check (public.is_admin());
 
 drop policy if exists "auth write accessories" on public.accessories;
-create policy "auth write accessories"
+drop policy if exists "admin write accessories" on public.accessories;
+create policy "admin write accessories"
   on public.accessories for all
   to authenticated
-  using (true)
-  with check (true);
+  using (public.is_admin())
+  with check (public.is_admin());
+
+-- ============================ เพิ่ม admin คนแรก ============================
+-- อีเมล admin ถูกเติมไว้ให้แล้ว -> zombe.jpm@gmail.com
+-- ตรวจว่าตรงกับบัญชีใน Authentication -> Users (ถ้าไม่ใช่ ให้แก้ก่อนรัน)
+--
+-- ถ้าปล่อยเป็น 'PUT_YOUR_EMAIL_HERE' สคริปต์จะ raise exception
+-- และถูก rollback ทั้งไฟล์ (Supabase SQL Editor รันใน transaction เดียว)
+-- จงใจทำแบบนี้เพราะถ้ารันโดยไม่มี admin คุณจะเขียนข้อมูลไม่ได้อีกเลย
+do $$
+declare
+  v_admin_email text := 'zombe.jpm@gmail.com';   -- ตรวจว่าตรงกับบัญชีใน Authentication -> Users
+  v_uid         uuid;
+  v_name        text;
+begin
+  if btrim(v_admin_email) = '' or lower(btrim(v_admin_email)) = 'put_your_email_here' then
+    raise exception
+      'ยังไม่ได้ใส่อีเมล admin — แก้ตัวแปร v_admin_email ในบล็อก "เพิ่ม admin คนแรก" ของ supabase/schema.sql ก่อนรัน';
+  end if;
+
+  select u.id,
+         coalesce(nullif(btrim(u.raw_user_meta_data ->> 'full_name'), ''),
+                  nullif(btrim(u.raw_user_meta_data ->> 'name'), ''),
+                  split_part(v_admin_email, '@', 1))
+    into v_uid, v_name
+  from auth.users u
+  where lower(u.email) = lower(btrim(v_admin_email));
+
+  if v_uid is null then
+    raise exception
+      'ไม่พบบัญชี % ใน Supabase Authentication — ไปสร้างที่ Authentication → Users → Add user ก่อน',
+      v_admin_email;
+  end if;
+
+  insert into public.members (auth_uid, code, full_name, role, active)
+  values (v_uid, 'ADMIN01', v_name, 'admin', true)
+  on conflict (auth_uid) do update
+    set role   = 'admin',
+        active = true;
+end;
+$$;
 
 -- ============================ ตรวจผลหลังรัน ============================
 -- ถ้า 2 บรรทัดนี้คืนค่า > 0 แปลว่าตารางพร้อมใช้งานแล้ว
 select 'fixtures' as table_name, count(*) as rows from public.fixtures
 union all
 select 'accessories', count(*) from public.accessories;
+
+-- ต้องมีอย่างน้อย 1 แถว ไม่งั้นจะไม่มีใครแก้ไขข้อมูลได้เลย
+select m.code, m.full_name, m.role, m.active, u.email
+from public.members m
+left join auth.users u on u.id = m.auth_uid
+where m.role = 'admin' and m.active = true
+order by m.code;

@@ -313,6 +313,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     const who = document.getElementById('adminUserEmail');
     if (who) who.textContent = AdminAuth.getEmail() || '';
 
+    // โชว์สิทธิ์ + รหัสประจำตัวจากตาราง members
+    // ใช้ textContent/createElement ทั้งหมด เพราะค่ามาจากฐานข้อมูล
+    // (ถ้าเอาไปร้อยเป็น innerHTML ตรง ๆ จะเปิดช่อง XSS)
+    const roleEl = document.getElementById('adminUserRole');
+    if (roleEl) {
+      roleEl.textContent = '';
+      const role = AdminAuth.getRole();
+      if (role) {
+        const badge = document.createElement('span');
+        badge.className = 'badge bg-dark';
+        const code = AdminAuth.getMemberCode();
+        badge.textContent = code ? `${role} · ${code}` : String(role);
+        roleEl.appendChild(badge);
+      }
+    }
+
+    // เตือนเมื่อสิทธิ์มาจากทางออกฉุกเฉิน (อ่านตาราง members ไม่ได้)
+    // ไม่งั้นผู้ใช้จะไม่รู้ตัวว่ายังไม่ได้รัน migration
+    const warnEl = document.getElementById('adminRoleWarning');
+    if (warnEl) {
+      const roleError = AdminAuth.getRoleError();
+      warnEl.textContent = roleError ? `⚠️ ${roleError}` : '';
+      warnEl.style.display = roleError ? 'block' : 'none';
+    }
+
     await refreshData();
 
     const summary = VerificationStore.getSummary();

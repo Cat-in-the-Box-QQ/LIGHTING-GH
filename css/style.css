@@ -180,6 +180,40 @@ img {
   width: 84px;
 }
 
+/* จำนวน stock ที่มุมขวาล่างของการ์ด
+   ใช้สี accent ของแบรนด์เพราะเป็นตัวเลขที่ดูบ่อยที่สุด ต้องการให้เห็นชัดในกวาดตาเดียว */
+.stock-pill {
+  margin-left: auto;              /* ดันไปชิดขวาสุดของแถว flex */
+  display: inline-flex;
+  align-items: baseline;
+  gap: .25rem;
+  padding: .28rem .6rem;
+  border-radius: 999px;
+  background: var(--brand-accent);
+  color: var(--brand-dark);
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .18);
+}
+
+.stock-pill strong {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.stock-pill-unit {
+  font-size: .68rem;
+  font-weight: 600;
+  opacity: .78;
+}
+
+/* แถวล่างของการ์ดอุปกรณ์เสริม — การ์ดกลุ่มนี้ไม่มี .card-add-row ให้ยืม */
+.card-stock-row {
+  display: flex;
+  align-items: center;
+  margin-top: .75rem;
+}
+
 .cart-header {
   display: flex;
   justify-content: space-between;
